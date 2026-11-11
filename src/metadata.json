@@ -1,0 +1,10 @@
+{
+  "uuid": "lume@cjts15",
+  "name": "Lume",
+  "description": "A lightweight Spotlight-style search window for GNOME Shell.",
+  "shell-version": ["45", "46", "47", "48", "49", "50", "51"],
+  "settings-schema": "org.gnome.shell.extensions.lume",
+  "gettext-domain": "lume",
+  "url": "https://github.com/CJTS15/lume",
+  "version-name": "0.1.0"
+}

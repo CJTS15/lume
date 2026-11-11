@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="lume">
+  <schema id="org.gnome.shell.extensions.lume" path="/org/gnome/shell/extensions/lume/">
+    <key name="toggle-shortcut" type="as">
+      <default><![CDATA[['<Super><Alt>space']]]></default>
+      <summary>Toggle the Lume search window</summary>
+      <description>Global keyboard shortcut that shows or hides the search window. An empty list disables it.</description>
+    </key>
+    <key name="max-results" type="i">
+      <range min="1" max="20"/>
+      <default>8</default>
+      <summary>Maximum number of results</summary>
+      <description>How many results the search window shows at most.</description>
+    </key>
+    <key name="panel-width" type="i">
+      <range min="400" max="1200"/>
+      <default>640</default>
+      <summary>Search window width</summary>
+      <description>Width of the search window in logical pixels. It is clamped to the monitor width.</description>
+    </key>
+    <key name="top-offset" type="i">
+      <range min="5" max="50"/>
+      <default>20</default>
+      <summary>Distance from the top</summary>
+      <description>Distance between the top of the monitor and the search window, as a percentage of the monitor height.</description>
+    </key>
+  </schema>
+</schemalist>
