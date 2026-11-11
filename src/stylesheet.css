@@ -1,0 +1,50 @@
+/*
+ * Layout only. Colors, borders, radii and shadows come from the Shell theme
+ * classes set in lib/searchWindow.js (popup-menu-content, popup-menu-item,
+ * StEntry, ...), so Lume follows light, dark, high contrast and custom
+ * Shell themes. Do not add colors here.
+ */
+
+.lume-panel {
+  spacing: 6px;
+  padding: 8px;
+}
+
+.lume-entry {
+  font-size: 1.25em;
+  min-height: 2.2em;
+}
+
+.lume-entry-icon {
+  icon-size: 1.1em;
+  padding: 0 6px;
+}
+
+.lume-separator {
+  padding: 0;
+  margin: 0 4px;
+}
+
+.lume-results {
+  spacing: 2px;
+}
+
+.lume-result {
+  spacing: 12px;
+}
+
+.lume-result-text {
+  spacing: 2px;
+}
+
+.lume-result-title {
+  font-weight: bold;
+}
+
+.lume-result-subtitle {
+  font-size: 0.9em;
+}
+
+.lume-status {
+  padding: 12px;
+}
