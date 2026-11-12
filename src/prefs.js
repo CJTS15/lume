@@ -6,6 +6,7 @@
 import Adw from 'gi://Adw';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -163,7 +164,8 @@ export default class LumePreferences extends ExtensionPreferences {
     _buildWeatherGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Weather'),
-            description: _('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather.'),
+            // Group descriptions are Pango markup; escape the <placeholders>.
+            description: GLib.markup_escape_text(_('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather.'), -1),
         });
 
         const city = new Adw.EntryRow({title: _('Default City')});
@@ -181,7 +183,7 @@ export default class LumePreferences extends ExtensionPreferences {
     _buildAgentGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('AI Agent'),
-            description: _('Search “ask <prompt>” to open the agent in a terminal, or start with an agent’s name, e.g. “codex <prompt>”. Leave Terminal empty to use the system default.'),
+            description: GLib.markup_escape_text(_('Search “ask <prompt>” to open the agent in a terminal, or start with an agent’s name, e.g. “codex <prompt>”. Leave Terminal empty to use the system default.'), -1),
         });
 
         group.add(this._comboRow(settings, 'ai-agent', _('Default Agent'),

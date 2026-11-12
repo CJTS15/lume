@@ -7,6 +7,7 @@
 // high-contrast styles and any custom Shell theme. stylesheet.css only sets
 // layout, never colors.
 
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
@@ -23,6 +24,10 @@ const NAVIGATION_KEYS = new Set([
     Clutter.KEY_Down, Clutter.KEY_KP_Down, Clutter.KEY_Up, Clutter.KEY_KP_Up,
     Clutter.KEY_Tab, Clutter.KEY_ISO_Left_Tab, Clutter.KEY_Page_Down, Clutter.KEY_Page_Up,
 ]);
+
+// Return and KP_Enter on the entry arrive as ClutterText 'activate'; these
+// only reach _onKeyPress when a result row has key focus.
+const ENTER_KEYS = new Set([Clutter.KEY_Return, Clutter.KEY_KP_Enter, Clutter.KEY_ISO_Enter]);
 
 /**
  * St.BoxLayout's `vertical` property was replaced by `orientation` in
@@ -96,7 +101,11 @@ class LumeSearchWindow extends St.Widget {
         }));
         this._panel.add_child(this._separator);
 
-        this._resultsBox = new St.BoxLayout({style_class: 'lume-results'});
+        this._resultsBox = new St.BoxLayout({
+            style_class: 'lume-results',
+            accessible_role: Atk.Role.LIST,
+            accessible_name: _('Results'),
+        });
         setVertical(this._resultsBox);
 
         this._scrollView = new St.ScrollView({
@@ -252,6 +261,7 @@ class LumeSearchWindow extends St.Widget {
         // late, better result (files, weather) must take the top spot, or
         // Enter would open whatever answered first (e.g. web search).
         const previous = this._userMoved ? this._rows[this._selected]?.key : undefined;
+        const rowHadFocus = this._rows.some(r => r.actor.has_key_focus());
 
         const merged = [];
         for (const [providerId, results] of this._resultsByProvider) {
@@ -283,13 +293,20 @@ class LumeSearchWindow extends St.Widget {
         this._select(keep >= 0 ? keep : 0, false);
         if (keep < 0)
             this._scrollAdjustment().value = 0;
+        // The focused row was just destroyed; focus its replacement.
+        if (rowHadFocus)
+            (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
     }
 
     _createRow(result, index) {
+        // Rows take key focus during keyboard navigation, so screen readers
+        // announce them, as in the overview's search results.
         const row = new St.BoxLayout({
             style_class: 'popup-menu-item lume-result',
             reactive: true,
+            can_focus: true,
             x_expand: true,
+            accessible_role: Atk.Role.LIST_ITEM,
         });
 
         if (result.icon) {
@@ -311,29 +328,34 @@ class LumeSearchWindow extends St.Widget {
             y_align: Clutter.ActorAlign.CENTER,
         });
         setVertical(text);
-        text.add_child(new St.Label({
+        const title = new St.Label({
             style_class: 'lume-result-title',
             text: result.title,
-        }));
+        });
+        text.add_child(title);
+        row.label_actor = title;
         if (result.subtitle) {
-            text.add_child(new St.Label({
+            const subtitle = new St.Label({
                 // Non-reactive labels are :insensitive, which this theme
                 // class dims with the theme's own (HC-aware) color.
                 style_class: 'popup-inactive-menu-item lume-result-subtitle',
                 text: result.subtitle,
-            }));
+            });
+            text.add_child(subtitle);
+            row.get_accessible().add_relationship(
+                Atk.RelationType.DESCRIBED_BY, subtitle.get_accessible());
         }
         row.add_child(text);
-
-        row.accessible_name = result.subtitle
-            ? `${result.title}, ${result.subtitle}`
-            : result.title;
 
         // Selection follows the pointer only when it actually moves, so a
         // pointer resting where the panel opens does not steal it.
         row.connect('motion-event', () => {
             this._userMoved = true;
             this._select(index, false);
+            // Keep key focus on the selected row once it is in the list, so
+            // Enter opens what the screen reader announced.
+            if (!this._entry.clutter_text.has_key_focus())
+                row.grab_key_focus();
             return Clutter.EVENT_PROPAGATE;
         });
         row.connect('button-release-event', (_a, event) => {
@@ -359,14 +381,31 @@ class LumeSearchWindow extends St.Widget {
         const old = this._rows[this._selected]?.actor;
         old?.remove_style_pseudo_class('selected');
         old?.remove_style_pseudo_class('hover');
+        old?.remove_accessible_state(Atk.StateType.SELECTED);
 
         this._selected = index;
         const actor = this._rows[index].actor;
         actor.add_style_pseudo_class('selected');
         actor.add_style_pseudo_class('hover');
+        actor.add_accessible_state(Atk.StateType.SELECTED);
 
         if (scroll)
             this._ensureVisible(actor);
+    }
+
+    /**
+     * Keyboard navigation: move the selection and key focus together.
+     * Moving above the first row returns focus to the entry.
+     *
+     * @param {number} index
+     */
+    _navigate(index) {
+        if (index < 0) {
+            this._entry.grab_key_focus();
+            return;
+        }
+        this._select(index);
+        this._rows[this._selected]?.actor.grab_key_focus();
     }
 
     _scrollAdjustment() {
@@ -407,6 +446,16 @@ class LumeSearchWindow extends St.Widget {
 
         if (NAVIGATION_KEYS.has(symbol))
             this._userMoved = true;
+        // Up/Shift+Tab from the first row return to the entry; from the
+        // entry they stop at the first row.
+        const onRow = !this._entry.clutter_text.has_key_focus();
+        const next = this._selected + 1;
+        const previous = onRow ? this._selected - 1 : Math.max(0, this._selected - 1);
+
+        if (ENTER_KEYS.has(symbol)) {
+            this._activate(this._selected);
+            return Clutter.EVENT_STOP;
+        }
 
         switch (symbol) {
         case Clutter.KEY_Escape:
@@ -414,26 +463,42 @@ class LumeSearchWindow extends St.Widget {
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Down:
         case Clutter.KEY_KP_Down:
-            this._select(this._selected + 1);
+            this._navigate(next);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Up:
         case Clutter.KEY_KP_Up:
-            this._select(this._selected - 1);
+            this._navigate(previous);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Tab:
-            this._select(this._selected + (shift ? -1 : 1));
+            this._navigate(shift ? previous : next);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_ISO_Left_Tab:
-            this._select(this._selected - 1);
+            this._navigate(previous);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Page_Down:
-            this._select(this._rows.length - 1);
+            this._navigate(this._rows.length - 1);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Page_Up:
-            this._select(0);
+            this._navigate(0);
             return Clutter.EVENT_STOP;
-        default:
-            return Clutter.EVENT_PROPAGATE;
         }
+
+        // Typing while a row has focus continues at the end of the entry.
+        // Forwarding the event with clutter_text.event() inserts nothing on
+        // GNOME 51, so apply the key here.
+        const unicode = Clutter.keysym_to_unicode(symbol);
+        const modifiers = state & (Clutter.ModifierType.CONTROL_MASK |
+            Clutter.ModifierType.MOD1_MASK | Clutter.ModifierType.SUPER_MASK);
+        if (onRow && !modifiers && (unicode !== 0 || symbol === Clutter.KEY_BackSpace)) {
+            this._entry.grab_key_focus();
+            const text = this._entry.clutter_text;
+            text.set_cursor_position(-1);
+            if (unicode !== 0)
+                text.insert_unichar(String.fromCodePoint(unicode));
+            else
+                this._entry.text = [...this._entry.text].slice(0, -1).join('');
+            return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
     }
 });

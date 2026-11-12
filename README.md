@@ -6,9 +6,9 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: step 3 of 4. Apps, calculator, files, clipboard history, web
-> search, weather and AI agents work. Polish (theming, accessibility,
-> testing on GNOME 45–50) comes next.
+> Status: v1 feature-complete. Tested on GNOME 51 only; the code handles
+> 45–50 (see [Version notes](#version-notes-gnome-4551)) but nobody has run
+> it there yet.
 
 ## Install
 
@@ -42,10 +42,14 @@ the next time a Shell starts. `make unlink` removes only that symlink.
 | Key | Action |
 | --- | --- |
 | <kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> | Open or close Lume (default, configurable) |
-| <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection |
+| <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
 | <kbd>Enter</kbd> | Open the selected result |
 | <kbd>Esc</kbd> or a click outside | Close |
+
+Enter on the search field opens the top (highlighted) result. Moving with the
+keyboard puts focus on the result itself, so screen readers such as Orca read
+its title and description; typing sends you back to the search field.
 
 What you can type:
 
@@ -150,6 +154,17 @@ Inside the nested session, open a terminal there and run
 (this changes your real settings too). Set the window size with
 `MUTTER_DEBUG_DUMMY_MODE_SPECS=1600x1000` (the Makefile does).
 
+The nested Shell shares your real settings. Turning on high contrast, large
+text or the screen reader inside it turns them on in your session too. Note
+your current values first (`gsettings get` with the same keys), because
+`reset` goes back to the default, not to your previous value:
+
+```sh
+gsettings reset org.gnome.desktop.a11y.interface high-contrast
+gsettings reset org.gnome.desktop.interface text-scaling-factor
+gsettings reset org.gnome.desktop.a11y.applications screen-reader-enabled
+```
+
 Logs: the nested Shell prints to the terminal you started it from. For the
 real session: `journalctl -f -o cat /usr/bin/gnome-shell`. Preferences run in
 a separate process; watch `journalctl -f -o cat` while opening them.
@@ -158,10 +173,15 @@ a separate process; watch `journalctl -f -o cat` while opening them.
 
 ```sh
 make test             # gjs self-checks for the pure modules in src/lib/
+make smoke            # headless gnome-shell: enable/disable cycles, prefs
 ```
 
-They cover the pure modules in `src/lib/`. Providers that need the Shell are
-tested in a nested session.
+`make test` covers the pure modules in `src/lib/`. `make smoke` starts a
+throwaway headless Shell with its own config and data directories (your
+settings are not touched), enables Lume, disables and re-enables it five
+times, opens the preferences, and fails on any JS error or preferences
+warning. It does not open the search window; test that, and the providers,
+in a nested session.
 
 ## Writing a provider
 
@@ -221,7 +241,8 @@ src/
   providers/          one file per provider: apps, calculator, commands,
                       files, clipboard, weather, agents, web
   schemas/            GSettings schema
-tests/                gjs self-checks, run with `make test`
+tests/                gjs self-checks (`make test`), headless smoke test
+                      (`make smoke`)
 ```
 
 ## Version notes (GNOME 45–51)

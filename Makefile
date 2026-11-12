@@ -3,7 +3,7 @@ SRC      := src
 EXT_DIR  := $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 ZIP      := $(UUID).shell-extension.zip
 
-.PHONY: schemas pack install link unlink nested test clean
+.PHONY: schemas pack install link unlink nested test smoke clean
 
 # Needed for `make link`; `gnome-extensions install` compiles schemas itself.
 schemas:
@@ -37,6 +37,10 @@ nested:
 
 test:
 	@for t in tests/*.test.js; do gjs -m "$$t" || exit 1; done
+
+# Headless gnome-shell in throwaway dirs: enable/disable cycles and prefs.
+smoke: schemas
+	tests/smoke.sh
 
 clean:
 	rm -f "$(ZIP)" "$(SRC)/schemas/gschemas.compiled"

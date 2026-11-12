@@ -6,5 +6,5 @@
   "settings-schema": "org.gnome.shell.extensions.lume",
   "gettext-domain": "lume",
   "url": "https://github.com/CJTS15/lume",
-  "version-name": "0.1.0"
+  "version-name": "1.0.0"
 }
