@@ -24,9 +24,10 @@ if [ -z "${LUME_SMOKE_DIR:-}" ]; then
     LUME_SMOKE_DIR=$tmp dbus-run-session -- "$0" > "$tmp/session.log" 2>&1
     status=$?
 
-    # Shell JS errors, Lume's own log lines, and warnings from the prefs
-    # process. Ignored: GJS's own property notes and the missing a11y bus.
-    if grep -E 'JS ERROR|Gjs-CRITICAL|lume: |Extensions:[0-9]+\): (Gtk|Adw|Gjs)-(WARNING|CRITICAL)' "$tmp/session.log" |
+    # Shell JS errors and unhandled rejections, Lume's own log lines, and
+    # warnings from the prefs process. Ignored: GJS's own property notes and
+    # the missing a11y bus.
+    if grep -E 'JS ERROR|Gjs-CRITICAL|Unhandled promise rejection|lume: |Extensions:[0-9]+\): (Gtk|Adw|Gjs)-(WARNING|CRITICAL)' "$tmp/session.log" |
         grep -vE 'Falling back to slow path|accessibility bus' >&2; then
         echo "smoke: errors or warnings above" >&2
         status=1
