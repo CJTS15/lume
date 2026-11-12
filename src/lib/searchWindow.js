@@ -352,6 +352,10 @@ class LumeSearchWindow extends St.Widget {
         row.connect('motion-event', () => {
             this._userMoved = true;
             this._select(index, false);
+            // Keep key focus on the selected row once it is in the list, so
+            // Enter opens what the screen reader announced.
+            if (!this._entry.clutter_text.has_key_focus())
+                row.grab_key_focus();
             return Clutter.EVENT_PROPAGATE;
         });
         row.connect('button-release-event', (_a, event) => {
@@ -479,11 +483,20 @@ class LumeSearchWindow extends St.Widget {
             return Clutter.EVENT_STOP;
         }
 
-        // Typing while a row has focus goes back to the entry.
-        if (onRow && (Clutter.keysym_to_unicode(symbol) !== 0 ||
-            symbol === Clutter.KEY_BackSpace || symbol === Clutter.KEY_Delete)) {
+        // Typing while a row has focus continues at the end of the entry.
+        // Forwarding the event with clutter_text.event() inserts nothing on
+        // GNOME 51, so apply the key here.
+        const unicode = Clutter.keysym_to_unicode(symbol);
+        const modifiers = state & (Clutter.ModifierType.CONTROL_MASK |
+            Clutter.ModifierType.MOD1_MASK | Clutter.ModifierType.SUPER_MASK);
+        if (onRow && !modifiers && (unicode !== 0 || symbol === Clutter.KEY_BackSpace)) {
             this._entry.grab_key_focus();
-            this._entry.clutter_text.event(event, false);
+            const text = this._entry.clutter_text;
+            text.set_cursor_position(-1);
+            if (unicode !== 0)
+                text.insert_unichar(String.fromCodePoint(unicode));
+            else
+                this._entry.text = [...this._entry.text].slice(0, -1).join('');
             return Clutter.EVENT_STOP;
         }
         return Clutter.EVENT_PROPAGATE;
