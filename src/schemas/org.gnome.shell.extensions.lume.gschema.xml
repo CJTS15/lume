@@ -40,5 +40,22 @@
       <summary>Clipboard history size</summary>
       <description>How many copied items to remember.</description>
     </key>
+    <key name="web-search-engine" type="s">
+      <choices>
+        <choice value="google"/>
+        <choice value="duckduckgo"/>
+        <choice value="brave"/>
+        <choice value="startpage"/>
+        <choice value="custom"/>
+      </choices>
+      <default>'google'</default>
+      <summary>Web search engine</summary>
+      <description>Search engine used by the web search row. “custom” uses web-search-url.</description>
+    </key>
+    <key name="web-search-url" type="s">
+      <default>''</default>
+      <summary>Custom web search URL</summary>
+      <description>An http or https URL where %s is replaced by the query, used when web-search-engine is “custom”.</description>
+    </key>
   </schema>
 </schemalist>

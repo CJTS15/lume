@@ -10,6 +10,8 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {ENGINES, isValidSearchUrl} from './lib/web.js';
+
 const SHORTCUT_KEY = 'toggle-shortcut';
 
 const MODIFIER_KEYS = new Set([
@@ -41,6 +43,7 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildShortcutGroup(window, settings));
         page.add(this._buildAppearanceGroup(settings));
         page.add(this._buildClipboardGroup(settings));
+        page.add(this._buildWebSearchGroup(settings));
     }
 
     _buildShortcutGroup(window, settings) {
@@ -124,6 +127,60 @@ export default class LumePreferences extends ExtensionPreferences {
         group.add(size);
 
         return group;
+    }
+
+    _buildWebSearchGroup(settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Web Search'),
+            description: _('The last result opens your query in the browser. Nothing is sent until you choose it.'),
+        });
+
+        group.add(this._comboRow(settings, 'web-search-engine', _('Search Engine'), [
+            ...Object.entries(ENGINES).map(([id, engine]) => [id, engine.name]),
+            ['custom', _('Custom')],
+        ]));
+
+        const url = new Adw.EntryRow({title: _('Custom URL, with %s for the query')});
+        settings.bind('web-search-url', url, 'text', Gio.SettingsBindFlags.DEFAULT);
+        const sync = () => {
+            url.sensitive = settings.get_string('web-search-engine') === 'custom';
+            if (url.text && !isValidSearchUrl(url.text))
+                url.add_css_class('error');
+            else
+                url.remove_css_class('error');
+        };
+        sync();
+        settings.connect('changed::web-search-engine', sync);
+        url.connect('notify::text', sync);
+        group.add(url);
+
+        return group;
+    }
+
+    /**
+     * An Adw.ComboRow for a string key with <choices>.
+     *
+     * @param {Gio.Settings} settings
+     * @param {string} key
+     * @param {string} title
+     * @param {Array<[string, string]>} options - [value, label] pairs
+     */
+    _comboRow(settings, key, title, options) {
+        const row = new Adw.ComboRow({
+            title,
+            model: Gtk.StringList.new(options.map(([, label]) => label)),
+        });
+        const sync = () => {
+            row.selected = Math.max(0, options.findIndex(([value]) => value === settings.get_string(key)));
+        };
+        sync();
+        settings.connect(`changed::${key}`, sync);
+        row.connect('notify::selected', () => {
+            const value = options[row.selected]?.[0];
+            if (value && value !== settings.get_string(key))
+                settings.set_string(key, value);
+        });
+        return row;
     }
 
     _captureShortcut(parent, settings) {
