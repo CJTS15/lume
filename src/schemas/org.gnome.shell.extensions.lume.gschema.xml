@@ -24,5 +24,21 @@
       <summary>Distance from the top</summary>
       <description>Distance between the top of the monitor and the search window, as a percentage of the monitor height.</description>
     </key>
+    <key name="clipboard-history" type="b">
+      <default>true</default>
+      <summary>Remember clipboard history</summary>
+      <description>Keep a list of copied text, shown by searching “clip”. Copies that password managers mark as secret are skipped.</description>
+    </key>
+    <key name="clipboard-persist" type="b">
+      <default>false</default>
+      <summary>Keep clipboard history on disk</summary>
+      <description>Save the clipboard history so it survives screen locks and logging out. When off, the history lives only in memory.</description>
+    </key>
+    <key name="clipboard-size" type="i">
+      <range min="5" max="200"/>
+      <default>50</default>
+      <summary>Clipboard history size</summary>
+      <description>How many copied items to remember.</description>
+    </key>
   </schema>
 </schemalist>
