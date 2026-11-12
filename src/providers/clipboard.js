@@ -81,9 +81,11 @@ export class ClipboardProvider extends Provider {
             return [];
 
         const filter = text.slice(KEYWORD.length).trim();
+        // Unfiltered, leave room for the "Clear" row within max-results;
+        // older items are reached by typing a filter.
         const entries = filter
             ? this._history.filter(entry => matchScore(entry, filter) >= 0.6)
-            : this._history;
+            : this._history.slice(0, this._settings.get_int('max-results') - 1);
 
         // The keyword is an explicit request, so these rank above apps.
         const results = entries.map((entry, index) => ({
