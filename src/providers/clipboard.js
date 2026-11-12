@@ -82,10 +82,13 @@ export class ClipboardProvider extends Provider {
 
         const filter = text.slice(KEYWORD.length).trim();
         // Unfiltered, leave room for the "Clear" row within max-results;
-        // older items are reached by typing a filter.
+        // older items are reached by typing a filter. With room for one
+        // row only, there is no "Clear" row: Enter must not wipe history.
+        const maxResults = this._settings.get_int('max-results');
+        const showClear = !filter && this._history.length > 0 && maxResults >= 2;
         const entries = filter
             ? this._history.filter(entry => matchScore(entry, filter) >= 0.6)
-            : this._history.slice(0, this._settings.get_int('max-results') - 1);
+            : this._history.slice(0, showClear ? maxResults - 1 : maxResults);
 
         // The keyword is an explicit request, so these rank above apps.
         const results = entries.map((entry, index) => ({
@@ -97,7 +100,7 @@ export class ClipboardProvider extends Provider {
             activate: () => this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry),
         }));
 
-        if (!filter && this._history.length > 0) {
+        if (showClear) {
             results.push({
                 id: 'clear',
                 title: _('Clear Clipboard History'),

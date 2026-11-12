@@ -19,6 +19,11 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 const ICON_SIZE = 24;
 const SCREEN_MARGIN = 16;
 
+const NAVIGATION_KEYS = new Set([
+    Clutter.KEY_Down, Clutter.KEY_KP_Down, Clutter.KEY_Up, Clutter.KEY_KP_Up,
+    Clutter.KEY_Tab, Clutter.KEY_ISO_Left_Tab, Clutter.KEY_Page_Down, Clutter.KEY_Page_Up,
+]);
+
 /**
  * St.BoxLayout's `vertical` property was replaced by `orientation` in
  * GNOME 48. Set whichever this Shell has.
@@ -57,6 +62,8 @@ class LumeSearchWindow extends St.Widget {
         this._resultsByProvider = new Map();
         this._rows = [];
         this._selected = -1;
+        // Whether the user moved the selection since the query changed.
+        this._userMoved = false;
 
         this._panel = new St.BoxLayout({
             style_class: 'popup-menu popup-menu-content lume-panel',
@@ -219,6 +226,7 @@ class LumeSearchWindow extends St.Widget {
         const cancellable = new Gio.Cancellable();
         this._cancellable = cancellable;
         this._resultsByProvider.clear();
+        this._userMoved = false;
 
         this._registry.query(text, cancellable, (provider, results) => {
             this._resultsByProvider.set(provider.id, results);
@@ -240,7 +248,10 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _render() {
-        const previous = this._rows[this._selected]?.key;
+        // Keep the selection only if the user put it there; otherwise a
+        // late, better result (files, weather) must take the top spot, or
+        // Enter would open whatever answered first (e.g. web search).
+        const previous = this._userMoved ? this._rows[this._selected]?.key : undefined;
 
         const merged = [];
         for (const [providerId, results] of this._resultsByProvider) {
@@ -321,6 +332,7 @@ class LumeSearchWindow extends St.Widget {
         // Selection follows the pointer only when it actually moves, so a
         // pointer resting where the panel opens does not steal it.
         row.connect('motion-event', () => {
+            this._userMoved = true;
             this._select(index, false);
             return Clutter.EVENT_PROPAGATE;
         });
@@ -392,6 +404,9 @@ class LumeSearchWindow extends St.Widget {
         const symbol = event.get_key_symbol();
         const state = event.get_state();
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
+
+        if (NAVIGATION_KEYS.has(symbol))
+            this._userMoved = true;
 
         switch (symbol) {
         case Clutter.KEY_Escape:
