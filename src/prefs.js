@@ -10,6 +10,7 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {AGENTS} from './lib/agents.js';
 import {ENGINES, isValidSearchUrl} from './lib/web.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
@@ -45,6 +46,7 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildClipboardGroup(settings));
         page.add(this._buildWebSearchGroup(settings));
         page.add(this._buildWeatherGroup(settings));
+        page.add(this._buildAgentGroup(settings));
     }
 
     _buildShortcutGroup(window, settings) {
@@ -172,6 +174,22 @@ export default class LumePreferences extends ExtensionPreferences {
             ['metric', _('Metric (°C)')],
             ['imperial', _('Imperial (°F)')],
         ]));
+
+        return group;
+    }
+
+    _buildAgentGroup(settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('AI Agent'),
+            description: _('Search “ask <prompt>” to open the agent in a terminal, or start with an agent’s name, e.g. “codex <prompt>”. Leave Terminal empty to use the system default.'),
+        });
+
+        group.add(this._comboRow(settings, 'ai-agent', _('Default Agent'),
+            Object.entries(AGENTS).map(([id, agent]) => [id, agent.name])));
+
+        const terminal = new Adw.EntryRow({title: _('Terminal Command')});
+        settings.bind('terminal', terminal, 'text', Gio.SettingsBindFlags.DEFAULT);
+        group.add(terminal);
 
         return group;
     }

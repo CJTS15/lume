@@ -71,5 +71,20 @@
       <summary>Weather units</summary>
       <description>“metric” for °C, “imperial” for °F.</description>
     </key>
+    <key name="ai-agent" type="s">
+      <choices>
+        <choice value="claude"/>
+        <choice value="codex"/>
+        <choice value="agy"/>
+      </choices>
+      <default>'claude'</default>
+      <summary>Default AI agent</summary>
+      <description>Agent CLI opened by “ask &lt;prompt&gt;”.</description>
+    </key>
+    <key name="terminal" type="s">
+      <default>''</default>
+      <summary>Terminal command</summary>
+      <description>Command that runs the arguments after it in a terminal, e.g. “kitty” or “ptyxis --new-window --”. Empty uses the system default.</description>
+    </key>
   </schema>
 </schemalist>

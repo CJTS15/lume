@@ -8,6 +8,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
+import {AgentsProvider} from './providers/agents.js';
 import {AppsProvider} from './providers/apps.js';
 import {CalculatorProvider} from './providers/calculator.js';
 import {ClipboardProvider} from './providers/clipboard.js';
@@ -30,6 +31,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new FilesProvider());
         this._registry.register(new ClipboardProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
+        this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new WebSearchProvider(this._settings));
 
         this._window = new SearchWindow(this._settings, this._registry);
