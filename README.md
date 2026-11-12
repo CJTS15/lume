@@ -6,8 +6,9 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: step 2 of 4. Apps, calculator, files and clipboard history work.
-> Web search, weather and AI agents come next.
+> Status: step 3 of 4. Apps, calculator, files, clipboard history, web
+> search, weather and AI agents work. Polish (theming, accessibility,
+> testing on GNOME 45–50) comes next.
 
 ## Install
 
@@ -54,6 +55,9 @@ What you can type:
 | An expression (`2*(3+4)`, `sqrt(2)`, `2^10`) | The result; Enter copies it |
 | Three or more letters of a file or folder name | Up to 5 files, from the LocalSearch index; Enter opens it |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
+| `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
+| `ask <prompt>`, or `claude`/`codex`/`agy <prompt>` | Opens the AI agent's CLI in a terminal with your prompt |
+| Anything | Last row: search the web for it |
 | `pref` | Lume Preferences |
 
 The calculator supports `+ - * / % ^` (or `**`), parentheses and `sqrt cbrt
@@ -64,6 +68,27 @@ Files come from GNOME's file index (LocalSearch, formerly Tracker), so only
 indexed folders are searched (Settings → Search → Search Locations). Hidden
 folders and `node_modules` are skipped. Without an index, Lume searches the
 names in your home folder, three levels deep.
+
+### Web search, weather and AI agents
+
+The web search row opens your query with the engine chosen in preferences
+(Google by default; DuckDuckGo, Brave Search, Startpage, or a custom
+`https://…%s` URL). Nothing is sent until you choose the row. It has the
+lowest score, so it drops off when the other results already fill the list.
+
+`weather` uses the default city from preferences; `weather <city>` looks up
+any city with Open-Meteo's geocoding. The city goes to Open-Meteo.com only
+when you search for weather, and results are cached for 10 minutes. Weather
+data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
+
+`ask <prompt>` opens the default agent (Claude Code, Codex or agy, set in
+preferences) in a terminal, starting in your home folder. Typing an agent's
+command name instead of `ask` picks that agent. Only agents found on your
+`PATH` are offered. The prompt is passed to the CLI as a single argument,
+never through a shell. Lume uses your terminal command from preferences if
+set, otherwise `xdg-terminal-exec`, GNOME's default terminal setting, or the
+first of Ptyxis, Console, GNOME Terminal, Konsole, kitty, Alacritty, foot,
+WezTerm and xterm that is installed.
 
 ### Clipboard history
 
@@ -93,6 +118,9 @@ it in Lume's preferences.
   free it in GNOME Settings first.
 - **Width**, **Distance From Top**, **Maximum Results**.
 - **Clipboard History**: on/off, keep on disk, number of items (5–200).
+- **Web Search**: search engine, custom URL.
+- **Weather**: default city, units (°C or °F).
+- **AI Agent**: default agent, terminal command (empty for automatic).
 
 ## Testing in a nested session
 
@@ -129,7 +157,7 @@ a separate process; watch `journalctl -f -o cat` while opening them.
 ## Tests
 
 ```sh
-make test             # gjs self-checks for the calculator and matcher
+make test             # gjs self-checks for the pure modules in src/lib/
 ```
 
 They cover the pure modules in `src/lib/`. Providers that need the Shell are
@@ -188,8 +216,10 @@ src/
   lib/searchWindow.js the search window (St widgets)
   lib/calculator.js   expression parser (no gi imports)
   lib/match.js        text match scoring (no gi imports)
+  lib/web.js          search engine URLs (no gi imports)
+  lib/agents.js       agent and terminal argv (no gi imports)
   providers/          one file per provider: apps, calculator, commands,
-                      files, clipboard
+                      files, clipboard, weather, agents, web
   schemas/            GSettings schema
 tests/                gjs self-checks, run with `make test`
 ```
