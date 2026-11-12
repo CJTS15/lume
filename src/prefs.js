@@ -44,6 +44,7 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildAppearanceGroup(settings));
         page.add(this._buildClipboardGroup(settings));
         page.add(this._buildWebSearchGroup(settings));
+        page.add(this._buildWeatherGroup(settings));
     }
 
     _buildShortcutGroup(window, settings) {
@@ -153,6 +154,24 @@ export default class LumePreferences extends ExtensionPreferences {
         settings.connect('changed::web-search-engine', sync);
         url.connect('notify::text', sync);
         group.add(url);
+
+        return group;
+    }
+
+    _buildWeatherGroup(settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Weather'),
+            description: _('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather.'),
+        });
+
+        const city = new Adw.EntryRow({title: _('Default City')});
+        settings.bind('weather-city', city, 'text', Gio.SettingsBindFlags.DEFAULT);
+        group.add(city);
+
+        group.add(this._comboRow(settings, 'weather-units', _('Units'), [
+            ['metric', _('Metric (°C)')],
+            ['imperial', _('Imperial (°F)')],
+        ]));
 
         return group;
     }

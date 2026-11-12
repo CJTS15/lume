@@ -57,5 +57,19 @@
       <summary>Custom web search URL</summary>
       <description>An http or https URL where %s is replaced by the query, used when web-search-engine is “custom”.</description>
     </key>
+    <key name="weather-city" type="s">
+      <default>''</default>
+      <summary>Default weather city</summary>
+      <description>City used when searching “weather” without a city. It is sent to Open-Meteo only when you search for weather.</description>
+    </key>
+    <key name="weather-units" type="s">
+      <choices>
+        <choice value="metric"/>
+        <choice value="imperial"/>
+      </choices>
+      <default>'metric'</default>
+      <summary>Weather units</summary>
+      <description>“metric” for °C, “imperial” for °F.</description>
+    </key>
   </schema>
 </schemalist>
