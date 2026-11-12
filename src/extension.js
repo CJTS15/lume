@@ -8,7 +8,11 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
+import {AppsProvider} from './providers/apps.js';
+import {CalculatorProvider} from './providers/calculator.js';
+import {ClipboardProvider} from './providers/clipboard.js';
 import {CommandsProvider} from './providers/commands.js';
+import {FilesProvider} from './providers/files.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
 
@@ -17,7 +21,12 @@ export default class LumeExtension extends Extension {
         this._settings = this.getSettings();
 
         this._registry = new ProviderRegistry();
+        // Registration order breaks score ties.
+        this._registry.register(new CalculatorProvider());
+        this._registry.register(new AppsProvider());
         this._registry.register(new CommandsProvider(this));
+        this._registry.register(new FilesProvider());
+        this._registry.register(new ClipboardProvider(this._settings));
 
         this._window = new SearchWindow(this._settings, this._registry);
         Main.layoutManager.modalDialogGroup.add_child(this._window);

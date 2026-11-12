@@ -6,10 +6,8 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: step 1 of 4. The window, shortcut, preferences and provider
-> interface are in place. The only provider so far is an example
-> ("Lume Preferences"). Apps, calculator, files, clipboard, web search,
-> weather and AI agents come next.
+> Status: step 2 of 4. Apps, calculator, files and clipboard history work.
+> Web search, weather and AI agents come next.
 
 ## Install
 
@@ -48,7 +46,37 @@ the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Enter</kbd> | Open the selected result |
 | <kbd>Esc</kbd> or a click outside | Close |
 
-Type `pref` to see the example provider.
+What you can type:
+
+| Query | Result |
+| --- | --- |
+| An app name, keyword or initials (`term`, `frfx`) | Applications; Enter opens or focuses it |
+| An expression (`2*(3+4)`, `sqrt(2)`, `2^10`) | The result; Enter copies it |
+| Three or more letters of a file or folder name | Up to 5 files, from the LocalSearch index; Enter opens it |
+| `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
+| `pref` | Lume Preferences |
+
+The calculator supports `+ - * / % ^` (or `**`), parentheses and `sqrt cbrt
+abs exp ln log sin cos tan asin acos atan round floor ceil`, `pi` and `e`.
+It never uses `eval`.
+
+Files come from GNOME's file index (LocalSearch, formerly Tracker), so only
+indexed folders are searched (Settings → Search → Search Locations). Hidden
+folders and `node_modules` are skipped. Without an index, Lume searches the
+names in your home folder, three levels deep.
+
+### Clipboard history
+
+Copied text is shown only when you search `clip`, never in ordinary results.
+It is on by default and kept in memory, so it is cleared when the screen
+locks, you log out or the extension is disabled. Turn on *Keep After Locking
+or Logging Out* to save it to `~/.local/state/lume/clipboard.json` (readable
+only by you); turning it off deletes the file. `clip` also offers *Clear
+Clipboard History*.
+
+Copies that a password manager marks as secret (`x-kde-passwordManagerHint`,
+set by KeePassXC and others) are skipped. Password managers that don't set
+it are not excluded; turn off *Remember Copied Text* if that matters to you.
 
 **Why not <kbd>Super</kbd>+<kbd>Space</kbd>?** GNOME uses it to switch input
 sources. To use it for Lume, first clear or change *Settings → Keyboard →
@@ -64,6 +92,7 @@ it in Lume's preferences.
   resets it. A combination already taken by GNOME never reaches the dialog;
   free it in GNOME Settings first.
 - **Width**, **Distance From Top**, **Maximum Results**.
+- **Clipboard History**: on/off, keep on disk, number of items (5–200).
 
 ## Testing in a nested session
 
@@ -96,6 +125,15 @@ Inside the nested session, open a terminal there and run
 Logs: the nested Shell prints to the terminal you started it from. For the
 real session: `journalctl -f -o cat /usr/bin/gnome-shell`. Preferences run in
 a separate process; watch `journalctl -f -o cat` while opening them.
+
+## Tests
+
+```sh
+make test             # gjs self-checks for the calculator and matcher
+```
+
+They cover the pure modules in `src/lib/`. Providers that need the Shell are
+tested in a nested session.
 
 ## Writing a provider
 
@@ -148,8 +186,12 @@ src/
   stylesheet.css      layout only; colors come from the Shell theme
   lib/provider.js     Provider base class and registry
   lib/searchWindow.js the search window (St widgets)
-  providers/          one file per provider
+  lib/calculator.js   expression parser (no gi imports)
+  lib/match.js        text match scoring (no gi imports)
+  providers/          one file per provider: apps, calculator, commands,
+                      files, clipboard
   schemas/            GSettings schema
+tests/                gjs self-checks, run with `make test`
 ```
 
 ## Version notes (GNOME 45–51)
@@ -169,6 +211,10 @@ Handled in code, listed here so they're easy to find:
   `Adw.Dialog`. `fillPreferencesWindow` is synchronous, which 47+ still
   accepts.
 - **Nested testing**: `--nested` until 48, `--devkit` from 49.
+- **TinySPARQL**: the namespace is `Tsparql` from 47 and `Tracker` before,
+  and the index service is `org.freedesktop.LocalSearch3` from 47 and
+  `org.freedesktop.Tracker3.Miner.Files` before. `providers/files.js` tries
+  both.
 
 ## License
 

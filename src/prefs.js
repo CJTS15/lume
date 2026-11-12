@@ -40,6 +40,7 @@ export default class LumePreferences extends ExtensionPreferences {
 
         page.add(this._buildShortcutGroup(window, settings));
         page.add(this._buildAppearanceGroup(settings));
+        page.add(this._buildClipboardGroup(settings));
     }
 
     _buildShortcutGroup(window, settings) {
@@ -93,6 +94,34 @@ export default class LumePreferences extends ExtensionPreferences {
         spinRow('panel-width', _('Width'), _('In pixels, limited to the monitor width'), 20);
         spinRow('top-offset', _('Distance From Top'), _('Percentage of the monitor height'), 1);
         spinRow('max-results', _('Maximum Results'), _('How many results to show at most'), 1);
+
+        return group;
+    }
+
+    _buildClipboardGroup(settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Clipboard History'),
+            description: _('Search “clip” to see copied text. Copies that password managers mark as secret are skipped.'),
+        });
+
+        const history = new Adw.SwitchRow({title: _('Remember Copied Text')});
+        settings.bind('clipboard-history', history, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(history);
+
+        const persist = new Adw.SwitchRow({
+            title: _('Keep After Locking or Logging Out'),
+            subtitle: _('Saves the history to disk, readable only by you'),
+        });
+        settings.bind('clipboard-persist', persist, 'active', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('clipboard-history', persist, 'sensitive', Gio.SettingsBindFlags.GET);
+        group.add(persist);
+
+        const [, range] = settings.settings_schema.get_key('clipboard-size').get_range().recursiveUnpack();
+        const size = Adw.SpinRow.new_with_range(range[0], range[1], 5);
+        size.title = _('Items to Remember');
+        settings.bind('clipboard-size', size, 'value', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('clipboard-history', size, 'sensitive', Gio.SettingsBindFlags.GET);
+        group.add(size);
 
         return group;
     }

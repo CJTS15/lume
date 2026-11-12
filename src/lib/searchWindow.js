@@ -113,6 +113,10 @@ class LumeSearchWindow extends St.Widget {
 
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKeyPress(event));
+        // Enter: ClutterText emits 'activate' for Return/KP_Enter/ISO_Enter.
+        // Matching it in key-press-event did not work on GNOME 51; the
+        // Shell's own search entry uses this signal.
+        this._entry.clutter_text.connect('activate', () => this._activate(this._selected));
         this.connect('button-press-event', (_a, event) => {
             // Clicks on the (reactive) panel bubble up here too; only close
             // for clicks that land on the backdrop itself.
@@ -392,11 +396,6 @@ class LumeSearchWindow extends St.Widget {
         switch (symbol) {
         case Clutter.KEY_Escape:
             this.close();
-            return Clutter.EVENT_STOP;
-        case Clutter.KEY_Return:
-        case Clutter.KEY_KP_Enter:
-        case Clutter.KEY_ISO_Enter:
-            this._activate(this._selected);
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Down:
         case Clutter.KEY_KP_Down:
