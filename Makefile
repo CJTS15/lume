@@ -3,7 +3,7 @@ SRC      := src
 EXT_DIR  := $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 ZIP      := $(UUID).shell-extension.zip
 
-.PHONY: schemas pack install link unlink nested clean
+.PHONY: schemas pack install link unlink nested test clean
 
 # Needed for `make link`; `gnome-extensions install` compiles schemas itself.
 schemas:
@@ -34,6 +34,9 @@ nested:
 	@major=$$(gnome-shell --version | grep -oE '[0-9]+' | head -n1); \
 	if [ "$$major" -ge 49 ]; then flag=--devkit; else flag=--nested; fi; \
 	set -x; MUTTER_DEBUG_DUMMY_MODE_SPECS=1600x1000 dbus-run-session -- gnome-shell $$flag --wayland
+
+test:
+	@for t in tests/*.test.js; do gjs -m "$$t" || exit 1; done
 
 clean:
 	rm -f "$(ZIP)" "$(SRC)/schemas/gschemas.compiled"

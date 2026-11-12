@@ -8,6 +8,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
+import {CalculatorProvider} from './providers/calculator.js';
 import {CommandsProvider} from './providers/commands.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
@@ -17,6 +18,8 @@ export default class LumeExtension extends Extension {
         this._settings = this.getSettings();
 
         this._registry = new ProviderRegistry();
+        // Registration order breaks score ties.
+        this._registry.register(new CalculatorProvider());
         this._registry.register(new CommandsProvider(this));
 
         this._window = new SearchWindow(this._settings, this._registry);
