@@ -155,8 +155,9 @@ Inside the nested session, open a terminal there and run
 `MUTTER_DEBUG_DUMMY_MODE_SPECS=1600x1000` (the Makefile does).
 
 The nested Shell shares your real settings. Turning on high contrast, large
-text or the screen reader inside it turns them on in your session too. Undo
-with:
+text or the screen reader inside it turns them on in your session too. Note
+your current values first (`gsettings get` with the same keys), because
+`reset` goes back to the default, not to your previous value:
 
 ```sh
 gsettings reset org.gnome.desktop.a11y.interface high-contrast
