@@ -796,6 +796,11 @@ class LumeSearchWindow extends St.Widget {
      *   row's second action, if it has one
      */
     _activate(index, modifiers = 0) {
+        // Rows waiting for the next frame belong to the current text: act on them.
+        if (this._renderLater) {
+            this._render();
+            index = this._selected;
+        }
         const result = this._rows[index]?.result;
         if (!result)
             return;
@@ -820,6 +825,9 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _onKeyPress(event) {
+        // Keys act on the rows for the current text, never on the last frame's.
+        if (this._renderLater)
+            this._render();
         const symbol = event.get_key_symbol();
         const state = event.get_state();
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
