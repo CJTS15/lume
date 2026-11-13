@@ -76,6 +76,17 @@ export class WeatherProvider extends Provider {
         if (lower !== KEYWORD && !lower.startsWith(`${KEYWORD} `))
             return [];
 
+        if (this._settings.get_boolean('offline-mode')) {
+            return [{
+                id: 'offline',
+                title: _('Weather is off in offline mode'),
+                subtitle: _('Enter to open Lume Preferences'),
+                icon: 'network-offline-symbolic',
+                score: SCORE,
+                activate: () => this._openPreferences(),
+            }];
+        }
+
         const city = text.slice(KEYWORD.length).trim() || this._settings.get_string('weather-city').trim();
         if (city.length < MIN_CITY_LENGTH) {
             return [{

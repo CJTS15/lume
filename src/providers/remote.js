@@ -29,8 +29,12 @@ const DEBOUNCE_MS = 200;
 const PROVIDER_TIMEOUT_MS = 2000;
 
 export class RemoteProvider extends Provider {
-    constructor() {
+    /**
+     * @param {Gio.Settings} settings
+     */
+    constructor(settings) {
         super({id: 'remote', name: _('Search Providers'), label: _('Search')});
+        this._settings = settings;
         this._providers = [];
         this._debounce = null;
         this._destroyed = false;
@@ -55,7 +59,9 @@ export class RemoteProvider extends Provider {
     }
 
     async query(text, cancellable) {
-        if (text.length < MIN_QUERY_LENGTH || this._providers.length === 0)
+        // Offline: some providers (Software, browsers) search online.
+        if (text.length < MIN_QUERY_LENGTH || this._providers.length === 0 ||
+            this._settings.get_boolean('offline-mode'))
             return [];
 
         await this._wait();

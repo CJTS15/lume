@@ -288,6 +288,22 @@ AI API tokens (`sk-…`), JWTs, private keys and card numbers. A plain password
 from such a manager can't be recognised; turn off *Remember Copied Text* if
 that matters to you.
 
+### What leaves your computer
+
+Lume sends nothing unless one of these happens:
+
+- `weather …`: the city to Open-Meteo.com (geocoding and forecast).
+- A currency conversion: one fixed request for the day's ECB rates to
+  frankfurter.dev, at most every 12 hours. Your query is never sent.
+- Results from apps' GNOME search providers: Lume asks the apps, as the
+  overview does; some (Software, browsers) may search online.
+- Choosing a web, Wikipedia or YouTube search row or a web address: your
+  browser opens it.
+
+*Preferences → Privacy → Offline Mode* turns off the first three and the web
+search rows. Saved exchange rates are still used. Commands, AI agents and
+web addresses you choose to open are not affected.
+
 **Why not <kbd>Super</kbd>+<kbd>Space</kbd>?** GNOME uses it to switch input
 sources. To use it for Lume, first clear or change *Settings → Keyboard →
 View and Customize Shortcuts → Typing → Switch to next input source*, then set

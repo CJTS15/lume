@@ -26,22 +26,25 @@ export class Rates {
     }
 
     /**
+     * @param {boolean} offline - only use the cache, however old
      * @returns {Promise<{date: string, rates: Object<string, number>}>}
      *   rates per euro (EUR included); rejects only when there is neither
      *   a fresh answer nor any cache
      */
-    get() {
-        this._pending ??= this._load().finally(() => {
+    get(offline) {
+        this._pending ??= this._load(offline).finally(() => {
             this._pending = null;
         });
         return this._pending;
     }
 
-    async _load() {
+    async _load(offline) {
         this._cache ??= await this._readCache();
         const now = GLib.get_real_time() / 1e6;
-        if (this._cache && now - this._cache.fetched < MAX_AGE_SECONDS)
+        if (this._cache && (offline || now - this._cache.fetched < MAX_AGE_SECONDS))
             return this._cache;
+        if (offline)
+            throw new Error('offline mode');
 
         try {
             const message = Soup.Message.new('GET', URL);

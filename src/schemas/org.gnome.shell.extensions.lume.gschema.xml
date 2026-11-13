@@ -97,6 +97,11 @@
       <default>[':', 'emoji']</default>
       <summary>Prefixes for emoji only</summary>
     </key>
+    <key name="offline-mode" type="b">
+      <default>false</default>
+      <summary>Offline mode</summary>
+      <description>Nothing leaves the computer: no weather or exchange-rate requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
+    </key>
     <key name="show-preview" type="b">
       <default>false</default>
       <summary>Show the preview pane</summary>
