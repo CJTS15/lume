@@ -6,9 +6,9 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: v1 feature-complete. Tested on GNOME 51 only; the code handles
-> 45–50 (see [Version notes](#version-notes-gnome-4551)) but nobody has run
-> it there yet.
+> Status: v2. Tested on GNOME 51 only; the code handles 45–50 (see
+> [Version notes](#version-notes-gnome-4551)) but nobody has run it there
+> yet.
 
 ## Install
 
@@ -48,6 +48,8 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in a terminal |
 | <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> | The selected result's actions; <kbd>Esc</kbd> goes back |
+| <kbd>Ctrl</kbd>+<kbd>P</kbd> | Show or hide the preview pane (remembered) |
 | <kbd>Esc</kbd> or a click outside | Close |
 
 Each row shows its type on the right (App, Setting, File, Folder, Web, …),
@@ -102,6 +104,55 @@ Start with one of these to see only one kind of result; the pill names it.
 
 `> ` is deliberate, so it also runs power commands (`> shutdown now`) that
 the command row otherwise leaves out; you see them in the terminal.
+
+These are the defaults. Change them on the *Prefixes* page of Lume's
+preferences: several per scope, separated by spaces, or none to turn a scope
+off. A prefix that starts with a letter needs a space after it (`f readme`),
+a symbol does not (`?lume`). A user script's name works as a prefix too.
+
+### Actions and preview
+
+<kbd>Ctrl</kbd>+<kbd>K</kbd> shows what you can do with the selected result:
+
+| Result | Actions |
+| --- | --- |
+| App | Open, New Window, the app's own actions (New Private Window, …), launch on the other graphics card (dual-GPU machines), App Details (with GNOME Software) |
+| File or folder | Open, Show in Folder, Properties, Copy File, Copy Path, Open Folder in Terminal |
+| Window | Focus, Close Window |
+| Media player | Play or Pause, Next, Previous |
+| Command | Run in Background, Run in Terminal |
+| Anything else | Open, and Copy where it can be copied |
+
+<kbd>Ctrl</kbd>+<kbd>P</kbd> shows a preview pane beside the results, and
+Lume remembers whether it is shown. Files show their type, size, date and
+location, with a thumbnail for images; clipboard entries their full text;
+weather a 5-day forecast; other results their icon, title and subtitle.
+
+### User scripts
+
+Put an executable file in `~/.config/lume/scripts/`, for example `vpn`.
+Typing `vpn work` runs it with `work` as its single argument (never through a
+shell), in your home folder. Every line it prints becomes a result:
+
+```
+title|subtitle|command
+```
+
+Enter runs `command` with `/bin/sh` in the background (a line without a
+command copies its title). A script gets 2 seconds and 50 lines; it runs
+under `timeout`, so anything it started ends with it. Lume runs only scripts
+you put there, and only when their name starts the search. New scripts are
+picked up within a few seconds.
+
+```sh
+#!/bin/sh
+# ~/.config/lume/scripts/vpn: "vpn" shows both rows
+echo "Connect work VPN|nmcli|nmcli connection up work"
+echo "Disconnect work VPN|nmcli|nmcli connection down work"
+```
+
+The command is run by the shell. If your script puts the search text into a
+command, quoting it safely is up to the script.
 
 ### Fuzzy matching
 
@@ -238,6 +289,7 @@ it in Lume's preferences.
 - **Width**, **Distance From Top**, **Maximum Results**.
 - **Search**: fuzzy matching (strict, normal, loose), search file contents,
   run commands.
+- **Prefixes** (own page): the prefixes for each scope.
 - **Clipboard History**: on/off, keep on disk, number of items (5–200).
 - **Web Search**: search engine, custom URL.
 - **Weather**: default city, units (°C or °F).
@@ -370,12 +422,13 @@ src/
   lib/emoji.js        emoji search (no gi imports)
   lib/url.js          web address recognition (no gi imports)
   lib/agents.js       agent and terminal argv (no gi imports)
-  lib/terminal.js     run an argv in the user's terminal
+  lib/terminal.js     run commands in the terminal or the background
+  lib/prefix.js       prefix scope matching (no gi imports)
   providers/          one file per provider: apps, windows, system,
                       toggles, settings, files, calculator, units,
                       devtools, emoji, url, cli, clipboard, media,
                       weather, agents, remote (apps' search providers),
-                      web, commands (Lume's own)
+                      scripts (user scripts), web, commands (Lume's own)
   data/               emoji.json (generated) and its Unicode licence
   schemas/            GSettings schema
 tests/                gjs self-checks (`make test`), headless smoke test
