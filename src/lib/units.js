@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Unit conversion: "10 km to mi", "5 ft in cm", "cup to qt",
-// "100 kph -> mph", "32 F to C", "16px to rem". No gi:// imports, so tests
-// run under plain gjs.
+// "100 kph -> mph", "32 F to C", "16px to rem", "100 eur to usd". No gi://
+// imports, so tests run under plain gjs.
 
 // [category, factor to the category's base unit, names...]. The first name
 // is the symbol shown in results. Names are matched without case; a name
@@ -120,6 +120,23 @@ for (const [{toKelvin, fromKelvin}, ...names] of TEMPERATURES) {
 
 const PX = 0.0254 / 96;
 
+/** Currencies with ECB reference rates (the Frankfurter API's set). */
+export const CURRENCIES = new Set([
+    'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD',
+    'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JPY', 'KRW', 'MXN', 'MYR', 'NOK',
+    'NZD', 'PHP', 'PLN', 'RON', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR',
+]);
+
+/** Currency units from rates per euro ({USD: 1.1, ...}). */
+function currencyUnits(rates) {
+    const units = new Map();
+    for (const [code, perEuro] of Object.entries(rates)) {
+        if (CURRENCIES.has(code) && Number.isFinite(perEuro) && perEuro > 0)
+            add(units, code, linear('currency', 1 / perEuro, code));
+    }
+    return units;
+}
+
 /** vw, vh, vmin, vmax for a viewport in CSS pixels. */
 function viewportUnits({width, height}) {
     const units = new Map();
@@ -154,17 +171,22 @@ const PATTERN = /^\s*(-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)?\s*([^\s\d.-]\S*?
  * @param {object} [context]
  * @param {{width: number, height: number}} [context.viewport] - in CSS px;
  *   without it vw/vh/vmin/vmax are not recognised
+ * @param {Object<string, number>} [context.rates] - units per euro; without
+ *   them currencies are not recognised
  * @returns {{amount: number, value: number, from: string, to: string}|null}
  *   from/to are display symbols; null if `text` is not a conversion between
  *   two known units of the same category
  */
-export function convert(text, {viewport} = {}) {
+export function convert(text, {viewport, rates} = {}) {
     const match = PATTERN.exec(text);
     if (!match)
         return null;
 
     const amount = match[1] === undefined ? 1 : parseFloat(match[1]);
-    const extra = viewport ? viewportUnits(viewport) : new Map();
+    const extra = new Map([
+        ...viewport ? viewportUnits(viewport) : [],
+        ...rates ? currencyUnits(rates) : [],
+    ]);
     const tos = lookup(match[3], extra);
     let from, to;
     for (const candidate of lookup(match[2], extra)) {
@@ -179,4 +201,16 @@ export function convert(text, {viewport} = {}) {
 
     const value = to.fromBase(from.toBase(amount));
     return Number.isFinite(value) ? {amount, value, from: from.symbol, to: to.symbol} : null;
+}
+
+/**
+ * Whether `text` converts between two currencies, so rates are needed.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+export function needsRates(text) {
+    const match = PATTERN.exec(text);
+    return Boolean(match) && CURRENCIES.has(match[2].toUpperCase()) &&
+        CURRENCIES.has(match[3].toUpperCase());
 }
