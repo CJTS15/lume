@@ -97,6 +97,8 @@ export class RemoteProvider extends Provider {
             return metas.map((meta, index) => ({
                 id: `${provider.id}:${meta.id}`,
                 type: name,
+                // Grouped per app ("Calendar"), not under one header.
+                group: name,
                 title: meta.name,
                 subtitle: meta.description || undefined,
                 createIcon: meta.createIcon,

@@ -108,7 +108,7 @@ const checked = checkResults([
     {id: 'e', title: 'No activate'},
     null,
     {id: 'f', title: 'x'.repeat(1000), subtitle: 'y'.repeat(1000), type: 'z'.repeat(100), activate: ok, score: NaN},
-    {id: 'g', title: 'Odd fields', subtitle: {}, type: 7, activate: ok, score: '0.9'},
+    {id: 'g', title: 'Odd fields', subtitle: {}, type: 7, group: [], activate: ok, score: '0.9'},
 ]);
 check('only valid rows kept', checked.map(r => r.id).join(), 'a,f,g');
 check('title capped', checked[1].title.length, 256);
@@ -119,6 +119,7 @@ check('NaN score', checked[1].score, 0);
 check('string score', checked[2].score, 0);
 check('non-string subtitle dropped', checked[2].subtitle, undefined);
 check('non-string type dropped', checked[2].type, undefined);
+check('non-string group dropped', checked[2].group, undefined);
 check('good row untouched', checked[0].score, 0.5);
 
 class Broken extends Provider {
