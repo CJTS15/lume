@@ -54,8 +54,9 @@ class LumeSearchWindow extends St.Widget {
     /**
      * @param {Gio.Settings} settings
      * @param {import('./provider.js').ProviderRegistry} registry
+     * @param {() => void} openPreferences
      */
-    _init(settings, registry) {
+    _init(settings, registry, openPreferences) {
         // Full-stage transparent backdrop: catches clicks outside the panel.
         super._init({
             name: 'lumeBackdrop',
@@ -69,6 +70,7 @@ class LumeSearchWindow extends St.Widget {
 
         this._settings = settings;
         this._registry = registry;
+        this._openPreferences = openPreferences;
         this._grab = null;
         this._cancellable = null;
         this._resultsByProvider = new Map();
@@ -229,7 +231,27 @@ class LumeSearchWindow extends St.Widget {
         // do not fit at large text sizes.
         hint('↵', _('Open'));
         hint(_('Esc'), _('Close'));
+
+        const preferences = new St.Button({
+            style_class: 'lume-footer-button',
+            child: new St.Icon({
+                style_class: 'popup-inactive-menu-item lume-footer-icon',
+                icon_name: 'emblem-system-symbolic',
+            }),
+            accessible_name: _('Preferences'),
+            y_align: Clutter.ActorAlign.CENTER,
+            // Out of the Tab order, which moves between rows; Ctrl+, is
+            // the keyboard way (the GNOME convention).
+            can_focus: false,
+        });
+        preferences.connect('clicked', () => this._showPreferences());
+        footer.add_child(preferences);
         return footer;
+    }
+
+    _showPreferences() {
+        this.close();
+        this._openPreferences();
     }
 
     get isOpen() {
@@ -714,6 +736,10 @@ class LumeSearchWindow extends St.Widget {
         if ((symbol === Clutter.KEY_p || symbol === Clutter.KEY_P) &&
             (state & Clutter.ModifierType.CONTROL_MASK)) {
             this._togglePreview();
+            return Clutter.EVENT_STOP;
+        }
+        if (symbol === Clutter.KEY_comma && (state & Clutter.ModifierType.CONTROL_MASK)) {
+            this._showPreferences();
             return Clutter.EVENT_STOP;
         }
 

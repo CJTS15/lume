@@ -59,7 +59,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new ScriptsProvider());
         this._registry.register(new WebSearchProvider(this._settings));
 
-        this._window = new SearchWindow(this._settings, this._registry);
+        this._window = new SearchWindow(this._settings, this._registry, () => this.openPreferences());
         Main.layoutManager.modalDialogGroup.add_child(this._window);
 
         this._addShortcut();

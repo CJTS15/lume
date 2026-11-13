@@ -143,3 +143,16 @@
 .lume-hint {
   margin-right: 6px;
 }
+
+.lume-footer-button {
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.lume-footer-button:hover {
+  background-color: rgba(127, 127, 127, 0.15);
+}
+
+.lume-footer-icon {
+  icon-size: 1.2em;
+}

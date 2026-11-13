@@ -50,6 +50,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | The selected result's actions; <kbd>Esc</kbd> goes back |
 | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Show or hide the preview pane (remembered) |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> | Open Lume Preferences (also the gear button in the footer) |
 | <kbd>Esc</kbd> or a click outside | Close |
 
 Each row shows its type on the right (App, Setting, File, Folder, Web, …),
@@ -281,7 +282,7 @@ it in Lume's preferences.
 
 ## Preferences
 
-`gnome-extensions prefs lume@cjts15.github.io`, or search "Lume Preferences" in Lume.
+`gnome-extensions prefs lume@cjts15.github.io`, <kbd>Ctrl</kbd>+<kbd>,</kbd> or the gear button in Lume, or search "Lume Preferences".
 
 - **Open Lume**: click the row and press a combination. It needs Super, Ctrl
   or Alt. Esc cancels, Backspace disables the shortcut, the arrow button
