@@ -28,6 +28,7 @@ import {UrlProvider} from './providers/url.js';
 import {WeatherProvider} from './providers/weather.js';
 import {WebSearchProvider} from './providers/web.js';
 import {WindowsProvider} from './providers/windows.js';
+import {WorkspacesProvider} from './providers/workspaces.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
 
@@ -44,6 +45,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));
         this._registry.register(new WindowsProvider(this._settings));
+        this._registry.register(new WorkspacesProvider(this._settings));
         this._registry.register(new CommandsProvider(this));
         this._registry.register(new SystemProvider());
         this._registry.register(new TogglesProvider());

@@ -68,6 +68,7 @@ What you can type:
 | Part or all of an app name (`term`, `vsc` on *Loose*) | Applications; Enter opens or focuses it |
 | A Settings panel or what you want to change (`wifi`, `night light`, `pointer speed`) | The best-matching Settings panels; Enter opens it |
 | A window title or app name, or `wd` for all windows | Open windows; Enter focuses the window and its workspace |
+| `ws`, `ws 2`, `ws firefox` | Workspaces with their apps; Enter switches to the workspace |
 | `lock`, `suspend`, `restart`, `power off`, `log out` | GNOME's own system actions; power off, restart and log out ask for confirmation |
 | `dark`, `night light`, `dnd` | Turn Dark Style, Night Light or Do Not Disturb on or off |
 | `media`, `music`, `pause`, `next`, or a player, song or artist | Each playing or paused player; Enter plays/pauses, Ctrl+Enter next, Alt+Enter previous |
@@ -100,6 +101,7 @@ Start with one of these to see only one kind of result; the pill names it.
 | `= ` | Calculator |
 | `f ` | Files |
 | `wd` | Open windows |
+| `ws` | Workspaces |
 | `clip` | Clipboard history |
 | `:` or `emoji ` | Emoji |
 | `ask ` or `ai ` | AI agent |

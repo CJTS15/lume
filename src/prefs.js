@@ -253,6 +253,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-calculator', _('Calculator')],
             ['prefix-files', _('Files')],
             ['prefix-windows', _('Open Windows')],
+            ['prefix-workspaces', _('Workspaces')],
             ['prefix-clipboard', _('Clipboard History')],
             ['prefix-agent', _('AI Agent')],
             ['prefix-terminal', _('Run in Terminal')],

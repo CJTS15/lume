@@ -68,6 +68,10 @@
       <default>['wd']</default>
       <summary>Prefixes for open windows only</summary>
     </key>
+    <key name="prefix-workspaces" type="as">
+      <default>['ws']</default>
+      <summary>Prefixes for workspaces only</summary>
+    </key>
     <key name="prefix-clipboard" type="as">
       <default>['clip']</default>
       <summary>Prefixes for clipboard history only</summary>
