@@ -80,7 +80,8 @@ export class WebSearchProvider extends Provider {
                         try {
                             Gio.AppInfo.launch_default_for_uri_finish(res);
                         } catch (e) {
-                            console.error(`lume: could not open ${url}: ${e.message}`);
+                            // Never log the URL: it contains the query.
+                            console.error(`lume: could not open a web search: ${e.message}`);
                         }
                     });
             },
