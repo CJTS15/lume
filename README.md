@@ -50,7 +50,11 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Esc</kbd> or a click outside | Close |
 
-Enter on the search field opens the top (highlighted) result. Moving with the
+Each row shows its type on the right (App, Setting, File, Folder, Web, …),
+and the pill in the search field shows what you are searching: *All
+results*, or *Clipboard*, *Weather*, *AI Agent* or *Folder* when a keyword
+or path takes over. Enter on the search field opens the top (highlighted)
+result. Moving with the
 keyboard puts focus on the result itself, so screen readers such as Orca read
 its title and description; typing sends you back to the search field.
 
@@ -249,7 +253,14 @@ import {Provider} from '../lib/provider.js';
 
 export class ExampleProvider extends Provider {
     constructor() {
-        super({id: 'example', name: 'Example'});
+        // label: the short type shown on each row's right ("App").
+        super({id: 'example', name: 'Example', label: 'Example'});
+    }
+
+    // Optional: when a keyword of yours owns the query, name it for the
+    // pill in the search field ("clip" -> "Clipboard").
+    scope(text) {
+        return text.startsWith('hello ') ? 'Example' : null;
     }
 
     // Return an array, or a Promise of one. Stop early if `cancellable`
@@ -263,7 +274,8 @@ export class ExampleProvider extends Provider {
             score: 0.5,                     // 0..1, higher sorts first
             activate: () => console.log('chosen'),  // window is already closed
             // Optional: ctrlActivate (Ctrl+Enter), altActivate (Alt+Enter),
-            // copy (Ctrl+C), fallback: true (only shown when few rows match)
+            // copy (Ctrl+C), fallback: true (only shown when few rows match),
+            // type: 'Folder' (overrides the provider's label on this row)
         }];
     }
 
