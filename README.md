@@ -146,9 +146,13 @@ title|subtitle|command
 
 Enter runs `command` with `/bin/sh` in the background (a line without a
 command copies its title). A script gets 2 seconds and 50 lines; it runs
-under `timeout`, so anything it started ends with it. Lume runs only scripts
-you put there, and only when their name starts the search. New scripts are
-picked up within a few seconds.
+under `timeout` at low CPU priority (`nice`), so anything it started ends
+with it. Lume runs only scripts you put there, and only when their name
+starts the search. New scripts are picked up within a few seconds.
+
+A script, and the `scripts` folder, must belong to you (or root) and must not
+be writable by other users; otherwise Lume shows "Script not run" instead.
+`chmod go-w ~/.config/lume/scripts ~/.config/lume/scripts/*` fixes it.
 
 ```sh
 #!/bin/sh
