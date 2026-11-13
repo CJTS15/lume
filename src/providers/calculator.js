@@ -7,18 +7,20 @@ import St from 'gi://St';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {evaluate, formatResult} from '../lib/calculator.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {Provider} from '../lib/provider.js';
 
-// "= expression": calculator only.
-const PREFIX = /^=\s*/;
-
 export class CalculatorProvider extends Provider {
-    constructor() {
+    /**
+     * @param {Gio.Settings} settings
+     */
+    constructor(settings) {
         super({id: 'calculator', name: _('Calculator'), label: _('Calculator')});
+        this._settings = settings;
     }
 
     owns(text) {
-        return PREFIX.test(text);
+        return matchPrefix(text, this._settings.get_strv('prefix-calculator')) !== null;
     }
 
     scope(text) {
@@ -26,7 +28,7 @@ export class CalculatorProvider extends Provider {
     }
 
     query(text) {
-        const value = evaluate(text.replace(PREFIX, ''));
+        const value = evaluate(matchPrefix(text, this._settings.get_strv('prefix-calculator')) ?? text);
         if (value === null)
             return [];
 

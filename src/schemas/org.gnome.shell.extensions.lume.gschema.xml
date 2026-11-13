@@ -44,6 +44,43 @@
       <summary>Offer to run commands</summary>
       <description>When the first word is a program on PATH, show a row that runs the line.</description>
     </key>
+    <key name="prefix-web" type="as">
+      <default>['?', 'b']</default>
+      <summary>Prefixes for web search only</summary>
+    </key>
+    <key name="prefix-calculator" type="as">
+      <default>['=']</default>
+      <summary>Prefixes for the calculator only</summary>
+    </key>
+    <key name="prefix-files" type="as">
+      <default>['f']</default>
+      <summary>Prefixes for files only</summary>
+    </key>
+    <key name="prefix-windows" type="as">
+      <default>['win']</default>
+      <summary>Prefixes for open windows only</summary>
+    </key>
+    <key name="prefix-clipboard" type="as">
+      <default>['clip']</default>
+      <summary>Prefixes for clipboard history only</summary>
+    </key>
+    <key name="prefix-agent" type="as">
+      <default>['ask', 'ai']</default>
+      <summary>Prefixes for the AI agent only</summary>
+    </key>
+    <key name="prefix-terminal" type="as">
+      <default>['&gt;']</default>
+      <summary>Prefixes for running a command in the terminal</summary>
+    </key>
+    <key name="prefix-emoji" type="as">
+      <default>[':', 'emoji']</default>
+      <summary>Prefixes for emoji only</summary>
+    </key>
+    <key name="show-preview" type="b">
+      <default>false</default>
+      <summary>Show the preview pane</summary>
+      <description>Toggled with Ctrl+P in the search window.</description>
+    </key>
     <key name="clipboard-history" type="b">
       <default>true</default>
       <summary>Remember clipboard history</summary>

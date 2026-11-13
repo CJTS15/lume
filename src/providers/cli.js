@@ -12,6 +12,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {Provider} from '../lib/provider.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
@@ -22,9 +23,6 @@ const POWER_PROGRAMS = new Set(['shutdown', 'poweroff', 'reboot', 'halt']);
 // ponytail: only direct calls are caught; wrappers (sh -c, env) are not.
 // sudo fails without a terminal to ask for the password.
 const POWER_VERBS = /^(systemctl|loginctl)\s+(-\S+\s+)*(poweroff|reboot|halt|kexec|soft-reboot|suspend|hibernate|hybrid-sleep|suspend-then-hibernate)\b/;
-// "> command": run it in the terminal, commands only. Deliberate, so
-// power commands are allowed here.
-const PREFIX = /^>\s*/;
 // Exit status of sh when the program could not be found.
 const NOT_FOUND = 127;
 // Flags, paths, pipes, redirects, assignments: clearly a command line.
@@ -42,7 +40,17 @@ export class CliProvider extends Provider {
     }
 
     owns(text) {
-        return this._settings.get_boolean('run-commands') && PREFIX.test(text);
+        return this._settings.get_boolean('run-commands') && this._scoped(text) !== null;
+    }
+
+    /**
+     * The command after ">": run in the terminal, commands only. Deliberate,
+     * so power commands are allowed here.
+     *
+     * @returns {string|null}
+     */
+    _scoped(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-terminal'));
     }
 
     scope(text) {
@@ -53,7 +61,7 @@ export class CliProvider extends Provider {
         if (!this._settings.get_boolean('run-commands'))
             return [];
         if (this.owns(text))
-            return this._terminalRow(text.replace(PREFIX, '').trim());
+            return this._terminalRow(this._scoped(text));
         const program = text.split(/\s+/)[0];
         if (POWER_PROGRAMS.has(program) || POWER_VERBS.test(text))
             return [];

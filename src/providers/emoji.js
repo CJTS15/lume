@@ -12,9 +12,8 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {parseEmoji, searchEmoji} from '../lib/emoji.js';
 import {Provider} from '../lib/provider.js';
+import {matchPrefix} from '../lib/prefix.js';
 
-// ":name" (no space after the colon) or "emoji name".
-const PREFIX = /^(?::(?=\S)|emoji(?:\s+|$))/i;
 const DATA = GLib.uri_resolve_relative(import.meta.url, '../data/emoji.json', GLib.UriFlags.NONE);
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
@@ -30,7 +29,7 @@ export class EmojiProvider extends Provider {
     }
 
     owns(text) {
-        return PREFIX.test(text);
+        return matchPrefix(text, this._settings.get_strv('prefix-emoji')) !== null;
     }
 
     scope(text) {
@@ -38,9 +37,7 @@ export class EmojiProvider extends Provider {
     }
 
     async query(text) {
-        if (!this.owns(text))
-            return [];
-        const words = text.replace(PREFIX, '').trim();
+        const words = matchPrefix(text, this._settings.get_strv('prefix-emoji'));
         if (!words)
             return [];
 

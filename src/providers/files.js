@@ -18,12 +18,11 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {evaluate} from '../lib/calculator.js';
 import {fuzzyScore, matchScore} from '../lib/match.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
 
 const MIN_QUERY_LENGTH = 3;
-// "f name": files only.
-const PREFIX = /^f\s+/i;
 const MAX_RESULTS = 5;
 // Fetch more than shown; results are scored and cut afterwards.
 const QUERY_LIMIT = 40;
@@ -169,7 +168,8 @@ export class FilesProvider extends Provider {
 
     owns(text) {
         // "f to c" is a temperature conversion, not a file search.
-        return PREFIX.test(text) && convert(text) === null && evaluate(text) === null;
+        return matchPrefix(text, this._settings.get_strv('prefix-files')) !== null &&
+            convert(text) === null && evaluate(text) === null;
     }
 
     scope(text) {
@@ -180,7 +180,8 @@ export class FilesProvider extends Provider {
 
     async query(text, cancellable) {
         const level = this._settings.get_string('fuzzy-matching');
-        text = text.replace(PREFIX, '').trim();
+        if (this.owns(text))
+            text = matchPrefix(text, this._settings.get_strv('prefix-files'));
 
         const target = this._browseTarget(text);
         if (target)

@@ -36,7 +36,7 @@ export default class LumeExtension extends Extension {
 
         this._registry = new ProviderRegistry();
         // Registration order breaks score ties.
-        this._registry.register(new CalculatorProvider());
+        this._registry.register(new CalculatorProvider(this._settings));
         this._registry.register(new UnitsProvider());
         this._registry.register(new DevToolsProvider());
         this._registry.register(new EmojiProvider(this._settings));

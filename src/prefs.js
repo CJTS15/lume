@@ -49,6 +49,13 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildWebSearchGroup(settings));
         page.add(this._buildWeatherGroup(settings));
         page.add(this._buildAgentGroup(settings));
+
+        const prefixPage = new Adw.PreferencesPage({
+            title: _('Prefixes'),
+            icon_name: 'input-keyboard-symbolic',
+        });
+        prefixPage.add(this._buildPrefixGroup(settings));
+        window.add(prefixPage);
     }
 
     _buildShortcutGroup(window, settings) {
@@ -233,6 +240,65 @@ export default class LumePreferences extends ExtensionPreferences {
      * @param {string} title
      * @param {Array<[string, string]>} options - [value, label] pairs
      */
+    _buildPrefixGroup(settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Prefixes'),
+            description: _('Start a search with one of these to see only that kind of result. Separate several with spaces; leave empty to turn a prefix off. Letters need a space after them (“f readme”), symbols do not (“?lume”).'),
+        });
+
+        const scopes = [
+            ['prefix-web', _('Web Search')],
+            ['prefix-calculator', _('Calculator')],
+            ['prefix-files', _('Files')],
+            ['prefix-windows', _('Open Windows')],
+            ['prefix-clipboard', _('Clipboard History')],
+            ['prefix-agent', _('AI Agent')],
+            ['prefix-terminal', _('Run in Terminal')],
+            ['prefix-emoji', _('Emoji')],
+        ];
+        const rows = new Map();
+        const words = key => settings.get_strv(key).map(w => w.toLowerCase());
+
+        // A prefix in two scopes only works for the first; flag both rows.
+        const checkDuplicates = () => {
+            for (const [key, row] of rows) {
+                const shared = words(key).some(w => scopes.some(([other]) => other !== key && words(other).includes(w)));
+                if (shared)
+                    row.add_css_class('error');
+                else
+                    row.remove_css_class('error');
+            }
+        };
+
+        for (const [key, title] of scopes) {
+            const row = new Adw.EntryRow({title, show_apply_button: true});
+            const sync = () => {
+                row.text = settings.get_strv(key).join(' ');
+                checkDuplicates();
+            };
+            row.connect('apply', () => settings.set_strv(key, row.text.split(/\s+/).filter(w => w)));
+            settings.connect(`changed::${key}`, sync);
+
+            const reset = new Gtk.Button({
+                icon_name: 'edit-undo-symbolic',
+                tooltip_text: _('Reset to default'),
+                valign: Gtk.Align.CENTER,
+                css_classes: ['flat'],
+            });
+            // TRANSLATORS: %s is a prefix scope, e.g. "Files"
+            reset.update_property([Gtk.AccessibleProperty.LABEL], [_('Reset %s prefix').format(title)]);
+            reset.connect('clicked', () => settings.reset(key));
+            row.add_suffix(reset);
+
+            rows.set(key, row);
+            group.add(row);
+        }
+        for (const key of rows.keys())
+            rows.get(key).text = settings.get_strv(key).join(' ');
+        checkDuplicates();
+        return group;
+    }
+
     _comboRow(settings, key, title, options) {
         const row = new Adw.ComboRow({
             title,

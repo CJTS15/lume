@@ -11,9 +11,9 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {fuzzyScore} from '../lib/match.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {Provider} from '../lib/provider.js';
 
-const KEYWORD = 'win';
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS = 5;
 
@@ -37,10 +37,7 @@ export class WindowsProvider extends Provider {
 
     /** @returns {string|null} the filter after "win", or null without it */
     _keywordFilter(text) {
-        const lower = text.toLowerCase();
-        if (lower === KEYWORD)
-            return '';
-        return lower.startsWith(`${KEYWORD} `) ? text.slice(KEYWORD.length).trim() : null;
+        return matchPrefix(text, this._settings.get_strv('prefix-windows'));
     }
 
     query(text) {
