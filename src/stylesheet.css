@@ -91,6 +91,39 @@
   font-size: 0.9em;
 }
 
+.lume-body {
+  spacing: 8px;
+}
+
+.lume-preview {
+  spacing: 8px;
+  padding: 12px 8px 12px 16px;
+  border-left: 1px solid rgba(127, 127, 127, 0.25);
+}
+
+.lume-preview-glyph {
+  font-size: 4em;
+}
+
+.lume-preview-title {
+  font-size: 1.1em;
+}
+
+.lume-preview-row {
+  spacing: 8px;
+}
+
+.lume-preview-label {
+  min-width: 80px;
+}
+
+.lume-preview-subtitle,
+.lume-preview-label,
+.lume-preview-value,
+.lume-preview-text {
+  font-size: 0.9em;
+}
+
 .lume-status {
   padding: 12px;
 }

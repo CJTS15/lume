@@ -10,10 +10,9 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {AGENTS, agentArgv} from '../lib/agents.js';
 import {Provider} from '../lib/provider.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {runInTerminal} from '../lib/terminal.js';
 
-// "ask <prompt>" or "ai <prompt>": the default agent, agents only.
-const KEYWORDS = ['ask', 'ai'];
 const TITLE_LENGTH = 80;
 
 export class AgentsProvider extends Provider {
@@ -28,28 +27,33 @@ export class AgentsProvider extends Provider {
     }
 
     owns(text) {
-        return KEYWORDS.includes(text.split(/\s+/)[0].toLowerCase());
+        return this._scoped(text) !== null;
+    }
+
+    /** @returns {string|null} the prompt after "ask"/"ai", or null without it */
+    _scoped(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-agent'));
     }
 
     scope(text) {
         const [, word, rest = ''] = /^(\S+)(?:\s+([\s\S]*))?$/.exec(text) ?? [];
         const keyword = word?.toLowerCase();
         // A bare agent name ("claude") may be an app search.
-        if (KEYWORDS.includes(keyword) || (Object.hasOwn(AGENTS, keyword) && rest.trim()))
+        if (this.owns(text) || (Object.hasOwn(AGENTS, keyword) && rest.trim()))
             return _('AI Agent');
         return null;
     }
 
     query(text) {
+        const scoped = this._scoped(text);
         const [, word, rest = ''] = /^(\S+)(?:\s+([\s\S]*))?$/.exec(text) ?? [];
-        const keyword = word?.toLowerCase();
-        const explicit = !KEYWORDS.includes(keyword);
-        const id = explicit ? keyword : this._settings.get_string('ai-agent');
+        const explicit = scoped === null;
+        const id = explicit ? word?.toLowerCase() : this._settings.get_string('ai-agent');
         if (!Object.hasOwn(AGENTS, id))
             return [];
 
         const agent = AGENTS[id];
-        const prompt = rest.trim();
+        const prompt = explicit ? rest.trim() : scoped;
         const path = GLib.find_program_in_path(agent.command);
 
         if (!path) {

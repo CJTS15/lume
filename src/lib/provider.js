@@ -30,6 +30,9 @@ import Gio from 'gi://Gio';
  *   Without it, Alt+Enter does what Enter does.
  * @property {() => void} [copy] - Ctrl+C on the row. Without it, Ctrl+C
  *   copies the entry's selected text as usual.
+ * @property {Array<{label: string, icon?: string, run: () => void}>} [actions]
+ *   - the Ctrl+K menu. Without it the menu offers Open and, if there is
+ *   `copy`, Copy.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
  * @property {(size: number) => Clutter.Actor|null} [createIcon] - an icon

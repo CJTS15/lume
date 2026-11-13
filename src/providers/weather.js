@@ -193,7 +193,7 @@ export class WeatherProvider extends Provider {
         const data = await this._getJson('https://api.open-meteo.com/v1/forecast' +
             `?latitude=${place.latitude}&longitude=${place.longitude}` +
             '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
-            '&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1' +
+            '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=5' +
             units, cancellable);
 
         const {current, daily} = data;
@@ -207,6 +207,13 @@ export class WeatherProvider extends Provider {
             isDay: current.is_day === 1,
             high: daily?.temperature_2m_max?.[0],
             low: daily?.temperature_2m_min?.[0],
+            // The preview's 5-day forecast.
+            days: (daily?.time ?? []).map((date, i) => ({
+                date,
+                high: daily.temperature_2m_max?.[i],
+                low: daily.temperature_2m_min?.[i],
+                code: daily.weather_code?.[i],
+            })),
         };
         this._forecasts.set(this._forecastKey(place, imperial),
             {time: GLib.get_monotonic_time() / 1e6, forecast});
@@ -227,6 +234,14 @@ export class WeatherProvider extends Provider {
                 degrees(forecast.high), degrees(forecast.low), degrees(forecast.feelsLike)),
             icon,
             score: SCORE,
+            preview: () => ({
+                rows: forecast.days.map(day => {
+                    const [y, m, d] = day.date.split('-').map(Number);
+                    // %a: the day's short name in the user's language.
+                    const name = GLib.DateTime.new_local(y, m, d, 12, 0, 0)?.format('%a %e') ?? day.date;
+                    return [name, `${degrees(day.high)} / ${degrees(day.low)} · ${describe(day.code, true).text}`];
+                }),
+            }),
             activate: () => {
                 const app = Shell.AppSystem.get_default().lookup_app('org.gnome.Weather.desktop');
                 if (app)

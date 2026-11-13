@@ -16,8 +16,8 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {matchScore} from '../lib/match.js';
 import {Provider} from '../lib/provider.js';
+import {matchPrefix} from '../lib/prefix.js';
 
-const KEYWORD = 'clip';
 // Large copies (logs, files' contents) are not worth keeping or rendering.
 const MAX_ENTRY_LENGTH = 20000;
 const TITLE_LENGTH = 80;
@@ -77,20 +77,22 @@ export class ClipboardProvider extends Provider {
 
     owns(text) {
         // Off: let "clip …" fall through to normal results.
-        const lower = text.toLowerCase();
-        return this._enabled && (lower === KEYWORD || lower.startsWith(`${KEYWORD} `));
+        return this._enabled && this._filter(text) !== null;
     }
 
     scope(text) {
         return this.owns(text) ? _('Clipboard') : null;
     }
 
-    query(text) {
-        const lower = text.toLowerCase();
-        if (!this._enabled || (lower !== KEYWORD && !lower.startsWith(`${KEYWORD} `)))
-            return [];
+    /** @returns {string|null} the text after "clip", or null without it */
+    _filter(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-clipboard'));
+    }
 
-        const filter = text.slice(KEYWORD.length).trim();
+    query(text) {
+        const filter = this._enabled ? this._filter(text) : null;
+        if (filter === null)
+            return [];
         // Unfiltered, leave room for the "Clear" row within max-results;
         // older items are reached by typing a filter. With room for one
         // row only, there is no "Clear" row: Enter must not wipe history.
@@ -108,6 +110,7 @@ export class ClipboardProvider extends Provider {
             icon: 'edit-paste-symbolic',
             score: 0.99 - 0.001 * index,
             activate: () => this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry),
+            preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
         }));
 
         if (showClear) {

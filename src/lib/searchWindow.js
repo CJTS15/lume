@@ -21,6 +21,11 @@ const ICON_SIZE = 24;
 const SCREEN_MARGIN = 16;
 // Fallback rows (web search) are hidden once this many other rows match.
 const FALLBACK_HIDDEN_AT = 3;
+// The preview pane (Ctrl+P) adds this much width, in logical pixels.
+const PREVIEW_WIDTH = 340;
+const PREVIEW_ICON_SIZE = 96;
+const PREVIEW_TEXT_LENGTH = 2000;
+const PREVIEW_TEXT_LINES = 12;
 
 const NAVIGATION_KEYS = new Set([
     Clutter.KEY_Down, Clutter.KEY_KP_Down, Clutter.KEY_Up, Clutter.KEY_KP_Up,
@@ -71,6 +76,8 @@ class LumeSearchWindow extends St.Widget {
         this._selected = -1;
         // Whether the user moved the selection since the query changed.
         this._userMoved = false;
+        // The result whose actions (Ctrl+K) replace the list, or null.
+        this._actionsOf = null;
 
         this._panel = new St.BoxLayout({
             style_class: 'popup-menu popup-menu-content lume-panel',
@@ -140,7 +147,26 @@ class LumeSearchWindow extends St.Widget {
         // St.ScrollView is an St.Bin on 45 and has its own `child` on 46+;
         // `child` works on both (add_actor() was removed in 46).
         this._scrollView.child = this._resultsBox;
-        this._panel.add_child(this._scrollView);
+
+        // Results on the left, the preview pane (Ctrl+P) on the right.
+        const body = new St.BoxLayout({style_class: 'lume-body', x_expand: true});
+        this._scrollView.x_expand = true;
+        body.add_child(this._scrollView);
+        this._previewPane = new St.BoxLayout({
+            style_class: 'lume-preview',
+            width: PREVIEW_WIDTH,
+            visible: false,
+            // Never taller than the results area (see _updateGeometry).
+            clip_to_allocation: true,
+        });
+        setVertical(this._previewPane);
+        body.add_child(this._previewPane);
+        this._panel.add_child(body);
+        this._previewToken = 0;
+        this._previewChangedId = settings.connect('changed::show-preview', () => {
+            this._updateGeometry();
+            this._updatePreview();
+        });
 
         this._statusLabel = new St.Label({
             style_class: 'popup-inactive-menu-item lume-status',
@@ -178,16 +204,12 @@ class LumeSearchWindow extends St.Widget {
         });
         this.connect('key-press-event', (_a, event) => this._onKeyPress(event));
         this.connect('destroy', () => this._onDestroy());
+
     }
 
     _createFooter() {
         const footer = new St.BoxLayout({style_class: 'lume-footer'});
-        footer.add_child(new St.Widget({x_expand: true}));
-        for (const [key, action] of [
-            ['↑↓', _('Navigate')],
-            ['↵', _('Open')],
-            [_('Esc'), _('Close')],
-        ]) {
+        const hint = (key, action) => {
             footer.add_child(new St.Label({
                 style_class: 'lume-key',
                 text: key,
@@ -198,7 +220,15 @@ class LumeSearchWindow extends St.Widget {
                 text: action,
                 y_align: Clutter.ActorAlign.CENTER,
             }));
-        }
+        };
+        // TRANSLATORS: key names in the footer hints
+        hint(_('Ctrl K'), _('Actions'));
+        hint(_('Ctrl P'), _('Preview'));
+        footer.add_child(new St.Widget({x_expand: true}));
+        // No arrow-key hint: it is the one everyone knows, and five hints
+        // do not fit at large text sizes.
+        hint('↵', _('Open'));
+        hint(_('Esc'), _('Close'));
         return footer;
     }
 
@@ -241,11 +271,13 @@ class LumeSearchWindow extends St.Widget {
         Main.popModal(this._grab);
         this._grab = null;
         this.hide();
+        this._actionsOf = null;
         this._entry.text = '';
         this._clearResults();
     }
 
     _onDestroy() {
+        this._settings.disconnect(this._previewChangedId);
         this._cancelQuery();
         if (this._grab) {
             Main.popModal(this._grab);
@@ -260,8 +292,9 @@ class LumeSearchWindow extends St.Widget {
 
         const {scaleFactor} = St.ThemeContext.get_for_stage(global.stage);
         const margin = SCREEN_MARGIN * scaleFactor;
+        const preview = this._settings.get_boolean('show-preview') ? PREVIEW_WIDTH : 0;
         const width = Math.min(
-            this._settings.get_int('panel-width') * scaleFactor,
+            (this._settings.get_int('panel-width') + preview) * scaleFactor,
             monitor.width - 2 * margin);
         const top = Math.floor(monitor.height * this._settings.get_int('top-offset') / 100);
 
@@ -274,6 +307,7 @@ class LumeSearchWindow extends St.Widget {
         // divide the physical space by the scale factor.
         const maxHeight = Math.max(100, (monitor.height - top) / scaleFactor - 140);
         this._scrollView.style = `max-height: ${Math.floor(maxHeight)}px;`;
+        this._previewPane.style = `max-height: ${Math.floor(maxHeight)}px;`;
     }
 
     _cancelQuery() {
@@ -283,6 +317,8 @@ class LumeSearchWindow extends St.Widget {
 
     _onTextChanged() {
         this._cancelQuery();
+        // Typing leaves the action list.
+        this._actionsOf = null;
         const text = this._entry.text.trim();
         this._scopeLabel.text = (text && this._registry.scopeFor(text)) || _('All results');
 
@@ -322,16 +358,7 @@ class LumeSearchWindow extends St.Widget {
         const previous = this._userMoved ? this._rows[this._selected]?.key : undefined;
         const rowHadFocus = this._rows.some(r => r.actor.has_key_focus());
 
-        const merged = [];
-        for (const [providerId, results] of this._resultsByProvider) {
-            for (const result of results)
-                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
-        }
-        // Array.prototype.sort is stable, so equal scores keep provider order.
-        merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
-        if (merged.filter(r => !r.result.fallback).length >= FALLBACK_HIDDEN_AT)
-            merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
-        merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
+        const merged = this._actionsOf ? this._actionItems(this._actionsOf) : this._mergedResults();
 
         this._resultsBox.destroy_all_children();
         this._rows = merged.map(({key, result, type}, index) => ({
@@ -357,6 +384,122 @@ class LumeSearchWindow extends St.Widget {
         // The focused row was just destroyed; focus its replacement.
         if (rowHadFocus)
             (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
+    }
+
+    _mergedResults() {
+        const merged = [];
+        for (const [providerId, results] of this._resultsByProvider) {
+            for (const result of results)
+                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
+        }
+        // Array.prototype.sort is stable, so equal scores keep provider order.
+        merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
+        if (merged.filter(r => !r.result.fallback).length >= FALLBACK_HIDDEN_AT)
+            merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
+        merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
+        return merged;
+    }
+
+    /** Rows for the actions of `result`: its own, or Open and Copy. */
+    _actionItems(result) {
+        const actions = result.actions?.length ? result.actions : [
+            ...result.activate !== result.copy ? [{label: _('Open'), icon: 'document-open-symbolic', run: result.activate}] : [],
+            ...result.copy ? [{label: _('Copy'), icon: 'edit-copy-symbolic', run: result.copy}] : [],
+        ];
+        return actions.map((action, index) => ({
+            key: `action:${index}:${action.label}`,
+            result: {
+                id: action.label,
+                title: action.label,
+                subtitle: index === 0 ? result.title : undefined,
+                icon: action.icon ?? 'system-run-symbolic',
+                activate: action.run,
+            },
+        }));
+    }
+
+    /**
+     * Fill the preview pane for the selected row: the provider's preview
+     * (async) or the row's icon, title and subtitle.
+     */
+    async _updatePreview() {
+        const token = ++this._previewToken;
+        const result = this._actionsOf ? null : this._rows[this._selected]?.result;
+        const show = this._settings.get_boolean('show-preview') && Boolean(result);
+        this._previewPane.visible = show;
+        if (!show)
+            return;
+
+        let preview = null;
+        try {
+            preview = await result.preview?.();
+        } catch (e) {
+            console.debug(`lume: preview failed: ${e.message}`);
+        }
+        // The selection moved on while the preview loaded.
+        if (token !== this._previewToken)
+            return;
+        this._fillPreview(result, preview ?? {});
+    }
+
+    _fillPreview(result, {gicon, icon, text, rows = []}) {
+        this._previewPane.destroy_all_children();
+
+        const image = gicon ?? icon ?? result.icon;
+        if (result.glyph) {
+            this._previewPane.add_child(new St.Label({style_class: 'lume-preview-glyph', text: result.glyph, x_align: Clutter.ActorAlign.CENTER}));
+        } else if (image) {
+            const actor = new St.Icon({icon_size: PREVIEW_ICON_SIZE, x_align: Clutter.ActorAlign.CENTER});
+            if (typeof image === 'string')
+                actor.icon_name = image;
+            else
+                actor.gicon = image;
+            this._previewPane.add_child(actor);
+        }
+
+        const wrapped = (style, value) => {
+            const label = new St.Label({style_class: style, text: value});
+            label.clutter_text.line_wrap = true;
+            label.clutter_text.ellipsize = 0;
+            return label;
+        };
+        this._previewPane.add_child(wrapped('lume-preview-title', result.title));
+        if (result.subtitle)
+            this._previewPane.add_child(wrapped('popup-inactive-menu-item lume-preview-subtitle', result.subtitle));
+
+        for (const [label, value] of rows) {
+            const line = new St.BoxLayout({style_class: 'lume-preview-row'});
+            line.add_child(new St.Label({style_class: 'popup-inactive-menu-item lume-preview-label', text: label}));
+            line.add_child(wrapped('lume-preview-value', String(value)));
+            this._previewPane.add_child(line);
+        }
+        if (text) {
+            const lines = text.slice(0, PREVIEW_TEXT_LENGTH).split('\n');
+            const cut = lines.length > PREVIEW_TEXT_LINES || text.length > PREVIEW_TEXT_LENGTH;
+            const shown = `${lines.slice(0, PREVIEW_TEXT_LINES).join('\n')}${cut ? '…' : ''}`;
+            this._previewPane.add_child(wrapped('lume-preview-text', shown));
+        }
+    }
+
+    _togglePreview() {
+        this._settings.set_boolean('show-preview', !this._settings.get_boolean('show-preview'));
+    }
+
+    _toggleActions() {
+        if (this._actionsOf) {
+            this._actionsOf = null;
+        } else {
+            const result = this._rows[this._selected]?.result;
+            if (!result)
+                return;
+            this._actionsOf = result;
+        }
+        const text = this._entry.text.trim();
+        this._scopeLabel.text = this._actionsOf
+            ? _('Actions')
+            : (text && this._registry.scopeFor(text)) || _('All results');
+        this._userMoved = false;
+        this._render();
     }
 
     _createRow(result, type, index) {
@@ -461,6 +604,7 @@ class LumeSearchWindow extends St.Widget {
     _select(index, scroll = true) {
         if (this._rows.length === 0) {
             this._selected = -1;
+            this._updatePreview();
             return;
         }
         index = Math.max(0, Math.min(index, this._rows.length - 1));
@@ -479,6 +623,7 @@ class LumeSearchWindow extends St.Widget {
         actor.add_style_pseudo_class('selected');
         actor.add_style_pseudo_class('hover');
         actor.add_accessible_state(Atk.StateType.SELECTED);
+        this._updatePreview();
 
         if (scroll)
             this._ensureVisible(actor);
@@ -561,6 +706,17 @@ class LumeSearchWindow extends St.Widget {
             return Clutter.EVENT_STOP;
         }
 
+        if ((symbol === Clutter.KEY_k || symbol === Clutter.KEY_K) &&
+            (state & Clutter.ModifierType.CONTROL_MASK)) {
+            this._toggleActions();
+            return Clutter.EVENT_STOP;
+        }
+        if ((symbol === Clutter.KEY_p || symbol === Clutter.KEY_P) &&
+            (state & Clutter.ModifierType.CONTROL_MASK)) {
+            this._togglePreview();
+            return Clutter.EVENT_STOP;
+        }
+
         // Ctrl+C copies the selected row if it can be copied, unless text
         // is selected in the entry.
         const row = this._rows[this._selected];
@@ -573,7 +729,11 @@ class LumeSearchWindow extends St.Widget {
 
         switch (symbol) {
         case Clutter.KEY_Escape:
-            this.close();
+            // Esc leaves the action list first.
+            if (this._actionsOf)
+                this._toggleActions();
+            else
+                this.close();
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Down:
         case Clutter.KEY_KP_Down:

@@ -5,14 +5,13 @@
 // Ctrl+Enter in a terminal window. The line is run by /bin/sh, as if typed
 // in a terminal, because that is what the user typed it for.
 
-import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {Provider} from '../lib/provider.js';
-import {runInTerminal} from '../lib/terminal.js';
+import {matchPrefix} from '../lib/prefix.js';
+import {runInBackground, runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
 // Power commands act without GNOME's confirmation (polkit lets the active
@@ -22,15 +21,9 @@ const POWER_PROGRAMS = new Set(['shutdown', 'poweroff', 'reboot', 'halt']);
 // ponytail: only direct calls are caught; wrappers (sh -c, env) are not.
 // sudo fails without a terminal to ask for the password.
 const POWER_VERBS = /^(systemctl|loginctl)\s+(-\S+\s+)*(poweroff|reboot|halt|kexec|soft-reboot|suspend|hibernate|hybrid-sleep|suspend-then-hibernate)\b/;
-// "> command": run it in the terminal, commands only. Deliberate, so
-// power commands are allowed here.
-const PREFIX = /^>\s*/;
-// Exit status of sh when the program could not be found.
-const NOT_FOUND = 127;
 // Flags, paths, pipes, redirects, assignments: clearly a command line.
 const COMMAND_SYNTAX = /(^|\s)-|[/|<>=$&;]/;
 
-Gio._promisify(Gio.Subprocess.prototype, 'wait_async');
 
 export class CliProvider extends Provider {
     /**
@@ -42,7 +35,17 @@ export class CliProvider extends Provider {
     }
 
     owns(text) {
-        return this._settings.get_boolean('run-commands') && PREFIX.test(text);
+        return this._settings.get_boolean('run-commands') && this._scoped(text) !== null;
+    }
+
+    /**
+     * The command after ">": run in the terminal, commands only. Deliberate,
+     * so power commands are allowed here.
+     *
+     * @returns {string|null}
+     */
+    _scoped(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-terminal'));
     }
 
     scope(text) {
@@ -53,7 +56,7 @@ export class CliProvider extends Provider {
         if (!this._settings.get_boolean('run-commands'))
             return [];
         if (this.owns(text))
-            return this._terminalRow(text.replace(PREFIX, '').trim());
+            return this._terminalRow(this._scoped(text));
         const program = text.split(/\s+/)[0];
         if (POWER_PROGRAMS.has(program) || POWER_VERBS.test(text))
             return [];
@@ -73,8 +76,12 @@ export class CliProvider extends Provider {
             // program but are searches. A bare word ("firefox") is more
             // likely an app.
             score: COMMAND_SYNTAX.test(args) ? 0.92 : args ? 0.6 : 0.45,
-            activate: () => this._runInBackground(text),
+            activate: () => runInBackground(text),
             ctrlActivate: () => this._runInTerminal(text),
+            actions: [
+                {label: _('Run in Background'), icon: 'system-run-symbolic', run: () => runInBackground(text)},
+                {label: _('Run in Terminal'), icon: 'utilities-terminal-symbolic', run: () => this._runInTerminal(text)},
+            ],
         }];
     }
 
@@ -98,26 +105,4 @@ export class CliProvider extends Provider {
             ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', line]);
     }
 
-    async _runInBackground(line) {
-        let detail;
-        try {
-            // Output is discarded, not piped: a long-running command
-            // ("tail -f") must not grow the Shell's memory.
-            const launcher = new Gio.SubprocessLauncher({
-                flags: Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE,
-            });
-            launcher.set_cwd(GLib.get_home_dir());
-            const process = launcher.spawnv(['/bin/sh', '-c', line]);
-            await process.wait_async(null);
-            if (process.get_successful())
-                return;
-            const status = process.get_if_exited() ? process.get_exit_status() : -1;
-            detail = status === NOT_FOUND
-                ? _('Command not found')
-                : _('Exited with status %d').format(status);
-        } catch (e) {
-            detail = e.message;
-        }
-        Main.notifyError(_('Command failed: %s').format(line.slice(0, TITLE_LENGTH)), detail);
-    }
 }

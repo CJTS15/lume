@@ -9,10 +9,8 @@ import Gio from 'gi://Gio';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {Provider} from '../lib/provider.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {ENGINES, buildSearchUrl} from '../lib/web.js';
-
-// "? query" or "b query": web search only.
-const PREFIX = /^(?:\?|b\s)\s*/i;
 
 export class WebSearchProvider extends Provider {
     /**
@@ -24,7 +22,7 @@ export class WebSearchProvider extends Provider {
     }
 
     owns(text) {
-        return PREFIX.test(text);
+        return matchPrefix(text, this._settings.get_strv('prefix-web')) !== null;
     }
 
     scope(text) {
@@ -32,8 +30,9 @@ export class WebSearchProvider extends Provider {
     }
 
     query(text) {
-        const owned = this.owns(text);
-        text = text.replace(PREFIX, '').trim();
+        const scoped = matchPrefix(text, this._settings.get_strv('prefix-web'));
+        const owned = scoped !== null;
+        text = scoped ?? text;
         if (!text)
             return [];
         const engine = ENGINES[this._settings.get_string('web-search-engine')];

@@ -18,12 +18,12 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {evaluate} from '../lib/calculator.js';
 import {fuzzyScore, matchScore} from '../lib/match.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
+import {runInTerminal} from '../lib/terminal.js';
 
 const MIN_QUERY_LENGTH = 3;
-// "f name": files only.
-const PREFIX = /^f\s+/i;
 const MAX_RESULTS = 5;
 // Fetch more than shown; results are scored and cut afterwards.
 const QUERY_LIMIT = 40;
@@ -31,6 +31,7 @@ const CONTENT_LIMIT = 20;
 // Longer loose queries make long regexes for little gain.
 const MAX_LOOSE_LENGTH = 40;
 const BROWSE_SCORE = 0.96;
+const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
 // Index queries scan every file name (about 50 to 150 ms in LocalSearch,
 // which keeps working after a cancel): wait for typing to pause.
 const DEBOUNCE_MS = 150;
@@ -85,6 +86,7 @@ const WALK_CACHE_SECONDS = 300;
 const ENUMERATE_ATTRIBUTES = 'standard::name,standard::type,standard::is-hidden';
 
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
+Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 
@@ -169,7 +171,8 @@ export class FilesProvider extends Provider {
 
     owns(text) {
         // "f to c" is a temperature conversion, not a file search.
-        return PREFIX.test(text) && convert(text) === null && evaluate(text) === null;
+        return matchPrefix(text, this._settings.get_strv('prefix-files')) !== null &&
+            convert(text) === null && evaluate(text) === null;
     }
 
     scope(text) {
@@ -180,7 +183,8 @@ export class FilesProvider extends Provider {
 
     async query(text, cancellable) {
         const level = this._settings.get_string('fuzzy-matching');
-        text = text.replace(PREFIX, '').trim();
+        if (this.owns(text))
+            text = matchPrefix(text, this._settings.get_strv('prefix-files'));
 
         const target = this._browseTarget(text);
         if (target)
@@ -488,6 +492,23 @@ export class FilesProvider extends Provider {
             ? 'folder'
             : Gio.content_type_get_icon(Gio.content_type_guess(name, null)[0]);
         const location = shownFolder ?? this._shortPath(GLib.path_get_dirname(path));
+        const open = () => {
+            Gio.AppInfo.launch_default_for_uri_async(uri,
+                global.create_app_launch_context(0, -1), null, (_o, res) => {
+                    try {
+                        Gio.AppInfo.launch_default_for_uri_finish(res);
+                    } catch (e) {
+                        console.error(`lume: could not open ${uri}: ${e.message}`);
+                    }
+                });
+        };
+        const showInFolder = () => callFileManager('ShowItems', uri);
+        const properties = () => callFileManager('ShowItemProperties', uri);
+        // The format Files reads when pasting copied files.
+        const copyFile = () => St.Clipboard.get_default().set_content(St.ClipboardType.CLIPBOARD,
+            'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
+        const folderPath = folder ? path : GLib.path_get_dirname(path);
+        const preview = () => this._preview(uri, path, folder);
 
         return {
             id: uri,
@@ -499,22 +520,56 @@ export class FilesProvider extends Provider {
                 : location,
             icon,
             score,
-            activate: () => {
-                Gio.AppInfo.launch_default_for_uri_async(uri,
-                    global.create_app_launch_context(0, -1), null, (_o, res) => {
-                        try {
-                            Gio.AppInfo.launch_default_for_uri_finish(res);
-                        } catch (e) {
-                            console.error(`lume: could not open ${uri}: ${e.message}`);
-                        }
-                    });
-            },
-            ctrlActivate: () => callFileManager('ShowItems', uri),
-            altActivate: () => callFileManager('ShowItemProperties', uri),
-            // The format Files reads when pasting copied files.
-            copy: () => St.Clipboard.get_default().set_content(St.ClipboardType.CLIPBOARD,
-                'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`))),
+            activate: open,
+            preview,
+            ctrlActivate: showInFolder,
+            altActivate: properties,
+            copy: copyFile,
+            actions: [
+                {label: _('Open'), icon: 'document-open-symbolic', run: open},
+                {label: _('Show in Folder'), icon: 'folder-open-symbolic', run: showInFolder},
+                {label: _('Properties'), icon: 'document-properties-symbolic', run: properties},
+                {label: _('Copy File'), icon: 'edit-copy-symbolic', run: copyFile},
+                {
+                    label: _('Copy Path'),
+                    icon: 'edit-copy-symbolic',
+                    run: () => St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, path),
+                },
+                {
+                    label: _('Open Folder in Terminal'),
+                    icon: 'utilities-terminal-symbolic',
+                    // The folder is an argument, never part of the script.
+                    run: () => runInTerminal(this._settings,
+                        ['/bin/sh', '-c', 'cd -- "$1" && exec "${SHELL:-/bin/sh}"', 'sh', folderPath]),
+                },
+            ],
         };
+    }
+
+    /** Type, size, date and location; a thumbnail for images. */
+    async _preview(uri, path, folder) {
+        const file = Gio.File.new_for_uri(uri);
+        const info = await file.query_info_async(
+            'standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon',
+            Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
+        const type = info.get_content_type();
+        const rows = [[_('Type'), Gio.content_type_get_description(type)]];
+        if (!folder)
+            rows.push([_('Size'), GLib.format_size(info.get_size())]);
+        const modified = info.get_modification_date_time()?.to_local();
+        if (modified)
+            rows.push([_('Modified'), modified.format('%x %H:%M')]);
+        rows.push([_('Location'), this._shortPath(GLib.path_get_dirname(path))]);
+
+        // An existing thumbnail, or the image itself when it is small
+        // enough to decode without stalling the Shell.
+        const thumbnail = info.get_attribute_byte_string('thumbnail::path');
+        let gicon = info.get_icon();
+        if (thumbnail)
+            gicon = new Gio.FileIcon({file: Gio.File.new_for_path(thumbnail)});
+        else if (type.startsWith('image/') && info.get_size() <= MAX_PREVIEW_IMAGE_BYTES)
+            gicon = new Gio.FileIcon({file});
+        return {gicon, rows};
     }
 
     _closeConnection() {

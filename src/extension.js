@@ -19,6 +19,7 @@ import {EmojiProvider} from './providers/emoji.js';
 import {FilesProvider} from './providers/files.js';
 import {MediaProvider} from './providers/media.js';
 import {RemoteProvider} from './providers/remote.js';
+import {ScriptsProvider} from './providers/scripts.js';
 import {SettingsProvider} from './providers/settings.js';
 import {SystemProvider} from './providers/system.js';
 import {TogglesProvider} from './providers/toggles.js';
@@ -36,7 +37,7 @@ export default class LumeExtension extends Extension {
 
         this._registry = new ProviderRegistry();
         // Registration order breaks score ties.
-        this._registry.register(new CalculatorProvider());
+        this._registry.register(new CalculatorProvider(this._settings));
         this._registry.register(new UnitsProvider());
         this._registry.register(new DevToolsProvider());
         this._registry.register(new EmojiProvider(this._settings));
@@ -54,6 +55,8 @@ export default class LumeExtension extends Extension {
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));
         this._registry.register(new RemoteProvider());
+        // After the built-in scopes, so a script never hides "win" or "clip".
+        this._registry.register(new ScriptsProvider());
         this._registry.register(new WebSearchProvider(this._settings));
 
         this._window = new SearchWindow(this._settings, this._registry);

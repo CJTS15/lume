@@ -136,6 +136,11 @@ export class MediaProvider extends Provider {
                 activate: call('PlayPause'),
                 ctrlActivate: call('Next'),
                 altActivate: call('Previous'),
+                actions: [
+                    {label: playing ? _('Pause') : _('Play'), icon: playing ? 'media-playback-pause-symbolic' : 'media-playback-start-symbolic', run: call('PlayPause')},
+                    {label: _('Next'), icon: 'media-skip-forward-symbolic', run: call('Next')},
+                    {label: _('Previous'), icon: 'media-skip-backward-symbolic', run: call('Previous')},
+                ],
             });
         }
         return results;
