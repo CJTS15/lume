@@ -56,7 +56,8 @@ export class WeatherProvider extends Provider {
         super({id: 'weather', name: _('Weather'), label: _('Weather')});
         this._settings = settings;
         this._openPreferences = openPreferences;
-        this._session = new Soup.Session({timeout: 10});
+        // Short, so a dead server shows an error before the user gives up.
+        this._session = new Soup.Session({timeout: 5});
         /** @type {Map<string, object|null>} city -> place, null if not found */
         this._places = new Map();
         /** @type {Map<string, {time: number, forecast: object}>} */
@@ -70,7 +71,7 @@ export class WeatherProvider extends Provider {
         return lower === KEYWORD || lower.startsWith(`${KEYWORD} `) ? _('Weather') : null;
     }
 
-    async query(text, cancellable) {
+    async query(text, cancellable, update) {
         const lower = text.toLowerCase();
         if (lower !== KEYWORD && !lower.startsWith(`${KEYWORD} `))
             return [];
@@ -93,6 +94,14 @@ export class WeatherProvider extends Provider {
             place = this._places.get(city.toLowerCase());
             forecast = place && this._cachedForecast(place, imperial);
             if (place === undefined || (place && !forecast)) {
+                update([{
+                    id: 'pending',
+                    title: _('Fetching weather for “%s”…').format(city),
+                    subtitle: _('Weather data by Open-Meteo.com'),
+                    icon: 'content-loading-symbolic',
+                    score: SCORE,
+                    activate: () => {},
+                }]);
                 await this._wait();
                 if (cancellable.is_cancelled() || this._destroyed)
                     return [];
@@ -153,9 +162,19 @@ export class WeatherProvider extends Provider {
 
     async _getJson(url, cancellable) {
         const message = Soup.Message.new('GET', url);
-        const bytes = await this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable);
+        // Named in errors: geocoding and forecasts use different servers.
+        const host = message.get_uri().get_host();
+        let bytes;
+        try {
+            bytes = await this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable);
+        } catch (e) {
+            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                throw e;
+            throw new Error(`${host}: ${e.message}`);
+        }
         if (message.get_status() !== Soup.Status.OK)
-            throw new Error(_('Open-Meteo answered with HTTP %d').format(message.get_status()));
+            // TRANSLATORS: %s is a server name, %d an HTTP status code
+            throw new Error(_('%s answered with HTTP %d').format(host, message.get_status()));
         return JSON.parse(new TextDecoder().decode(bytes.get_data()));
     }
 

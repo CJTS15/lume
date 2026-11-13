@@ -71,6 +71,33 @@ await settle();
 check('owner only', owned.join(), 'web');
 check('everyone without an owner', open.join(), 'apps,web');
 
+// update() shows interim rows; the final answer replaces them.
+class Slow extends Provider {
+    constructor() {
+        super({id: 'slow'});
+    }
+
+    async query(text, _cancellable, update) {
+        update([{id: 'pending', title: 'Fetching', activate: () => {}}]);
+        await settle();
+        return [{id: 'done', title: 'Done', activate: () => {}}];
+    }
+}
+const slow = new ProviderRegistry();
+slow.register(new Slow());
+const reports = [];
+let cancelled = false;
+const running = slow.query('x', {is_cancelled: () => cancelled},
+    (_provider, results) => reports.push(results[0].id));
+check('interim rows first', reports.join(), 'pending');
+await running;
+check('final rows replace them', reports.join(), 'pending,done');
+
+reports.length = 0;
+cancelled = true;
+await slow.query('x', {is_cancelled: () => cancelled}, (_p, results) => reports.push(results[0].id));
+check('no interim rows once cancelled', reports.join(), '');
+
 if (failures > 0) {
     print(`${failures} provider test(s) failed`);
     System.exit(1);

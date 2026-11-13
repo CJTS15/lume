@@ -93,9 +93,11 @@ export class Provider {
      *
      * @param {string} _text - The trimmed, non-empty query.
      * @param {Gio.Cancellable} _cancellable
+     * @param {(results: Result[]) => void} _update - shows interim rows
+     *   ("Fetching…") until the returned results replace them
      * @returns {Result[]|Promise<Result[]>}
      */
-    query(_text, _cancellable) {
+    query(_text, _cancellable, _update) {
         return [];
     }
 
@@ -138,7 +140,8 @@ export class ProviderRegistry {
 
     /**
      * Query every provider. `onResults(provider, results)` is called once per
-     * provider as soon as it answers, unless the query was cancelled first.
+     * provider as soon as it answers, unless the query was cancelled first,
+     * and also for each interim update the provider sends before that.
      *
      * @param {string} text
      * @param {Gio.Cancellable} cancellable
@@ -149,8 +152,12 @@ export class ProviderRegistry {
         const owner = this.#providers.find(p => p.owns(text));
         await Promise.all((owner ? [owner] : this.#providers).map(async provider => {
             let results;
+            const update = interim => {
+                if (!cancellable.is_cancelled() && Array.isArray(interim))
+                    onResults(provider, interim);
+            };
             try {
-                results = await provider.query(text, cancellable);
+                results = await provider.query(text, cancellable, update);
             } catch (e) {
                 if (!cancellable.is_cancelled() &&
                     !e?.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
