@@ -44,6 +44,7 @@ export default class LumePreferences extends ExtensionPreferences {
 
         page.add(this._buildShortcutGroup(window, settings));
         page.add(this._buildAppearanceGroup(settings));
+        page.add(this._buildSearchGroup(settings));
         page.add(this._buildClipboardGroup(settings));
         page.add(this._buildWebSearchGroup(settings));
         page.add(this._buildWeatherGroup(settings));
@@ -101,6 +102,34 @@ export default class LumePreferences extends ExtensionPreferences {
         spinRow('panel-width', _('Width'), _('In pixels, limited to the monitor width'), 20);
         spinRow('top-offset', _('Distance From Top'), _('Percentage of the monitor height'), 1);
         spinRow('max-results', _('Maximum Results'), _('How many results to show at most'), 1);
+
+        return group;
+    }
+
+    _buildSearchGroup(settings) {
+        const group = new Adw.PreferencesGroup({title: _('Search')});
+
+        const fuzzy = this._comboRow(settings, 'fuzzy-matching', _('Fuzzy Matching'), [
+            ['strict', _('Strict')],
+            ['normal', _('Normal')],
+            ['loose', _('Loose')],
+        ]);
+        fuzzy.subtitle = _('For app and file names. Loose also skips letters, so “vsc” finds Visual Studio Code.');
+        group.add(fuzzy);
+
+        const contents = new Adw.SwitchRow({
+            title: _('Search File Contents'),
+            subtitle: _('Also match text inside indexed files. Slower.'),
+        });
+        settings.bind('file-contents', contents, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(contents);
+
+        const commands = new Adw.SwitchRow({
+            title: _('Run Commands'),
+            subtitle: _('When the first word is a program, Enter runs the line in the background'),
+        });
+        settings.bind('run-commands', commands, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(commands);
 
         return group;
     }

@@ -11,9 +11,13 @@ import {SearchWindow} from './lib/searchWindow.js';
 import {AgentsProvider} from './providers/agents.js';
 import {AppsProvider} from './providers/apps.js';
 import {CalculatorProvider} from './providers/calculator.js';
+import {CliProvider} from './providers/cli.js';
 import {ClipboardProvider} from './providers/clipboard.js';
 import {CommandsProvider} from './providers/commands.js';
 import {FilesProvider} from './providers/files.js';
+import {SettingsProvider} from './providers/settings.js';
+import {UnitsProvider} from './providers/units.js';
+import {UrlProvider} from './providers/url.js';
 import {WeatherProvider} from './providers/weather.js';
 import {WebSearchProvider} from './providers/web.js';
 
@@ -26,12 +30,16 @@ export default class LumeExtension extends Extension {
         this._registry = new ProviderRegistry();
         // Registration order breaks score ties.
         this._registry.register(new CalculatorProvider());
-        this._registry.register(new AppsProvider());
+        this._registry.register(new UnitsProvider());
+        this._registry.register(new UrlProvider());
+        this._registry.register(new AppsProvider(this._settings));
         this._registry.register(new CommandsProvider(this));
-        this._registry.register(new FilesProvider());
+        this._registry.register(new SettingsProvider());
+        this._registry.register(new FilesProvider(this._settings));
         this._registry.register(new ClipboardProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
+        this._registry.register(new CliProvider(this._settings));
         this._registry.register(new WebSearchProvider(this._settings));
 
         this._window = new SearchWindow(this._settings, this._registry);

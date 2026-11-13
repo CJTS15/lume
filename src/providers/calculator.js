@@ -20,6 +20,7 @@ export class CalculatorProvider extends Provider {
             return [];
 
         const result = formatResult(value);
+        const copy = () => St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, result);
         return [{
             id: 'result',
             title: `= ${result}`,
@@ -27,9 +28,8 @@ export class CalculatorProvider extends Provider {
             icon: 'accessories-calculator-symbolic',
             // Above apps: an expression is never meant as an app name.
             score: 0.95,
-            activate: () => {
-                St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, result);
-            },
+            activate: copy,
+            copy,
         }];
     }
 }
