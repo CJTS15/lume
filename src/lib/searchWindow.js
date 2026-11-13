@@ -25,6 +25,7 @@ const FALLBACK_HIDDEN_AT = 3;
 const PREVIEW_WIDTH = 340;
 const PREVIEW_ICON_SIZE = 96;
 const PREVIEW_TEXT_LENGTH = 2000;
+const PREVIEW_TEXT_LINES = 12;
 
 const NAVIGATION_KEYS = new Set([
     Clutter.KEY_Down, Clutter.KEY_KP_Down, Clutter.KEY_Up, Clutter.KEY_KP_Up,
@@ -155,6 +156,8 @@ class LumeSearchWindow extends St.Widget {
             style_class: 'lume-preview',
             width: PREVIEW_WIDTH,
             visible: false,
+            // Never taller than the results area (see _updateGeometry).
+            clip_to_allocation: true,
         });
         setVertical(this._previewPane);
         body.add_child(this._previewPane);
@@ -222,7 +225,8 @@ class LumeSearchWindow extends St.Widget {
         hint(_('Ctrl K'), _('Actions'));
         hint(_('Ctrl P'), _('Preview'));
         footer.add_child(new St.Widget({x_expand: true}));
-        hint('↑↓', _('Navigate'));
+        // No arrow-key hint: it is the one everyone knows, and five hints
+        // do not fit at large text sizes.
         hint('↵', _('Open'));
         hint(_('Esc'), _('Close'));
         return footer;
@@ -303,6 +307,7 @@ class LumeSearchWindow extends St.Widget {
         // divide the physical space by the scale factor.
         const maxHeight = Math.max(100, (monitor.height - top) / scaleFactor - 140);
         this._scrollView.style = `max-height: ${Math.floor(maxHeight)}px;`;
+        this._previewPane.style = `max-height: ${Math.floor(maxHeight)}px;`;
     }
 
     _cancelQuery() {
@@ -469,7 +474,9 @@ class LumeSearchWindow extends St.Widget {
             this._previewPane.add_child(line);
         }
         if (text) {
-            const shown = text.length > PREVIEW_TEXT_LENGTH ? `${text.slice(0, PREVIEW_TEXT_LENGTH)}…` : text;
+            const lines = text.slice(0, PREVIEW_TEXT_LENGTH).split('\n');
+            const cut = lines.length > PREVIEW_TEXT_LINES || text.length > PREVIEW_TEXT_LENGTH;
+            const shown = `${lines.slice(0, PREVIEW_TEXT_LINES).join('\n')}${cut ? '…' : ''}`;
             this._previewPane.add_child(wrapped('lume-preview-text', shown));
         }
     }
