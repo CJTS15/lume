@@ -5,6 +5,8 @@
 // then adds name matches as fuzzy as the fuzzy-matching setting allows:
 // on "loose", "vsc" finds Visual Studio Code.
 
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
 
 import * as ParentalControlsManager from 'resource:///org/gnome/shell/misc/parentalControlsManager.js';
@@ -14,6 +16,53 @@ import {fuzzyScore} from '../lib/match.js';
 import {Provider} from '../lib/provider.js';
 
 const MAX_FUZZY_RESULTS = 5;
+
+/**
+ * The actions of the Shell's app menu: New Window, the app's own desktop
+ * actions, the other graphics card, App Details.
+ *
+ * @param {Shell.App} app
+ * @returns {Array<{label: string, icon?: string, run: () => void}>}
+ */
+function appActions(app) {
+    const appInfo = app.app_info;
+    const desktopActions = appInfo?.list_actions() ?? [];
+    const actions = [{label: _('Open'), icon: 'document-open-symbolic', run: () => app.activate()}];
+
+    if (app.can_open_new_window() && !desktopActions.includes('new-window'))
+        actions.push({label: _('New Window'), icon: 'window-new-symbolic', run: () => app.open_new_window(-1)});
+    for (const action of desktopActions) {
+        actions.push({
+            label: appInfo.get_action_name(action),
+            run: () => app.launch_action(action, global.get_current_time(), -1),
+        });
+    }
+
+    const dualGpu = global.get_switcheroo_control?.()?.get_cached_property('HasDualGpu')?.unpack();
+    if (dualGpu && app.state === Shell.AppState.STOPPED) {
+        const prefersOther = appInfo.get_boolean('PrefersNonDefaultGPU');
+        actions.push({
+            label: prefersOther
+                ? _('Launch Using Integrated Graphics Card')
+                : _('Launch Using Discrete Graphics Card'),
+            icon: 'video-display-symbolic',
+            run: () => app.launch(0, -1, prefersOther ? Shell.AppLaunchGpu.DEFAULT : Shell.AppLaunchGpu.DISCRETE),
+        });
+    }
+
+    if (Shell.AppSystem.get_default().lookup_app('org.gnome.Software.desktop')) {
+        actions.push({
+            label: _('App Details'),
+            icon: 'help-about-symbolic',
+            // The same D-Bus call as the Shell's app menu.
+            run: () => Gio.DBus.session.call('org.gnome.Software', '/org/gnome/Software',
+                'org.gtk.Actions', 'Activate',
+                new GLib.Variant('(sava{sv})', ['details', [new GLib.Variant('(ss)', [app.get_id(), ''])], {}]),
+                null, Gio.DBusCallFlags.NONE, -1, null, null),
+        });
+    }
+    return actions;
+}
 
 export class AppsProvider extends Provider {
     /**
@@ -75,6 +124,10 @@ export class AppsProvider extends Provider {
             icon: app.get_icon(),
             score,
             activate: () => app.activate(),
+            // Built when Ctrl+K asks, like the Shell's app menu.
+            get actions() {
+                return appActions(app);
+            },
         };
     }
 }

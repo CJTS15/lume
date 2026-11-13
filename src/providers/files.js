@@ -21,6 +21,7 @@ import {fuzzyScore, matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
+import {runInTerminal} from '../lib/terminal.js';
 
 const MIN_QUERY_LENGTH = 3;
 const MAX_RESULTS = 5;
@@ -489,6 +490,22 @@ export class FilesProvider extends Provider {
             ? 'folder'
             : Gio.content_type_get_icon(Gio.content_type_guess(name, null)[0]);
         const location = shownFolder ?? this._shortPath(GLib.path_get_dirname(path));
+        const open = () => {
+            Gio.AppInfo.launch_default_for_uri_async(uri,
+                global.create_app_launch_context(0, -1), null, (_o, res) => {
+                    try {
+                        Gio.AppInfo.launch_default_for_uri_finish(res);
+                    } catch (e) {
+                        console.error(`lume: could not open ${uri}: ${e.message}`);
+                    }
+                });
+        };
+        const showInFolder = () => callFileManager('ShowItems', uri);
+        const properties = () => callFileManager('ShowItemProperties', uri);
+        // The format Files reads when pasting copied files.
+        const copyFile = () => St.Clipboard.get_default().set_content(St.ClipboardType.CLIPBOARD,
+            'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
+        const folderPath = folder ? path : GLib.path_get_dirname(path);
 
         return {
             id: uri,
@@ -500,21 +517,28 @@ export class FilesProvider extends Provider {
                 : location,
             icon,
             score,
-            activate: () => {
-                Gio.AppInfo.launch_default_for_uri_async(uri,
-                    global.create_app_launch_context(0, -1), null, (_o, res) => {
-                        try {
-                            Gio.AppInfo.launch_default_for_uri_finish(res);
-                        } catch (e) {
-                            console.error(`lume: could not open ${uri}: ${e.message}`);
-                        }
-                    });
-            },
-            ctrlActivate: () => callFileManager('ShowItems', uri),
-            altActivate: () => callFileManager('ShowItemProperties', uri),
-            // The format Files reads when pasting copied files.
-            copy: () => St.Clipboard.get_default().set_content(St.ClipboardType.CLIPBOARD,
-                'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`))),
+            activate: open,
+            ctrlActivate: showInFolder,
+            altActivate: properties,
+            copy: copyFile,
+            actions: [
+                {label: _('Open'), icon: 'document-open-symbolic', run: open},
+                {label: _('Show in Folder'), icon: 'folder-open-symbolic', run: showInFolder},
+                {label: _('Properties'), icon: 'document-properties-symbolic', run: properties},
+                {label: _('Copy File'), icon: 'edit-copy-symbolic', run: copyFile},
+                {
+                    label: _('Copy Path'),
+                    icon: 'edit-copy-symbolic',
+                    run: () => St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, path),
+                },
+                {
+                    label: _('Open Folder in Terminal'),
+                    icon: 'utilities-terminal-symbolic',
+                    // The folder is an argument, never part of the script.
+                    run: () => runInTerminal(this._settings,
+                        ['/bin/sh', '-c', 'cd -- "$1" && exec "${SHELL:-/bin/sh}"', 'sh', folderPath]),
+                },
+            ],
         };
     }
 

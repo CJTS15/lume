@@ -71,6 +71,8 @@ class LumeSearchWindow extends St.Widget {
         this._selected = -1;
         // Whether the user moved the selection since the query changed.
         this._userMoved = false;
+        // The result whose actions (Ctrl+K) replace the list, or null.
+        this._actionsOf = null;
 
         this._panel = new St.BoxLayout({
             style_class: 'popup-menu popup-menu-content lume-panel',
@@ -182,12 +184,7 @@ class LumeSearchWindow extends St.Widget {
 
     _createFooter() {
         const footer = new St.BoxLayout({style_class: 'lume-footer'});
-        footer.add_child(new St.Widget({x_expand: true}));
-        for (const [key, action] of [
-            ['↑↓', _('Navigate')],
-            ['↵', _('Open')],
-            [_('Esc'), _('Close')],
-        ]) {
+        const hint = (key, action) => {
             footer.add_child(new St.Label({
                 style_class: 'lume-key',
                 text: key,
@@ -198,7 +195,13 @@ class LumeSearchWindow extends St.Widget {
                 text: action,
                 y_align: Clutter.ActorAlign.CENTER,
             }));
-        }
+        };
+        // TRANSLATORS: key names in the footer hints
+        hint(_('Ctrl K'), _('Actions'));
+        footer.add_child(new St.Widget({x_expand: true}));
+        hint('↑↓', _('Navigate'));
+        hint('↵', _('Open'));
+        hint(_('Esc'), _('Close'));
         return footer;
     }
 
@@ -241,6 +244,7 @@ class LumeSearchWindow extends St.Widget {
         Main.popModal(this._grab);
         this._grab = null;
         this.hide();
+        this._actionsOf = null;
         this._entry.text = '';
         this._clearResults();
     }
@@ -283,6 +287,8 @@ class LumeSearchWindow extends St.Widget {
 
     _onTextChanged() {
         this._cancelQuery();
+        // Typing leaves the action list.
+        this._actionsOf = null;
         const text = this._entry.text.trim();
         this._scopeLabel.text = (text && this._registry.scopeFor(text)) || _('All results');
 
@@ -322,16 +328,7 @@ class LumeSearchWindow extends St.Widget {
         const previous = this._userMoved ? this._rows[this._selected]?.key : undefined;
         const rowHadFocus = this._rows.some(r => r.actor.has_key_focus());
 
-        const merged = [];
-        for (const [providerId, results] of this._resultsByProvider) {
-            for (const result of results)
-                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
-        }
-        // Array.prototype.sort is stable, so equal scores keep provider order.
-        merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
-        if (merged.filter(r => !r.result.fallback).length >= FALLBACK_HIDDEN_AT)
-            merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
-        merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
+        const merged = this._actionsOf ? this._actionItems(this._actionsOf) : this._mergedResults();
 
         this._resultsBox.destroy_all_children();
         this._rows = merged.map(({key, result, type}, index) => ({
@@ -357,6 +354,55 @@ class LumeSearchWindow extends St.Widget {
         // The focused row was just destroyed; focus its replacement.
         if (rowHadFocus)
             (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
+    }
+
+    _mergedResults() {
+        const merged = [];
+        for (const [providerId, results] of this._resultsByProvider) {
+            for (const result of results)
+                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
+        }
+        // Array.prototype.sort is stable, so equal scores keep provider order.
+        merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
+        if (merged.filter(r => !r.result.fallback).length >= FALLBACK_HIDDEN_AT)
+            merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
+        merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
+        return merged;
+    }
+
+    /** Rows for the actions of `result`: its own, or Open and Copy. */
+    _actionItems(result) {
+        const actions = result.actions?.length ? result.actions : [
+            ...result.activate !== result.copy ? [{label: _('Open'), icon: 'document-open-symbolic', run: result.activate}] : [],
+            ...result.copy ? [{label: _('Copy'), icon: 'edit-copy-symbolic', run: result.copy}] : [],
+        ];
+        return actions.map((action, index) => ({
+            key: `action:${index}:${action.label}`,
+            result: {
+                id: action.label,
+                title: action.label,
+                subtitle: index === 0 ? result.title : undefined,
+                icon: action.icon ?? 'system-run-symbolic',
+                activate: action.run,
+            },
+        }));
+    }
+
+    _toggleActions() {
+        if (this._actionsOf) {
+            this._actionsOf = null;
+        } else {
+            const result = this._rows[this._selected]?.result;
+            if (!result)
+                return;
+            this._actionsOf = result;
+        }
+        const text = this._entry.text.trim();
+        this._scopeLabel.text = this._actionsOf
+            ? _('Actions')
+            : (text && this._registry.scopeFor(text)) || _('All results');
+        this._userMoved = false;
+        this._render();
     }
 
     _createRow(result, type, index) {
@@ -561,6 +607,12 @@ class LumeSearchWindow extends St.Widget {
             return Clutter.EVENT_STOP;
         }
 
+        if ((symbol === Clutter.KEY_k || symbol === Clutter.KEY_K) &&
+            (state & Clutter.ModifierType.CONTROL_MASK)) {
+            this._toggleActions();
+            return Clutter.EVENT_STOP;
+        }
+
         // Ctrl+C copies the selected row if it can be copied, unless text
         // is selected in the entry.
         const row = this._rows[this._selected];
@@ -573,7 +625,11 @@ class LumeSearchWindow extends St.Widget {
 
         switch (symbol) {
         case Clutter.KEY_Escape:
-            this.close();
+            // Esc leaves the action list first.
+            if (this._actionsOf)
+                this._toggleActions();
+            else
+                this.close();
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Down:
         case Clutter.KEY_KP_Down:

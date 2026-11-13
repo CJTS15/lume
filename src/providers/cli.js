@@ -83,6 +83,10 @@ export class CliProvider extends Provider {
             score: COMMAND_SYNTAX.test(args) ? 0.92 : args ? 0.6 : 0.45,
             activate: () => this._runInBackground(text),
             ctrlActivate: () => this._runInTerminal(text),
+            actions: [
+                {label: _('Run in Background'), icon: 'system-run-symbolic', run: () => this._runInBackground(text)},
+                {label: _('Run in Terminal'), icon: 'utilities-terminal-symbolic', run: () => this._runInTerminal(text)},
+            ],
         }];
     }
 

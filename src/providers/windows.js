@@ -89,6 +89,10 @@ export class WindowsProvider extends Provider {
             icon: app?.get_icon() ?? 'focus-windows-symbolic',
             score,
             activate: () => Main.activateWindow(window),
+            actions: [
+                {label: _('Focus'), icon: 'focus-windows-symbolic', run: () => Main.activateWindow(window)},
+                {label: _('Close Window'), icon: 'window-close-symbolic', run: () => window.delete(global.get_current_time())},
+            ],
         };
     }
 }
