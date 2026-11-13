@@ -175,7 +175,11 @@ export class WeatherProvider extends Provider {
         if (message.get_status() !== Soup.Status.OK)
             // TRANSLATORS: %s is a server name, %d an HTTP status code
             throw new Error(_('%s answered with HTTP %d').format(host, message.get_status()));
-        return JSON.parse(new TextDecoder().decode(bytes.get_data()));
+        try {
+            return JSON.parse(new TextDecoder().decode(bytes.get_data()));
+        } catch (e) {
+            throw new Error(`${host}: ${e.message}`);
+        }
     }
 
     async _geocode(city, cancellable) {
