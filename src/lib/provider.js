@@ -32,6 +32,8 @@ import Gio from 'gi://Gio';
  *   copies the entry's selected text as usual.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
+ * @property {string} [swatch] - "#rrggbb": drawn as a colour square instead
+ *   of the icon.
  * @property {string} [type] - Short type shown on the row's right; defaults
  *   to the provider's label ("Folder" instead of "File").
  */
@@ -63,6 +65,18 @@ export class Provider {
      */
     scope(_text) {
         return null;
+    }
+
+    /**
+     * Whether this provider's prefix leads the query ("clip …", "b …").
+     * The registry then asks only this provider, so its rows are the only
+     * ones shown.
+     *
+     * @param {string} _text - The trimmed, non-empty query.
+     * @returns {boolean}
+     */
+    owns(_text) {
+        return false;
     }
 
     /**
@@ -125,7 +139,8 @@ export class ProviderRegistry {
      * @returns {Promise<void>} resolves when every provider has answered
      */
     async query(text, cancellable, onResults) {
-        await Promise.all(this.#providers.map(async provider => {
+        const owner = this.#providers.find(p => p.owns(text));
+        await Promise.all((owner ? [owner] : this.#providers).map(async provider => {
             let results;
             try {
                 results = await provider.query(text, cancellable);

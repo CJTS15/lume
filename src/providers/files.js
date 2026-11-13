@@ -16,10 +16,14 @@ import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import {evaluate} from '../lib/calculator.js';
 import {fuzzyScore, matchScore} from '../lib/match.js';
+import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
 
 const MIN_QUERY_LENGTH = 3;
+// "f name": files only.
+const PREFIX = /^f\s+/i;
 const MAX_RESULTS = 5;
 // Fetch more than shown; results are scored and cut afterwards.
 const QUERY_LIMIT = 40;
@@ -163,12 +167,20 @@ export class FilesProvider extends Provider {
         this._home = GLib.get_home_dir();
     }
 
+    owns(text) {
+        // "f to c" is a temperature conversion, not a file search.
+        return PREFIX.test(text) && convert(text) === null && evaluate(text) === null;
+    }
+
     scope(text) {
+        if (this.owns(text))
+            return _('Files');
         return this._browseTarget(text) ? _('Folder') : null;
     }
 
     async query(text, cancellable) {
         const level = this._settings.get_string('fuzzy-matching');
+        text = text.replace(PREFIX, '').trim();
 
         const target = this._browseTarget(text);
         if (target)

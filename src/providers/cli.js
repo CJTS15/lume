@@ -22,6 +22,9 @@ const POWER_PROGRAMS = new Set(['shutdown', 'poweroff', 'reboot', 'halt']);
 // ponytail: only direct calls are caught; wrappers (sh -c, env) are not.
 // sudo fails without a terminal to ask for the password.
 const POWER_VERBS = /^(systemctl|loginctl)\s+(-\S+\s+)*(poweroff|reboot|halt|kexec|soft-reboot|suspend|hibernate|hybrid-sleep|suspend-then-hibernate)\b/;
+// "> command": run it in the terminal, commands only. Deliberate, so
+// power commands are allowed here.
+const PREFIX = /^>\s*/;
 // Exit status of sh when the program could not be found.
 const NOT_FOUND = 127;
 // Flags, paths, pipes, redirects, assignments: clearly a command line.
@@ -38,9 +41,19 @@ export class CliProvider extends Provider {
         this._settings = settings;
     }
 
+    owns(text) {
+        return this._settings.get_boolean('run-commands') && PREFIX.test(text);
+    }
+
+    scope(text) {
+        return this.owns(text) ? _('Terminal') : null;
+    }
+
     query(text) {
         if (!this._settings.get_boolean('run-commands'))
             return [];
+        if (this.owns(text))
+            return this._terminalRow(text.replace(PREFIX, '').trim());
         const program = text.split(/\s+/)[0];
         if (POWER_PROGRAMS.has(program) || POWER_VERBS.test(text))
             return [];
@@ -61,11 +74,28 @@ export class CliProvider extends Provider {
             // likely an app.
             score: COMMAND_SYNTAX.test(args) ? 0.92 : args ? 0.6 : 0.45,
             activate: () => this._runInBackground(text),
-            // eval keeps the line as typed; the shell after it keeps the
-            // window open so the output can be read.
-            ctrlActivate: () => runInTerminal(this._settings,
-                ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', text]),
+            ctrlActivate: () => this._runInTerminal(text),
         }];
+    }
+
+    _terminalRow(line) {
+        if (!line)
+            return [];
+        return [{
+            id: 'terminal',
+            title: line.length > TITLE_LENGTH ? `${line.slice(0, TITLE_LENGTH - 1)}…` : line,
+            subtitle: _('Run in a terminal'),
+            icon: 'utilities-terminal-symbolic',
+            score: 0.97,
+            activate: () => this._runInTerminal(line),
+        }];
+    }
+
+    _runInTerminal(line) {
+        // eval keeps the line as typed; the shell after it keeps the
+        // window open so the output can be read.
+        runInTerminal(this._settings,
+            ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', line]);
     }
 
     async _runInBackground(line) {

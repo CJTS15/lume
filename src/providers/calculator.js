@@ -9,13 +9,24 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import {evaluate, formatResult} from '../lib/calculator.js';
 import {Provider} from '../lib/provider.js';
 
+// "= expression": calculator only.
+const PREFIX = /^=\s*/;
+
 export class CalculatorProvider extends Provider {
     constructor() {
         super({id: 'calculator', name: _('Calculator'), label: _('Calculator')});
     }
 
+    owns(text) {
+        return PREFIX.test(text);
+    }
+
+    scope(text) {
+        return this.owns(text) ? _('Calculator') : null;
+    }
+
     query(text) {
-        const value = evaluate(text);
+        const value = evaluate(text.replace(PREFIX, ''));
         if (value === null)
             return [];
 

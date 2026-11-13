@@ -2,8 +2,9 @@
  * Layout only. Colors, borders and shadows come from the Shell theme
  * classes set in lib/searchWindow.js (popup-menu-content, popup-menu-item,
  * StEntry, ...), so Lume follows light, dark, high contrast and custom
- * Shell themes. The one exception is a translucent neutral grey behind the
- * pill and key chips, which reads on light and dark backgrounds alike.
+ * Shell themes. The exceptions are a translucent neutral grey behind the
+ * pill and key chips (and around colour swatches), which reads on light and
+ * dark backgrounds alike, and the swatch's own colour, which is content.
  */
 
 .lume-panel {
@@ -66,6 +67,13 @@
   min-height: 44px;
   padding: 8px 14px;
   border-radius: 12px;
+}
+
+.lume-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
 }
 
 .lume-result-text {

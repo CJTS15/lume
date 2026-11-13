@@ -75,9 +75,14 @@ export class ClipboardProvider extends Provider {
         return this._settings.get_boolean('clipboard-persist');
     }
 
-    scope(text) {
+    owns(text) {
+        // Off: let "clip …" fall through to normal results.
         const lower = text.toLowerCase();
-        return lower === KEYWORD || lower.startsWith(`${KEYWORD} `) ? _('Clipboard') : null;
+        return this._enabled && (lower === KEYWORD || lower.startsWith(`${KEYWORD} `));
+    }
+
+    scope(text) {
+        return this.owns(text) ? _('Clipboard') : null;
     }
 
     query(text) {

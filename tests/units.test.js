@@ -5,7 +5,7 @@
 import System from 'system';
 
 import {formatResult} from '../src/lib/calculator.js';
-import {convert} from '../src/lib/units.js';
+import {convert, needsRates} from '../src/lib/units.js';
 
 let failures = 0;
 
@@ -63,6 +63,27 @@ check('10vmin to px', '10 vmin = 108 px', viewport);
 check('10vmax to px', '10 vmax = 192 px', viewport);
 check('1080px to vh', '1080 px = 100 vh', viewport);
 check('50vh to px', null);
+
+// Currency (rates per euro)
+const rates = {rates: {EUR: 1, USD: 1.1, PHP: 64}};
+check('100 eur to usd', '100 EUR = 110 USD', rates);
+check('11 usd in eur', '11 USD = 10 EUR', rates);
+check('1 usd to php', '1 USD = 58.1818181818 PHP', rates);
+check('100 EUR -> PHP', '100 EUR = 6400 PHP', rates);
+check('100 eur to usd', null);
+check('100 eur to gbp', null, rates);
+check('100 eur to km', null, rates);
+const needs = (text, expected) => {
+    if (needsRates(text) !== expected) {
+        failures++;
+        print(`FAIL needsRates(${JSON.stringify(text)}): expected ${expected}`);
+    }
+};
+needs('100 eur to usd', true);
+needs('usd to php', true);
+needs('10 km to mi', false);
+needs('100 eur to km', false);
+needs('100 abc to usd', false);
 
 // Not conversions
 check('10 km to kg', null);

@@ -38,6 +38,39 @@ registry.register(new Keyword('other', 'clip', 'Other'));
 check('first scope wins', registry.scopeFor('clip foo'), 'Clipboard');
 check('no scope', registry.scopeFor('firefox'), null);
 
+class Owner extends Provider {
+    constructor(id, prefix) {
+        super({id});
+        this._prefix = prefix;
+    }
+
+    owns(text) {
+        return this._prefix !== null && text.startsWith(this._prefix);
+    }
+
+    query() {
+        return [{id: 'x', title: this.id, activate: () => {}}];
+    }
+}
+
+const scoped = new ProviderRegistry();
+scoped.register(new Owner('apps', null));
+scoped.register(new Owner('web', 'b '));
+const answered = text => {
+    const ids = [];
+    // query() is async; the providers above answer synchronously.
+    scoped.query(text, {is_cancelled: () => false}, provider => ids.push(provider.id));
+    return ids;
+};
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+
+await settle();
+const owned = answered('b foo');
+const open = answered('foo');
+await settle();
+check('owner only', owned.join(), 'web');
+check('everyone without an owner', open.join(), 'apps,web');
+
 if (failures > 0) {
     print(`${failures} provider test(s) failed`);
     System.exit(1);

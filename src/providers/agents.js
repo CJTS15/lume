@@ -12,7 +12,8 @@ import {AGENTS, agentArgv} from '../lib/agents.js';
 import {Provider} from '../lib/provider.js';
 import {runInTerminal} from '../lib/terminal.js';
 
-const KEYWORD = 'ask';
+// "ask <prompt>" or "ai <prompt>": the default agent, agents only.
+const KEYWORDS = ['ask', 'ai'];
 const TITLE_LENGTH = 80;
 
 export class AgentsProvider extends Provider {
@@ -26,11 +27,15 @@ export class AgentsProvider extends Provider {
         this._openPreferences = openPreferences;
     }
 
+    owns(text) {
+        return KEYWORDS.includes(text.split(/\s+/)[0].toLowerCase());
+    }
+
     scope(text) {
         const [, word, rest = ''] = /^(\S+)(?:\s+([\s\S]*))?$/.exec(text) ?? [];
         const keyword = word?.toLowerCase();
         // A bare agent name ("claude") may be an app search.
-        if (keyword === KEYWORD || (Object.hasOwn(AGENTS, keyword) && rest.trim()))
+        if (KEYWORDS.includes(keyword) || (Object.hasOwn(AGENTS, keyword) && rest.trim()))
             return _('AI Agent');
         return null;
     }
@@ -38,7 +43,7 @@ export class AgentsProvider extends Provider {
     query(text) {
         const [, word, rest = ''] = /^(\S+)(?:\s+([\s\S]*))?$/.exec(text) ?? [];
         const keyword = word?.toLowerCase();
-        const explicit = keyword !== KEYWORD;
+        const explicit = !KEYWORDS.includes(keyword);
         const id = explicit ? keyword : this._settings.get_string('ai-agent');
         if (!Object.hasOwn(AGENTS, id))
             return [];
