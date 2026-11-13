@@ -377,6 +377,12 @@ class LumeSearchWindow extends St.Widget {
         if (iconActor) {
             iconActor.y_align = Clutter.ActorAlign.CENTER;
             row.add_child(iconActor);
+        } else if (result.glyph) {
+            row.add_child(new St.Label({
+                style_class: 'lume-glyph',
+                text: result.glyph,
+                y_align: Clutter.ActorAlign.CENTER,
+            }));
         } else if (/^#[0-9a-f]{6}$/i.test(result.swatch ?? '')) {
             row.add_child(new St.Widget({
                 style_class: 'lume-swatch',

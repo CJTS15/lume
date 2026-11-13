@@ -15,6 +15,7 @@ import {CliProvider} from './providers/cli.js';
 import {ClipboardProvider} from './providers/clipboard.js';
 import {CommandsProvider} from './providers/commands.js';
 import {DevToolsProvider} from './providers/devtools.js';
+import {EmojiProvider} from './providers/emoji.js';
 import {FilesProvider} from './providers/files.js';
 import {MediaProvider} from './providers/media.js';
 import {RemoteProvider} from './providers/remote.js';
@@ -38,6 +39,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new CalculatorProvider());
         this._registry.register(new UnitsProvider());
         this._registry.register(new DevToolsProvider());
+        this._registry.register(new EmojiProvider(this._settings));
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));
         this._registry.register(new WindowsProvider(this._settings));

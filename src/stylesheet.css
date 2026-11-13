@@ -76,6 +76,12 @@
   border: 1px solid rgba(127, 127, 127, 0.4);
 }
 
+.lume-glyph {
+  font-size: 1.5em;
+  min-width: 24px;
+  text-align: center;
+}
+
 .lume-result-text {
   spacing: 2px;
 }
