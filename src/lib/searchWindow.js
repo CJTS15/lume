@@ -370,9 +370,14 @@ class LumeSearchWindow extends St.Widget {
             accessible_role: Atk.Role.LIST_ITEM,
         });
 
+        // Remote search providers hand over a ready-made icon actor.
+        const iconActor = result.createIcon?.(ICON_SIZE);
         // The colour comes from a parsed "#rrggbb" only; check again before
         // it reaches CSS.
-        if (/^#[0-9a-f]{6}$/i.test(result.swatch ?? '')) {
+        if (iconActor) {
+            iconActor.y_align = Clutter.ActorAlign.CENTER;
+            row.add_child(iconActor);
+        } else if (/^#[0-9a-f]{6}$/i.test(result.swatch ?? '')) {
             row.add_child(new St.Widget({
                 style_class: 'lume-swatch',
                 style: `background-color: ${result.swatch};`,
