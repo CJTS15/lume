@@ -12,6 +12,7 @@ import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
@@ -74,6 +75,7 @@ class LumeSearchWindow extends St.Widget {
         this._openPreferences = openPreferences;
         this._grab = null;
         this._cancellable = null;
+        this._renderLater = 0;
         this._resultsByProvider = new Map();
         this._rows = [];
         this._selected = -1;
@@ -314,6 +316,7 @@ class LumeSearchWindow extends St.Widget {
     _onDestroy() {
         this._settings.disconnect(this._previewChangedId);
         this._settings.disconnect(this._previewPositionId);
+        this._cancelRender();
         this._cancelQuery();
         if (this._grab) {
             Main.popModal(this._grab);
@@ -377,11 +380,13 @@ class LumeSearchWindow extends St.Widget {
             this._resultsByProvider.set(provider.id, results);
             if (timing)
                 console.log(`lume: timing ${provider.id} +${elapsed()} ms, ${results.length} rows`);
-            this._render();
+            this._scheduleRender();
         }).then(() => {
             // Every provider has answered: show "No results" if none did.
             if (cancellable.is_cancelled())
                 return;
+            if (this._renderLater)
+                this._render();
             this._statusLabel.visible = this._rows.length === 0;
             this._separator.show();
             if (timing) {
@@ -398,7 +403,26 @@ class LumeSearchWindow extends St.Widget {
         this._separator.hide();
     }
 
+    /**
+     * Render once before the next frame, however many providers answer
+     * until then (most answer within the same main-loop turn).
+     */
+    _scheduleRender() {
+        this._renderLater ||= global.compositor.get_laters().add(Meta.LaterType.BEFORE_REDRAW, () => {
+            this._renderLater = 0;
+            this._render();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _cancelRender() {
+        if (this._renderLater)
+            global.compositor.get_laters().remove(this._renderLater);
+        this._renderLater = 0;
+    }
+
     _render() {
+        this._cancelRender();
         const started = this._timing ? GLib.get_monotonic_time() : 0;
         // Keep the selection only if the user put it there; otherwise a
         // late, better result (files, weather) must take the top spot, or
