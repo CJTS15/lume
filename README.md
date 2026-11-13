@@ -26,16 +26,16 @@ make install          # packs src/ and runs `gnome-extensions install --force`
 Then log out and back in (Wayland can't restart the Shell in place) and run:
 
 ```sh
-gnome-extensions enable lume@cjts15
+gnome-extensions enable lume@cjts15.github.io
 ```
 
-To remove: `gnome-extensions uninstall lume@cjts15`.
+To remove: `gnome-extensions uninstall lume@cjts15.github.io`.
 
 ### Development install
 
 `make link` compiles the schema and symlinks `src/` into
-`~/.local/share/gnome-shell/extensions/lume@cjts15`, so edits are picked up
-the next time a Shell starts. `make unlink` removes only that symlink.
+`~/.local/share/gnome-shell/extensions/lume@cjts15.github.io`, so edits are
+picked up the next time a Shell starts. `make unlink` removes only that symlink.
 
 ## Use
 
@@ -45,6 +45,9 @@ the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
 | <kbd>Enter</kbd> | Open the selected result |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in a terminal |
+| <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
+| <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Esc</kbd> or a click outside | Close |
 
 Enter on the search field opens the top (highlighted) result. Moving with the
@@ -55,30 +58,79 @@ What you can type:
 
 | Query | Result |
 | --- | --- |
-| An app name, keyword or initials (`term`, `frfx`) | Applications; Enter opens or focuses it |
-| An expression (`2*(3+4)`, `sqrt(2)`, `2^10`) | The result; Enter copies it |
-| Three or more letters of a file or folder name | Up to 5 files, from the LocalSearch index; Enter opens it |
+| Part or all of an app name (`term`, `vsc` on *Loose*) | Applications; Enter opens or focuses it |
+| A Settings panel or what you want to change (`wifi`, `night light`, `pointer speed`) | The best-matching Settings panels; Enter opens it |
+| Three or more letters of a file name, or part of a path | Up to 5 files from the LocalSearch index; Enter opens it |
+| A folder path (`~/Documents/`, `/etc/`, `~/Doc`) | That folder's contents, filtered by what follows the last `/` |
+| An expression (`4 + 3 * 8`, `2pi`, `sind(30)`) | The result; Enter copies it |
+| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`) | The converted value; Enter copies it |
+| A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
+| A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
 | `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
 | `ask <prompt>`, or `claude`/`codex`/`agy <prompt>` | Opens the AI agent's CLI in a terminal with your prompt |
-| Anything | Last row: search the web for it |
+| Anything that matches little else | Search the web for it |
 | `pref` | Lume Preferences |
 
-The calculator supports `+ - * / % ^` (or `**`), parentheses and `sqrt cbrt
-abs exp ln log sin cos tan asin acos atan round floor ceil`, `pi` and `e`.
-It never uses `eval`.
+### Fuzzy matching
+
+*Preferences → Search → Fuzzy Matching* sets how app and file names match:
+*Strict* matches the start of a name or a word in it, *Normal* (default) any
+part of a name, *Loose* also lets you leave out characters in between, so
+`vsc` finds Visual Studio Code. Apps always include GNOME's own overview
+search on top of this.
+
+### Calculator and unit conversion
+
+The calculator follows the order of operations: `+ - * / % ^` (or `**`) and
+parentheses. Implicit multiplication works: `2pi`, `2(3+4)`, `(2)(3)`.
+Functions: `sqrt cbrt abs exp ln log log10 log2 round rint floor ceil fact
+rad deg sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh pow fmod
+hypot min max`. `log` is base 10. Add `d` to a trigonometry function for
+degrees: `sind(30)`, `asind(0.5)`. Constants: `pi` (or `π`) and `e`. It never
+uses `eval`.
+
+Conversions take `to`, `in`, `into`, `as` or `->` between units of one
+category; without a number, 1 is assumed (`cup to qt`). Categories: length,
+mass, volume (US cups, pints, quarts, gallons), time, area, speed, storage
+(`kb`/`mb`/`gb` are 1000-based, `kib`/`mib`/`gib` 1024-based) and temperature.
+
+### Files
 
 Files come from GNOME's file index (LocalSearch, formerly Tracker), so only
 indexed folders are searched (Settings → Search → Search Locations). Hidden
 folders and `node_modules` are skipped. Without an index, Lume searches the
-names in your home folder, three levels deep.
+names in your home folder, three levels deep. Typing a path that starts with
+`/` or `~/` lists that folder instead (hidden files appear once the filter
+starts with `.`).
+
+*Search File Contents* (off by default) also matches text inside indexed
+files. It is slower, and only covers files LocalSearch extracts text from.
+
+### Web addresses
+
+With `https://` anything opens. Without it, only `localhost`, IPv4 addresses
+and a list of common domain endings (`.com`, `.org`, `.io`, `.dev`, `.ai`,
+country codes, …) count as addresses, because many endings are also file
+extensions: `notes.md`, `archive.zip` and `script.sh` stay file searches.
+
+### Commands
+
+When the first word is a program on your `PATH`, Lume offers to run the whole
+line with `/bin/sh` in your home folder, so pipes and quotes work as in a
+terminal. Enter runs it in the background and shows a notification if it
+fails; Ctrl+Enter opens it in your terminal and keeps the window open
+afterwards. Output is discarded. A bare program name ranks below matching
+apps, and a line ranks above Settings panels and apps only when it looks
+like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
+Commands* in preferences.
 
 ### Web search, weather and AI agents
 
 The web search row opens your query with the engine chosen in preferences
 (Google by default; DuckDuckGo, Brave Search, Startpage, or a custom
-`https://…%s` URL). Nothing is sent until you choose the row. It has the
-lowest score, so it drops off when the other results already fill the list.
+`https://…%s` URL). Nothing is sent until you choose the row. It appears only
+when fewer than three other results match.
 
 `weather` uses the default city from preferences; `weather <city>` looks up
 any city with Open-Meteo's geocoding. The city goes to Open-Meteo.com only
@@ -114,13 +166,15 @@ it in Lume's preferences.
 
 ## Preferences
 
-`gnome-extensions prefs lume@cjts15`, or search "Lume Preferences" in Lume.
+`gnome-extensions prefs lume@cjts15.github.io`, or search "Lume Preferences" in Lume.
 
 - **Open Lume**: click the row and press a combination. It needs Super, Ctrl
   or Alt. Esc cancels, Backspace disables the shortcut, the arrow button
   resets it. A combination already taken by GNOME never reaches the dialog;
   free it in GNOME Settings first.
 - **Width**, **Distance From Top**, **Maximum Results**.
+- **Search**: fuzzy matching (strict, normal, loose), search file contents,
+  run commands.
 - **Clipboard History**: on/off, keep on disk, number of items (5–200).
 - **Web Search**: search engine, custom URL.
 - **Weather**: default city, units (°C or °F).
@@ -149,8 +203,8 @@ package separately. On Fedora, find the package with
 (undo with `sudo dnf remove <name>`).
 
 Inside the nested session, open a terminal there and run
-`gnome-extensions enable lume@cjts15`, or enable it before starting with
-`gsettings set org.gnome.shell enabled-extensions "['lume@cjts15']"`
+`gnome-extensions enable lume@cjts15.github.io`, or enable it before starting with
+`gsettings set org.gnome.shell enabled-extensions "['lume@cjts15.github.io']"`
 (this changes your real settings too). Set the window size with
 `MUTTER_DEBUG_DUMMY_MODE_SPECS=1600x1000` (the Makefile does).
 
@@ -208,6 +262,8 @@ export class ExampleProvider extends Provider {
             icon: 'face-smile-symbolic',    // icon name or Gio.Icon
             score: 0.5,                     // 0..1, higher sorts first
             activate: () => console.log('chosen'),  // window is already closed
+            // Optional: ctrlActivate (Ctrl+Enter), altActivate (Alt+Enter),
+            // copy (Ctrl+C), fallback: true (only shown when few rows match)
         }];
     }
 
@@ -237,9 +293,13 @@ src/
   lib/calculator.js   expression parser (no gi imports)
   lib/match.js        text match scoring (no gi imports)
   lib/web.js          search engine URLs (no gi imports)
+  lib/units.js        unit conversion (no gi imports)
+  lib/url.js          web address recognition (no gi imports)
   lib/agents.js       agent and terminal argv (no gi imports)
-  providers/          one file per provider: apps, calculator, commands,
-                      files, clipboard, weather, agents, web
+  lib/terminal.js     run an argv in the user's terminal
+  providers/          one file per provider: apps, settings, files,
+                      calculator, units, url, cli, clipboard, weather,
+                      agents, web, commands (Lume's own)
   schemas/            GSettings schema
 tests/                gjs self-checks (`make test`), headless smoke test
                       (`make smoke`)

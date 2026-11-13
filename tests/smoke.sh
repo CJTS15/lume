@@ -9,7 +9,7 @@
 # Run with: make smoke
 
 set -u
-UUID=lume@cjts15
+UUID=lume@cjts15.github.io
 
 if [ -z "${LUME_SMOKE_DIR:-}" ]; then
     src=$(realpath "$(dirname "$0")/../src")

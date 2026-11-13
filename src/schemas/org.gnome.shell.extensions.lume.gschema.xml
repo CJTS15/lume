@@ -24,6 +24,26 @@
       <summary>Distance from the top</summary>
       <description>Distance between the top of the monitor and the search window, as a percentage of the monitor height.</description>
     </key>
+    <key name="fuzzy-matching" type="s">
+      <choices>
+        <choice value="strict"/>
+        <choice value="normal"/>
+        <choice value="loose"/>
+      </choices>
+      <default>'normal'</default>
+      <summary>How fuzzy app and file name matching is</summary>
+      <description>“strict” matches the start of a name or word, “normal” any part of a name, “loose” also skips characters in between (“vsc” finds Visual Studio Code).</description>
+    </key>
+    <key name="file-contents" type="b">
+      <default>false</default>
+      <summary>Search file contents</summary>
+      <description>Also match text inside indexed files. Slower than matching names.</description>
+    </key>
+    <key name="run-commands" type="b">
+      <default>true</default>
+      <summary>Offer to run commands</summary>
+      <description>When the first word is a program on PATH, show a row that runs the line.</description>
+    </key>
     <key name="clipboard-history" type="b">
       <default>true</default>
       <summary>Remember clipboard history</summary>

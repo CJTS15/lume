@@ -19,14 +19,16 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const ICON_SIZE = 24;
 const SCREEN_MARGIN = 16;
+// Fallback rows (web search) are hidden once this many other rows match.
+const FALLBACK_HIDDEN_AT = 3;
 
 const NAVIGATION_KEYS = new Set([
     Clutter.KEY_Down, Clutter.KEY_KP_Down, Clutter.KEY_Up, Clutter.KEY_KP_Up,
     Clutter.KEY_Tab, Clutter.KEY_ISO_Left_Tab, Clutter.KEY_Page_Down, Clutter.KEY_Page_Up,
 ]);
 
-// Return and KP_Enter on the entry arrive as ClutterText 'activate'; these
-// only reach _onKeyPress when a result row has key focus.
+// Return on the entry usually arrives as ClutterText 'activate' instead;
+// both paths pass the Ctrl/Alt state on to _activate.
 const ENTER_KEYS = new Set([Clutter.KEY_Return, Clutter.KEY_KP_Enter, Clutter.KEY_ISO_Enter]);
 
 /**
@@ -132,7 +134,8 @@ class LumeSearchWindow extends St.Widget {
         // Enter: ClutterText emits 'activate' for Return/KP_Enter/ISO_Enter.
         // Matching it in key-press-event did not work on GNOME 51; the
         // Shell's own search entry uses this signal.
-        this._entry.clutter_text.connect('activate', () => this._activate(this._selected));
+        this._entry.clutter_text.connect('activate', () =>
+            this._activate(this._selected, Clutter.get_current_event()?.get_state() ?? 0));
         this.connect('button-press-event', (_a, event) => {
             // Clicks on the (reactive) panel bubble up here too; only close
             // for clicks that land on the backdrop itself.
@@ -270,6 +273,8 @@ class LumeSearchWindow extends St.Widget {
         }
         // Array.prototype.sort is stable, so equal scores keep provider order.
         merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
+        if (merged.filter(r => !r.result.fallback).length >= FALLBACK_HIDDEN_AT)
+            merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
         merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
 
         this._resultsBox.destroy_all_children();
@@ -424,18 +429,31 @@ class LumeSearchWindow extends St.Widget {
             adjustment.value = box.y2 - pageSize;
     }
 
-    _activate(index) {
-        const row = this._rows[index];
-        if (!row)
+    /**
+     * @param {number} index
+     * @param {Clutter.ModifierType} [modifiers] - Ctrl or Alt pick the
+     *   row's second action, if it has one
+     */
+    _activate(index, modifiers = 0) {
+        const result = this._rows[index]?.result;
+        if (!result)
             return;
+        let action = result.activate;
+        if (modifiers & Clutter.ModifierType.CONTROL_MASK)
+            action = result.ctrlActivate ?? action;
+        else if (modifiers & Clutter.ModifierType.MOD1_MASK)
+            action = result.altActivate ?? action;
+        this._run(this._rows[index].key, action);
+    }
 
+    _run(key, action) {
         // Close first so the grab is released and focus can move to
         // whatever the result opens.
         this.close();
         try {
-            row.result.activate();
+            action();
         } catch (e) {
-            console.error(`lume: activating "${row.key}" failed: ${e}`);
+            console.error(`lume: activating "${key}" failed: ${e}`);
         }
     }
 
@@ -453,7 +471,17 @@ class LumeSearchWindow extends St.Widget {
         const previous = onRow ? this._selected - 1 : Math.max(0, this._selected - 1);
 
         if (ENTER_KEYS.has(symbol)) {
-            this._activate(this._selected);
+            this._activate(this._selected, state);
+            return Clutter.EVENT_STOP;
+        }
+
+        // Ctrl+C copies the selected row if it can be copied, unless text
+        // is selected in the entry.
+        const row = this._rows[this._selected];
+        if ((symbol === Clutter.KEY_c || symbol === Clutter.KEY_C) &&
+            (state & Clutter.ModifierType.CONTROL_MASK) && row?.result.copy &&
+            (onRow || !this._entry.clutter_text.get_selection())) {
+            this._run(row.key, row.result.copy);
             return Clutter.EVENT_STOP;
         }
 

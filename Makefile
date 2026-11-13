@@ -1,4 +1,4 @@
-UUID     := lume@cjts15
+UUID     := lume@cjts15.github.io
 SRC      := src
 EXT_DIR  := $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 ZIP      := $(UUID).shell-extension.zip
