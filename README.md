@@ -339,6 +339,15 @@ Handled in code, listed here so they're easy to find:
   `org.freedesktop.Tracker3.Miner.Files` before. `providers/files.js` tries
   both.
 
+## Inspiration
+
+Lume borrows ideas from these GNOME Shell launchers:
+
+- [lightning-search-gnome](https://github.com/mihierkansal/lightning-search-gnome)
+- [superbar](https://github.com/Furkan-rgb/superbar), the reference for the
+  search window's look
+- [searchlightng](https://git.salix.host/salix/searchlightng)
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
