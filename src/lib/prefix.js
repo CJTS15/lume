@@ -8,9 +8,9 @@ const WORD = /^[\p{L}\p{N}]/u;
 /**
  * The text after the first matching prefix, or null if none matches.
  *
- * A prefix starting with a letter or digit ("f", "win") must be followed
- * by whitespace, so typing a word ("foo", "wine") is never taken; one of
- * two or more characters also matches on its own ("win" lists all
+ * A prefix starting with a letter or digit ("f", "wd") must be followed
+ * by whitespace, so typing a word ("foo", "wdiff") is never taken; one of
+ * two or more characters also matches on its own ("wd" lists all
  * windows). A symbol prefix ("?", ">", ":") may be followed directly by
  * text. Comparison ignores case.
  *

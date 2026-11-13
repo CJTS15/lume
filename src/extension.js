@@ -28,6 +28,7 @@ import {UrlProvider} from './providers/url.js';
 import {WeatherProvider} from './providers/weather.js';
 import {WebSearchProvider} from './providers/web.js';
 import {WindowsProvider} from './providers/windows.js';
+import {WorkspacesProvider} from './providers/workspaces.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
 
@@ -44,6 +45,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));
         this._registry.register(new WindowsProvider(this._settings));
+        this._registry.register(new WorkspacesProvider(this._settings));
         this._registry.register(new CommandsProvider(this));
         this._registry.register(new SystemProvider());
         this._registry.register(new TogglesProvider());
@@ -55,11 +57,11 @@ export default class LumeExtension extends Extension {
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));
         this._registry.register(new RemoteProvider());
-        // After the built-in scopes, so a script never hides "win" or "clip".
+        // After the built-in scopes, so a script never hides "wd" or "clip".
         this._registry.register(new ScriptsProvider());
         this._registry.register(new WebSearchProvider(this._settings));
 
-        this._window = new SearchWindow(this._settings, this._registry);
+        this._window = new SearchWindow(this._settings, this._registry, () => this.openPreferences());
         Main.layoutManager.modalDialogGroup.add_child(this._window);
 
         this._addShortcut();

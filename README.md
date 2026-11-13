@@ -50,6 +50,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | The selected result's actions; <kbd>Esc</kbd> goes back |
 | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Show or hide the preview pane (remembered) |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> | Open Lume Preferences (also the gear button in the footer) |
 | <kbd>Esc</kbd> or a click outside | Close |
 
 Each row shows its type on the right (App, Setting, File, Folder, Web, …),
@@ -66,7 +67,8 @@ What you can type:
 | --- | --- |
 | Part or all of an app name (`term`, `vsc` on *Loose*) | Applications; Enter opens or focuses it |
 | A Settings panel or what you want to change (`wifi`, `night light`, `pointer speed`) | The best-matching Settings panels; Enter opens it |
-| A window title or app name, or `win` for all windows | Open windows; Enter focuses the window and its workspace |
+| A window title or app name, or `wd` for all windows | Open windows; Enter focuses the window and its workspace. Firefox and Chrome windows show their active tab |
+| `ws`, `ws 2`, `ws firefox` | Workspaces with their apps; Enter switches to the workspace |
 | `lock`, `suspend`, `restart`, `power off`, `log out` | GNOME's own system actions; power off, restart and log out ask for confirmation |
 | `dark`, `night light`, `dnd` | Turn Dark Style, Night Light or Do Not Disturb on or off |
 | `media`, `music`, `pause`, `next`, or a player, song or artist | Each playing or paused player; Enter plays/pauses, Ctrl+Enter next, Alt+Enter previous |
@@ -94,9 +96,12 @@ Start with one of these to see only one kind of result; the pill names it.
 | Prefix | Shows only |
 | --- | --- |
 | `? ` or `b ` | Web search |
+| `wiki ` | Search Wikipedia (in your language) |
+| `yt ` | Search YouTube |
 | `= ` | Calculator |
 | `f ` | Files |
-| `win` | Open windows |
+| `wd` | Open windows |
+| `ws` | Workspaces |
 | `clip` | Clipboard history |
 | `:` or `emoji ` | Emoji |
 | `ask ` or `ai ` | AI agent |
@@ -127,6 +132,7 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 Lume remembers whether it is shown. Files show their type, size, date and
 location, with a thumbnail for images; clipboard entries their full text;
 weather a 5-day forecast; other results their icon, title and subtitle.
+*Preferences → Preview Position* puts it on the left or right.
 
 ### User scripts
 
@@ -230,8 +236,9 @@ built from Unicode's emoji data by `tools/emoji.py` and ships in
 When the first word is a program on your `PATH`, Lume offers to run the whole
 line with `/bin/sh` in your home folder, so pipes and quotes work as in a
 terminal. Enter runs it in the background and shows a notification if it
-fails; Ctrl+Enter opens it in your terminal and keeps the window open
-afterwards. Output is discarded. A bare program name ranks below matching
+fails; Ctrl+Enter opens it in your terminal, run by your own shell (fish,
+bash or zsh, so your aliases and functions work), and keeps the window open
+afterwards. Output of background commands is discarded. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
 Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,
@@ -280,7 +287,7 @@ it in Lume's preferences.
 
 ## Preferences
 
-`gnome-extensions prefs lume@cjts15.github.io`, or search "Lume Preferences" in Lume.
+`gnome-extensions prefs lume@cjts15.github.io`, <kbd>Ctrl</kbd>+<kbd>,</kbd> or the gear button in Lume, or search "Lume Preferences".
 
 - **Open Lume**: click the row and press a combination. It needs Super, Ctrl
   or Alt. Esc cancels, Backspace disables the shortcut, the arrow button

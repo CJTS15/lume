@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {ENGINES, buildSearchUrl, isValidSearchUrl} from '../src/lib/web.js';
+import {ENGINES, SITES, browserTab, buildSearchUrl, isValidSearchUrl, wikipediaLanguage} from '../src/lib/web.js';
 
 let failures = 0;
 
@@ -31,6 +31,22 @@ check('file:', buildSearchUrl('file:///etc/%s', 'q'), null);
 check('spaces', buildSearchUrl('https://example.org/?q= %s', 'q'), null);
 check('no host', buildSearchUrl('https:///%s', 'q'), null);
 check('empty', buildSearchUrl('', 'q'), null);
+
+check('youtube', buildSearchUrl(SITES.youtube.url('en'), 'lo-fi beats'),
+    'https://www.youtube.com/results?search_query=lo-fi%20beats');
+check('wikipedia in the language', buildSearchUrl(SITES.wikipedia.url('de'), 'Köln'),
+    'https://de.wikipedia.org/wiki/Special:Search?search=K%C3%B6ln');
+check('language from locale', wikipediaLanguage(['de_DE.UTF-8', 'de_DE', 'de', 'C']), 'de');
+check('three-letter language', wikipediaLanguage(['fil_PH']), 'fil');
+check('C locale', wikipediaLanguage(['C']), 'en');
+check('no locale', wikipediaLanguage([]), 'en');
+
+check('firefox tab', browserTab('Lofi Girl - YouTube — Mozilla Firefox'), 'Lofi Girl - YouTube');
+check('firefox private', browserTab('Trello — Mozilla Firefox Private Browsing'), 'Trello');
+check('chrome tab', browserTab('Basecamp - Google Chrome'), 'Basecamp');
+check('chromium tab', browserTab('New Tab - Chromium'), 'New Tab');
+check('not a browser', browserTab('notes.md - Text Editor'), null);
+check('browser name alone', browserTab('Mozilla Firefox'), null);
 
 if (failures > 0) {
     print(`${failures} web test(s) failed`);

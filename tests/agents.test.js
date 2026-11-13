@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {agentArgv, terminalPrefix} from '../src/lib/agents.js';
+import {agentArgv, shellLineArgv, terminalPrefix} from '../src/lib/agents.js';
 
 let failures = 0;
 
@@ -55,6 +55,14 @@ check('empty exec-arg dropped', terminalPrefix({
     findProgram: find(['foot']),
 }), ['/usr/bin/foot']);
 check('none', terminalPrefix({override: null, desktopDefault: null, findProgram: find([])}), null);
+
+check('fish runs the line after its config', shellLineArgv('/usr/bin/fish', 'ff'), ['/usr/bin/fish', '-C', 'ff']);
+check('bash loads its rc file', shellLineArgv('/bin/bash', 'll -a'),
+    ['/bin/bash', '-i', '-c', 'eval "$1"; exec "$0"', '/bin/bash', 'll -a']);
+check('zsh too', shellLineArgv('/usr/bin/zsh', 'gs')[1], '-i');
+check('other shells fall back to sh', shellLineArgv('/usr/bin/nu', 'ls'),
+    ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', 'ls']);
+check('no SHELL', shellLineArgv(null, 'ls')[0], '/bin/sh');
 
 if (failures > 0) {
     print(`${failures} agents test(s) failed`);
