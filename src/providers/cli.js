@@ -15,9 +15,12 @@ import {Provider} from '../lib/provider.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
-const ERROR_LENGTH = 300;
+// Exit status of sh when the program could not be found.
+const NOT_FOUND = 127;
+// Flags, paths, pipes, redirects, assignments: clearly a command line.
+const COMMAND_SYNTAX = /(^|\s)-|[/|<>=$&;]/;
 
-Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async');
+Gio._promisify(Gio.Subprocess.prototype, 'wait_async');
 
 export class CliProvider extends Provider {
     /**
@@ -36,16 +39,18 @@ export class CliProvider extends Provider {
         if (!GLib.find_program_in_path(program))
             return [];
 
-        const hasArgs = program !== text;
+        const args = text.slice(program.length);
         const shown = text.length > TITLE_LENGTH ? `${text.slice(0, TITLE_LENGTH - 1)}…` : text;
         return [{
             id: 'run',
             title: shown,
             subtitle: _('Run in background · Ctrl+Enter to run in a terminal'),
             icon: 'utilities-terminal-symbolic',
-            // A bare word ("firefox", "htop") is more likely an app search:
-            // stay below apps. With arguments it is clearly a command.
-            score: hasArgs ? 0.92 : 0.45,
+            // Only clear command syntax ("ls -la") ranks above apps and
+            // Settings panels: "date time" or "time zone" start with a
+            // program but are searches. A bare word ("firefox") is more
+            // likely an app.
+            score: COMMAND_SYNTAX.test(args) ? 0.92 : args ? 0.6 : 0.45,
             activate: () => this._runInBackground(text),
             // eval keeps the line as typed; the shell after it keeps the
             // window open so the output can be read.
@@ -55,22 +60,25 @@ export class CliProvider extends Provider {
     }
 
     async _runInBackground(line) {
-        let stderr, status;
+        let detail;
         try {
+            // Output is discarded, not piped: a long-running command
+            // ("tail -f") must not grow the Shell's memory.
             const launcher = new Gio.SubprocessLauncher({
-                flags: Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_PIPE,
+                flags: Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE,
             });
             launcher.set_cwd(GLib.get_home_dir());
             const process = launcher.spawnv(['/bin/sh', '-c', line]);
-            [, stderr] = await process.communicate_utf8_async(null, null);
+            await process.wait_async(null);
             if (process.get_successful())
                 return;
-            status = process.get_exit_status();
+            const status = process.get_if_exited() ? process.get_exit_status() : -1;
+            detail = status === NOT_FOUND
+                ? _('Command not found')
+                : _('Exited with status %d').format(status);
         } catch (e) {
-            stderr = e.message;
+            detail = e.message;
         }
-        const detail = stderr?.trim().slice(-ERROR_LENGTH) ||
-            _('Exited with status %d').format(status);
         Main.notifyError(_('Command failed: %s').format(line.slice(0, TITLE_LENGTH)), detail);
     }
 }

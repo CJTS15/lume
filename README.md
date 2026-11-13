@@ -120,9 +120,10 @@ When the first word is a program on your `PATH`, Lume offers to run the whole
 line with `/bin/sh` in your home folder, so pipes and quotes work as in a
 terminal. Enter runs it in the background and shows a notification if it
 fails; Ctrl+Enter opens it in your terminal and keeps the window open
-afterwards. A bare program name ranks below matching apps; a line with
-arguments ranks near the top. Turn this off with *Run Commands* in
-preferences.
+afterwards. Output is discarded. A bare program name ranks below matching
+apps, and a line ranks above Settings panels and apps only when it looks
+like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
+Commands* in preferences.
 
 ### Web search, weather and AI agents
 
