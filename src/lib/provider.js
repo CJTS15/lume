@@ -10,6 +10,34 @@
 
 import Gio from 'gi://Gio';
 
+// Caps for text from untrusted sources (remote apps, scripts, the network).
+const MAX_TITLE = 256;
+const MAX_SUBTITLE = 512;
+const MAX_TYPE = 32;
+
+const cap = (text, max) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
+
+/**
+ * The boundary check every provider's rows pass before they are shown:
+ * rows without a title or activate are dropped, text is capped and the
+ * score made a finite number, so one bad row can never break rendering.
+ * Fixes rows in place.
+ *
+ * @param {Result[]} results
+ * @returns {Result[]}
+ */
+export function checkResults(results) {
+    return results.filter(r => typeof r?.title === 'string' && r.title.trim() &&
+        typeof r.activate === 'function')
+        .map(r => {
+            r.title = cap(r.title, MAX_TITLE);
+            r.subtitle = typeof r.subtitle === 'string' ? cap(r.subtitle, MAX_SUBTITLE) : undefined;
+            r.type = typeof r.type === 'string' ? cap(r.type, MAX_TYPE) : undefined;
+            r.score = Number.isFinite(r.score) ? r.score : 0;
+            return r;
+        });
+}
+
 /**
  * A single row in the search window.
  *
@@ -154,7 +182,7 @@ export class ProviderRegistry {
             let results;
             const update = interim => {
                 if (!cancellable.is_cancelled() && Array.isArray(interim))
-                    onResults(provider, interim);
+                    onResults(provider, checkResults(interim));
             };
             try {
                 results = await provider.query(text, cancellable, update);
@@ -166,7 +194,7 @@ export class ProviderRegistry {
             }
             if (cancellable.is_cancelled() || !Array.isArray(results))
                 return;
-            onResults(provider, results);
+            onResults(provider, checkResults(results));
         }));
     }
 

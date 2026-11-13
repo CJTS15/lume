@@ -45,7 +45,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
 | <kbd>Enter</kbd> | Open the selected result |
-| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in a terminal |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in the background |
 | <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | The selected result's actions; <kbd>Esc</kbd> goes back |
@@ -80,7 +80,7 @@ What you can type:
 | A colour (`#ff8800`, `rgb(255, 136, 0)`) | The other notation with a swatch; Enter copies it |
 | `unix`, or a 10- or 13-digit timestamp | The current Unix time, or that moment's date; Enter copies it |
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
-| A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
+| A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in your terminal; Ctrl+Enter runs it in the background |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
 | `:coffee` or `emoji coffee` | Emoji by name or keyword; Enter copies the emoji |
 | Anything apps can search (an event, a contact, an app to install, …) | Results from apps' GNOME search providers; Enter opens it in the app |
@@ -146,9 +146,14 @@ title|subtitle|command
 
 Enter runs `command` with `/bin/sh` in the background (a line without a
 command copies its title). A script gets 2 seconds and 50 lines; it runs
-under `timeout`, so anything it started ends with it. Lume runs only scripts
-you put there, and only when their name starts the search. New scripts are
-picked up within a few seconds.
+under `timeout` at low CPU priority (`nice`), so anything it started ends
+with it. Lume runs only scripts you put there, and only when their name
+starts the search. New scripts are picked up within a few seconds.
+
+A script, the `scripts` folder and every folder above it must belong to you
+(or root) and must not be writable by other users; otherwise Lume shows
+"Script not run" instead.
+`chmod go-w ~/.config/lume/scripts ~/.config/lume/scripts/*` fixes it.
 
 ```sh
 #!/bin/sh
@@ -234,11 +239,12 @@ built from Unicode's emoji data by `tools/emoji.py` and ships in
 ### Commands
 
 When the first word is a program on your `PATH`, Lume offers to run the whole
-line with `/bin/sh` in your home folder, so pipes and quotes work as in a
-terminal. Enter runs it in the background and shows a notification if it
-fails; Ctrl+Enter opens it in your terminal, run by your own shell (fish,
-bash or zsh, so your aliases and functions work), and keeps the window open
-afterwards. Output of background commands is discarded. A bare program name ranks below matching
+line in your home folder. Enter opens it in your terminal, run by your own
+shell (fish, bash or zsh, so your aliases and functions work), and keeps the
+window open afterwards, so a mistyped command can be seen and stopped.
+Ctrl+Enter runs it in the background with `/bin/sh` instead, and shows a
+notification if it fails; its output is discarded. *Enter Runs Commands In*
+in preferences swaps the two. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
 Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,
@@ -277,8 +283,27 @@ only by you); turning it off deletes the file. `clip` also offers *Clear
 Clipboard History*.
 
 Copies that a password manager marks as secret (`x-kde-passwordManagerHint`,
-set by KeePassXC and others) are skipped. Password managers that don't set
-it are not excluded; turn off *Remember Copied Text* if that matters to you.
+set by KeePassXC and KWallet) are skipped. Bitwarden and 1Password don't set
+it, so Lume also skips copies that look like a secret: GitHub, AWS, Slack and
+AI API tokens (`sk-…`), JWTs, private keys and card numbers. A plain password
+from such a manager can't be recognised; turn off *Remember Copied Text* if
+that matters to you.
+
+### What leaves your computer
+
+Lume sends nothing unless one of these happens:
+
+- `weather …`: the city to Open-Meteo.com (geocoding and forecast).
+- A currency conversion: one fixed request for the day's ECB rates to
+  frankfurter.dev, at most every 12 hours. Your query is never sent.
+- Results from apps' GNOME search providers: Lume asks the apps, as the
+  overview does; some (Software, browsers) may search online.
+- Choosing a web, Wikipedia or YouTube search row or a web address: your
+  browser opens it.
+
+*Preferences → Privacy → Offline Mode* turns off the first three and the web
+search rows. Saved exchange rates are still used. Commands, AI agents and
+web addresses you choose to open are not affected.
 
 **Why not <kbd>Super</kbd>+<kbd>Space</kbd>?** GNOME uses it to switch input
 sources. To use it for Lume, first clear or change *Settings → Keyboard →

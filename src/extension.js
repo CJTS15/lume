@@ -39,7 +39,7 @@ export default class LumeExtension extends Extension {
         this._registry = new ProviderRegistry();
         // Registration order breaks score ties.
         this._registry.register(new CalculatorProvider(this._settings));
-        this._registry.register(new UnitsProvider());
+        this._registry.register(new UnitsProvider(this._settings));
         this._registry.register(new DevToolsProvider());
         this._registry.register(new EmojiProvider(this._settings));
         this._registry.register(new UrlProvider());
@@ -56,7 +56,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));
-        this._registry.register(new RemoteProvider());
+        this._registry.register(new RemoteProvider(this._settings));
         // After the built-in scopes, so a script never hides "wd" or "clip".
         this._registry.register(new ScriptsProvider());
         this._registry.register(new WebSearchProvider(this._settings));

@@ -14,8 +14,12 @@ import {Rates} from '../lib/rates.js';
 import {convert, needsRates} from '../lib/units.js';
 
 export class UnitsProvider extends Provider {
-    constructor() {
+    /**
+     * @param {Gio.Settings} settings
+     */
+    constructor(settings) {
         super({id: 'units', name: _('Unit Conversion'), label: _('Conversion')});
+        this._settings = settings;
         this._rates = new Rates();
     }
 
@@ -33,13 +37,14 @@ export class UnitsProvider extends Provider {
 
     async _currency(text) {
         let rates;
+        const offline = this._settings.get_boolean('offline-mode');
         try {
-            rates = await this._rates.get();
+            rates = await this._rates.get(offline);
         } catch (e) {
             return [{
                 id: 'conversion-error',
                 title: _('Exchange rates unavailable'),
-                subtitle: e.message,
+                subtitle: offline ? _('Offline mode is on and no rates are saved yet') : e.message,
                 icon: 'network-offline-symbolic',
                 score: 0.95,
                 activate: () => {},

@@ -719,7 +719,8 @@ class LumeSearchWindow extends St.Widget {
         try {
             action();
         } catch (e) {
-            console.error(`lume: activating "${key}" failed: ${e}`);
+            // Only the provider: a row's id can hold clipboard text or a file name.
+            console.error(`lume: activating a "${key.split(':')[0]}" row failed: ${e}`);
         }
     }
 

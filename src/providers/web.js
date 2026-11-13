@@ -50,6 +50,16 @@ export class WebSearchProvider extends Provider {
         text = scoped?.text ?? text;
         if (!text)
             return [];
+        if (this._settings.get_boolean('offline-mode')) {
+            // Asked for with a prefix: say why there is nothing.
+            return scoped ? [{
+                id: 'offline',
+                title: _('Web search is off in offline mode'),
+                icon: 'network-offline-symbolic',
+                score: 0.05,
+                activate: () => {},
+            }] : [];
+        }
 
         let name = scoped?.site?.name;
         let template;
@@ -80,7 +90,8 @@ export class WebSearchProvider extends Provider {
                         try {
                             Gio.AppInfo.launch_default_for_uri_finish(res);
                         } catch (e) {
-                            console.error(`lume: could not open ${url}: ${e.message}`);
+                            // Never log the URL: it contains the query.
+                            console.error(`lume: could not open a web search: ${e.message}`);
                         }
                     });
             },

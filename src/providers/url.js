@@ -34,7 +34,8 @@ export class UrlProvider extends Provider {
                         try {
                             Gio.AppInfo.launch_default_for_uri_finish(res);
                         } catch (e) {
-                            console.error(`lume: could not open ${url}: ${e.message}`);
+                            // Never log the address: it is what the user typed.
+                            console.error(`lume: could not open a web address: ${e.message}`);
                         }
                     });
             },

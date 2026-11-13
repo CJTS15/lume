@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {Provider, ProviderRegistry} from '../src/lib/provider.js';
+import {Provider, ProviderRegistry, checkResults} from '../src/lib/provider.js';
 
 let failures = 0;
 
@@ -97,6 +97,44 @@ reports.length = 0;
 cancelled = true;
 await slow.query('x', {is_cancelled: () => cancelled}, (_p, results) => reports.push(results[0].id));
 check('no interim rows once cancelled', reports.join(), '');
+
+// One check for every provider's rows (remote apps, scripts, network).
+const ok = () => {};
+const checked = checkResults([
+    {id: 'a', title: 'Good', activate: ok, score: 0.5},
+    {id: 'b', title: '', activate: ok},
+    {id: 'c', title: '   ', activate: ok},
+    {id: 'd', title: 42, activate: ok},
+    {id: 'e', title: 'No activate'},
+    null,
+    {id: 'f', title: 'x'.repeat(1000), subtitle: 'y'.repeat(1000), type: 'z'.repeat(100), activate: ok, score: NaN},
+    {id: 'g', title: 'Odd fields', subtitle: {}, type: 7, activate: ok, score: '0.9'},
+]);
+check('only valid rows kept', checked.map(r => r.id).join(), 'a,f,g');
+check('title capped', checked[1].title.length, 256);
+check('title ends with an ellipsis', checked[1].title.endsWith('…'), true);
+check('subtitle capped', checked[1].subtitle.length, 512);
+check('type capped', checked[1].type.length, 32);
+check('NaN score', checked[1].score, 0);
+check('string score', checked[2].score, 0);
+check('non-string subtitle dropped', checked[2].subtitle, undefined);
+check('non-string type dropped', checked[2].type, undefined);
+check('good row untouched', checked[0].score, 0.5);
+
+class Broken extends Provider {
+    constructor() {
+        super({id: 'broken'});
+    }
+
+    query() {
+        return [{id: 'x', title: 'x'}, {id: 'y', title: 'Fine', activate: ok}];
+    }
+}
+const guarded = new ProviderRegistry();
+guarded.register(new Broken());
+const seen = [];
+await guarded.query('x', {is_cancelled: () => false}, (_p, results) => seen.push(...results.map(r => r.id)));
+check('registry drops bad rows', seen.join(), 'y');
 
 if (failures > 0) {
     print(`${failures} provider test(s) failed`);

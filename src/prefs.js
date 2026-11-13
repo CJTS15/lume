@@ -46,6 +46,7 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildAppearanceGroup(settings));
         page.add(this._buildSearchGroup(settings));
         page.add(this._buildClipboardGroup(settings));
+        page.add(this._buildPrivacyGroup(settings));
         page.add(this._buildWebSearchGroup(settings));
         page.add(this._buildWeatherGroup(settings));
         page.add(this._buildAgentGroup(settings));
@@ -142,18 +143,37 @@ export default class LumePreferences extends ExtensionPreferences {
 
         const commands = new Adw.SwitchRow({
             title: _('Run Commands'),
-            subtitle: _('When the first word is a program, Enter runs the line in the background'),
+            subtitle: _('When the first word is a program, offer to run the line'),
         });
         settings.bind('run-commands', commands, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(commands);
 
+        const enter = this._comboRow(settings, 'command-enter', _('Enter Runs Commands In'), [
+            ['terminal', _('Terminal')],
+            ['background', _('Background')],
+        ]);
+        enter.subtitle = _('A terminal shows the output and lets you stop the command. Ctrl+Enter does the other.');
+        settings.bind('run-commands', enter, 'sensitive', Gio.SettingsBindFlags.GET);
+        group.add(enter);
+
+        return group;
+    }
+
+    _buildPrivacyGroup(settings) {
+        const group = new Adw.PreferencesGroup({title: _('Privacy')});
+        const offline = new Adw.SwitchRow({
+            title: _('Offline Mode'),
+            subtitle: _('Nothing leaves this computer: no weather or exchange-rate requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
+        });
+        settings.bind('offline-mode', offline, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(offline);
         return group;
     }
 
     _buildClipboardGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Clipboard History'),
-            description: _('Search “clip” to see copied text. Copies that password managers mark as secret are skipped.'),
+            description: _('Search “clip” to see copied text. Copies that password managers mark as secret, and ones that look like tokens, keys or card numbers, are skipped.'),
         });
 
         const history = new Adw.SwitchRow({title: _('Remember Copied Text')});

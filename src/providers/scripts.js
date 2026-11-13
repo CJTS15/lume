@@ -5,7 +5,8 @@
 // its one argument (never through a shell). Each line it prints,
 // "title|subtitle|command", becomes a row; Enter runs the command with
 // /bin/sh in the background. Only scripts the user put there ever run, and
-// only for their own name.
+// only for their own name; a script or folder that another user could
+// change is never run.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -26,6 +27,7 @@ const MAX_LINES = 50;
 const SIGTERM = 15;
 
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
+Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
 // The Shell may already have wrapped read_line_async (with bytes as the
 // result), and a second wrap is ignored, so lines are decoded below.
@@ -36,6 +38,7 @@ export class ScriptsProvider extends Provider {
         super({id: 'scripts', name: _('User Scripts'), label: _('Script')});
         /** @type {Map<string, string>} name -> path */
         this._scripts = new Map();
+        this._uid = new Gio.Credentials().get_unix_user();
         this._scanned = 0;
         this._scanning = null;
         this._debounce = null;
@@ -102,16 +105,53 @@ export class ScriptsProvider extends Provider {
         return scripts;
     }
 
+    /**
+     * Whether another user could change the script, or swap it by changing
+     * a folder above it: the script or any folder up to / is owned by
+     * someone other than the user or root, or writable by group or others
+     * (the rule ssh applies to ~/.ssh). Checked right before each run.
+     *
+     * @param {string} path
+     * @returns {Promise<boolean>}
+     */
+    async _unsafe(path) {
+        // ponytail: a symlinked folder's own parents are not walked; the
+        // usual layout has none. Resolve symlinks first if that changes.
+        for (let file = Gio.File.new_for_path(path); file; file = file.get_parent()) {
+            const info = await file.query_info_async('unix::uid,unix::mode',
+                Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
+            const uid = info.get_attribute_uint32('unix::uid');
+            const mode = info.get_attribute_uint32('unix::mode');
+            // A sticky folder (/tmp) is fine: others can't rename what is ours.
+            if ((uid !== this._uid && uid !== 0) || ((mode & 0o022) !== 0 && (mode & 0o1000) === 0))
+                return true;
+        }
+        return false;
+    }
+
     async query(text, cancellable) {
         const match = this._match(text);
         if (!match)
             return [];
-
+        const path = this._scripts.get(match.name);
         await this._wait();
         if (cancellable.is_cancelled() || this._destroyed)
             return [];
 
-        const lines = await this._run(this._scripts.get(match.name), match.rest, cancellable);
+        // After the wait: right before the run, not 300 ms earlier.
+        if (await this._unsafe(path)) {
+            return [{
+                id: 'unsafe',
+                type: match.name,
+                title: _('Script “%s” not run').format(match.name),
+                subtitle: _('Other users can change it or a folder above it. Fix with: chmod go-w'),
+                icon: 'dialog-warning-symbolic',
+                score: 0.97,
+                activate: () => {},
+            }];
+        }
+
+        const lines = await this._run(path, match.rest, cancellable);
         return lines.map(line => line.split('|'))
             .filter(([title]) => title?.trim())
             .map(([title, subtitle, ...command], index) => {
@@ -147,7 +187,13 @@ export class ScriptsProvider extends Provider {
             // the whole group, so children it started do not outlive it.
             const timeout = GLib.find_program_in_path('timeout');
             const seconds = String(TIMEOUT_MS / 1000 + 1);
-            process = launcher.spawnv(timeout ? [timeout, '-k', '1', seconds, path, rest] : [path, rest]);
+            // Low CPU priority, so a busy script never slows the desktop.
+            const nice = GLib.find_program_in_path('nice');
+            process = launcher.spawnv([
+                ...nice ? [nice, '-n', '10'] : [],
+                ...timeout ? [timeout, '-k', '1', seconds] : [],
+                path, rest,
+            ]);
         } catch (e) {
             console.warn(`lume: could not run script ${path}: ${e.message}`);
             return [];
