@@ -18,11 +18,12 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {evaluate} from '../lib/calculator.js';
 import {fuzzyScore, matchScore} from '../lib/match.js';
+import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
 
 const MIN_QUERY_LENGTH = 3;
-// "e name": files only.
-const PREFIX = /^e\s+/i;
+// "f name": files only.
+const PREFIX = /^f\s+/i;
 const MAX_RESULTS = 5;
 // Fetch more than shown; results are scored and cut afterwards.
 const QUERY_LIMIT = 40;
@@ -167,8 +168,8 @@ export class FilesProvider extends Provider {
     }
 
     owns(text) {
-        // "e * 2" is the constant e, not a file search.
-        return PREFIX.test(text) && evaluate(text) === null;
+        // "f to c" is a temperature conversion, not a file search.
+        return PREFIX.test(text) && convert(text) === null && evaluate(text) === null;
     }
 
     scope(text) {

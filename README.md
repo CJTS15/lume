@@ -91,7 +91,7 @@ Start with one of these to see only one kind of result; the pill names it.
 | --- | --- |
 | `? ` or `b ` | Web search |
 | `= ` | Calculator |
-| `e ` | Files |
+| `f ` | Files |
 | `win` | Open windows |
 | `clip` | Clipboard history |
 | `ask ` or `ai ` | AI agent |
