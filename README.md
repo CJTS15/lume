@@ -45,7 +45,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
 | <kbd>Enter</kbd> | Open the selected result |
-| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in a terminal |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in the background |
 | <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selected file (to paste in Files), result or address; with text selected in the search field, copies that text |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | The selected result's actions; <kbd>Esc</kbd> goes back |
@@ -80,7 +80,7 @@ What you can type:
 | A colour (`#ff8800`, `rgb(255, 136, 0)`) | The other notation with a swatch; Enter copies it |
 | `unix`, or a 10- or 13-digit timestamp | The current Unix time, or that moment's date; Enter copies it |
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
-| A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
+| A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in your terminal; Ctrl+Enter runs it in the background |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
 | `:coffee` or `emoji coffee` | Emoji by name or keyword; Enter copies the emoji |
 | Anything apps can search (an event, a contact, an app to install, …) | Results from apps' GNOME search providers; Enter opens it in the app |
@@ -238,11 +238,12 @@ built from Unicode's emoji data by `tools/emoji.py` and ships in
 ### Commands
 
 When the first word is a program on your `PATH`, Lume offers to run the whole
-line with `/bin/sh` in your home folder, so pipes and quotes work as in a
-terminal. Enter runs it in the background and shows a notification if it
-fails; Ctrl+Enter opens it in your terminal, run by your own shell (fish,
-bash or zsh, so your aliases and functions work), and keeps the window open
-afterwards. Output of background commands is discarded. A bare program name ranks below matching
+line in your home folder. Enter opens it in your terminal, run by your own
+shell (fish, bash or zsh, so your aliases and functions work), and keeps the
+window open afterwards, so a mistyped command can be seen and stopped.
+Ctrl+Enter runs it in the background with `/bin/sh` instead, and shows a
+notification if it fails; its output is discarded. *Enter Runs Commands In*
+in preferences swaps the two. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
 Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,

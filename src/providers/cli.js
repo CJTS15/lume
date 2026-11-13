@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Commands: when the first word is a program on PATH ("htop", "git status",
-// "ls -la"), offer to run the line. Enter runs it in the background,
-// Ctrl+Enter in a terminal window. In the background the line is run by
+// "ls -la"), offer to run the line. Enter runs it in a terminal window
+// (or in the background, by setting), Ctrl+Enter the other way. In the background the line is run by
 // /bin/sh; in a terminal by the user's shell, so its aliases work.
 
 import GLib from 'gi://GLib';
@@ -67,21 +67,27 @@ export class CliProvider extends Provider {
 
         const args = text.slice(program.length);
         const shown = text.length > TITLE_LENGTH ? `${text.slice(0, TITLE_LENGTH - 1)}…` : text;
+        const background = () => runInBackground(text);
+        const terminal = () => this._runInTerminal(text);
+        // Terminal by default: a mistyped command is seen and can be stopped.
+        const inTerminal = this._settings.get_string('command-enter') !== 'background';
         return [{
             id: 'run',
             title: shown,
-            subtitle: _('Run in background · Ctrl+Enter to run in a terminal'),
+            subtitle: inTerminal
+                ? _('Run in a terminal · Ctrl+Enter to run in background')
+                : _('Run in background · Ctrl+Enter to run in a terminal'),
             icon: 'utilities-terminal-symbolic',
             // Only clear command syntax ("ls -la") ranks above apps and
             // Settings panels: "date time" or "time zone" start with a
             // program but are searches. A bare word ("firefox") is more
             // likely an app.
             score: COMMAND_SYNTAX.test(args) ? 0.92 : args ? 0.6 : 0.45,
-            activate: () => runInBackground(text),
-            ctrlActivate: () => this._runInTerminal(text),
+            activate: inTerminal ? terminal : background,
+            ctrlActivate: inTerminal ? background : terminal,
             actions: [
-                {label: _('Run in Background'), icon: 'system-run-symbolic', run: () => runInBackground(text)},
-                {label: _('Run in Terminal'), icon: 'utilities-terminal-symbolic', run: () => this._runInTerminal(text)},
+                {label: _('Run in Terminal'), icon: 'utilities-terminal-symbolic', run: terminal},
+                {label: _('Run in Background'), icon: 'system-run-symbolic', run: background},
             ],
         }];
     }
