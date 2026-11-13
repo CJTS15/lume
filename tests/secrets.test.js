@@ -40,6 +40,8 @@ check('ghp_ too short', looksSecret('ghp_abc'), false);
 check('failing Luhn', looksSecret('4111 1111 1111 1112'), false);
 check('phone number', looksSecret('+63 912 345 6789'), false);
 check('card number inside text', looksSecret('order 4111111111111111 shipped'), false);
+// Passes Luhn, but card numbers start with 2–6 and millisecond timestamps with 1.
+check('millisecond timestamp', looksSecret('1794560000009'), false);
 check('JWT-like words', looksSecret('eyJ.eyJ.x'), false);
 check('empty', looksSecret(''), false);
 

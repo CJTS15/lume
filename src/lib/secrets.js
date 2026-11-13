@@ -15,8 +15,9 @@ const PATTERNS = [
     /\bsk-[A-Za-z0-9_-]{20,}/, // AI API keys (sk-ant-…, sk-proj-…)
 ];
 
-// The whole text is 13–19 digits, maybe grouped by spaces or dashes.
-const CARD = /^\d(?:[ -]?\d){12,18}$/;
+// The whole text is 13–19 digits, maybe grouped by spaces or dashes,
+// starting with 2–6 like card numbers (millisecond timestamps start with 1).
+const CARD = /^[2-6](?:[ -]?\d){12,18}$/;
 
 /** @param {string} digits */
 function passesLuhn(digits) {
