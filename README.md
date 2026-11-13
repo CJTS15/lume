@@ -230,8 +230,9 @@ built from Unicode's emoji data by `tools/emoji.py` and ships in
 When the first word is a program on your `PATH`, Lume offers to run the whole
 line with `/bin/sh` in your home folder, so pipes and quotes work as in a
 terminal. Enter runs it in the background and shows a notification if it
-fails; Ctrl+Enter opens it in your terminal and keeps the window open
-afterwards. Output is discarded. A bare program name ranks below matching
+fails; Ctrl+Enter opens it in your terminal, run by your own shell (fish,
+bash or zsh, so your aliases and functions work), and keeps the window open
+afterwards. Output of background commands is discarded. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
 Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,

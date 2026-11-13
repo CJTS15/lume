@@ -60,6 +60,29 @@ const KNOWN_TERMINALS = [
 ];
 
 /**
+ * Argv that runs a typed line in the user's shell, so its aliases and
+ * functions work ("ff" in fish), then leaves that shell open so the
+ * output can be read.
+ *
+ * @param {string|null} shell - $SHELL
+ * @param {string} line - kept as typed, one argv element
+ * @returns {string[]}
+ */
+export function shellLineArgv(shell, line) {
+    switch (shell?.split('/').pop()) {
+    case 'fish':
+        // -C runs the line after config.fish, then shows the prompt.
+        return [shell, '-C', line];
+    case 'bash':
+    case 'zsh':
+        // -i loads the rc file, where aliases live; $0 is the shell.
+        return [shell, '-i', '-c', 'eval "$1"; exec "$0"', shell, line];
+    default:
+        return ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', line];
+    }
+}
+
+/**
  * Pick the terminal command prefix: the user's override, then
  * xdg-terminal-exec, then GNOME's default-applications setting, then known
  * terminals. The first whose program exists wins.

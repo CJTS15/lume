@@ -2,8 +2,8 @@
 //
 // Commands: when the first word is a program on PATH ("htop", "git status",
 // "ls -la"), offer to run the line. Enter runs it in the background,
-// Ctrl+Enter in a terminal window. The line is run by /bin/sh, as if typed
-// in a terminal, because that is what the user typed it for.
+// Ctrl+Enter in a terminal window. In the background the line is run by
+// /bin/sh; in a terminal by the user's shell, so its aliases work.
 
 import GLib from 'gi://GLib';
 
@@ -11,6 +11,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {Provider} from '../lib/provider.js';
 import {matchPrefix} from '../lib/prefix.js';
+import {shellLineArgv} from '../lib/agents.js';
 import {runInBackground, runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
@@ -99,10 +100,7 @@ export class CliProvider extends Provider {
     }
 
     _runInTerminal(line) {
-        // eval keeps the line as typed; the shell after it keeps the
-        // window open so the output can be read.
-        runInTerminal(this._settings,
-            ['/bin/sh', '-c', 'eval "$1"; exec "${SHELL:-/bin/sh}"', 'sh', line]);
+        runInTerminal(this._settings, shellLineArgv(GLib.getenv('SHELL'), line));
     }
 
 }
