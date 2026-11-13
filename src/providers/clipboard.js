@@ -76,8 +76,9 @@ export class ClipboardProvider extends Provider {
     }
 
     owns(text) {
+        // Off: let "clip …" fall through to normal results.
         const lower = text.toLowerCase();
-        return lower === KEYWORD || lower.startsWith(`${KEYWORD} `);
+        return this._enabled && (lower === KEYWORD || lower.startsWith(`${KEYWORD} `));
     }
 
     scope(text) {

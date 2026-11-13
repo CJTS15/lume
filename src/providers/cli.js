@@ -42,7 +42,7 @@ export class CliProvider extends Provider {
     }
 
     owns(text) {
-        return PREFIX.test(text);
+        return this._settings.get_boolean('run-commands') && PREFIX.test(text);
     }
 
     scope(text) {
