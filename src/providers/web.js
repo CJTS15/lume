@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Web search: a last row for every query that opens the chosen search
-// engine in the default browser. Nothing is sent until the row is chosen.
+// Web search: a fallback row, shown when few other rows match, that opens
+// the chosen search engine in the default browser. Nothing is sent until
+// the row is chosen.
 
 import Gio from 'gi://Gio';
 
@@ -33,9 +34,8 @@ export class WebSearchProvider extends Provider {
                 ? _('Search %s for “%s”').format(engine.name, text)
                 : _('Search the web for “%s”').format(text),
             icon: 'web-browser-symbolic',
-            // ponytail: lowest score, so it is cut when max-results rows
-            // already match; reserve a slot in SearchWindow if that bites.
             score: 0.05,
+            fallback: true,
             activate: () => {
                 Gio.AppInfo.launch_default_for_uri_async(url,
                     global.create_app_launch_context(0, -1), null, (_o, res) => {

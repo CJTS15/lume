@@ -23,6 +23,15 @@ import Gio from 'gi://Gio';
  *   Defaults to 0.
  * @property {() => void} activate - Runs when the row is chosen. The window
  *   is already closed when this is called.
+ * @property {() => void} [ctrlActivate] - Ctrl+Enter, if the row has a
+ *   second action (open the containing folder, run in a terminal).
+ *   Without it, Ctrl+Enter does what Enter does.
+ * @property {() => void} [altActivate] - Alt+Enter (show properties).
+ *   Without it, Alt+Enter does what Enter does.
+ * @property {() => void} [copy] - Ctrl+C on the row. Without it, Ctrl+C
+ *   copies the entry's selected text as usual.
+ * @property {boolean} [fallback] - Shown only when few other rows match
+ *   (web search).
  */
 
 /**
