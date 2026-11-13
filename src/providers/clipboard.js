@@ -40,7 +40,7 @@ export class ClipboardProvider extends Provider {
      * @param {Gio.Settings} settings
      */
     constructor(settings) {
-        super({id: 'clipboard', name: _('Clipboard')});
+        super({id: 'clipboard', name: _('Clipboard'), label: _('Clipboard')});
 
         this._settings = settings;
         /** @type {string[]} newest first */
@@ -73,6 +73,11 @@ export class ClipboardProvider extends Provider {
 
     get _persist() {
         return this._settings.get_boolean('clipboard-persist');
+    }
+
+    scope(text) {
+        const lower = text.toLowerCase();
+        return lower === KEYWORD || lower.startsWith(`${KEYWORD} `) ? _('Clipboard') : null;
     }
 
     query(text) {

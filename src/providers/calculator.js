@@ -11,7 +11,7 @@ import {Provider} from '../lib/provider.js';
 
 export class CalculatorProvider extends Provider {
     constructor() {
-        super({id: 'calculator', name: _('Calculator')});
+        super({id: 'calculator', name: _('Calculator'), label: _('Calculator')});
     }
 
     query(text) {

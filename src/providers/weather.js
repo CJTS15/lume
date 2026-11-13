@@ -53,7 +53,7 @@ export class WeatherProvider extends Provider {
      * @param {() => void} openPreferences
      */
     constructor(settings, openPreferences) {
-        super({id: 'weather', name: _('Weather')});
+        super({id: 'weather', name: _('Weather'), label: _('Weather')});
         this._settings = settings;
         this._openPreferences = openPreferences;
         this._session = new Soup.Session({timeout: 10});
@@ -63,6 +63,11 @@ export class WeatherProvider extends Provider {
         this._forecasts = new Map();
         this._debounce = null;
         this._destroyed = false;
+    }
+
+    scope(text) {
+        const lower = text.toLowerCase();
+        return lower === KEYWORD || lower.startsWith(`${KEYWORD} `) ? _('Weather') : null;
     }
 
     async query(text, cancellable) {

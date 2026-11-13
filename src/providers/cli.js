@@ -27,7 +27,7 @@ export class CliProvider extends Provider {
      * @param {Gio.Settings} settings
      */
     constructor(settings) {
-        super({id: 'cli', name: _('Commands')});
+        super({id: 'cli', name: _('Commands'), label: _('Command')});
         this._settings = settings;
     }
 

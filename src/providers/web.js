@@ -16,7 +16,7 @@ export class WebSearchProvider extends Provider {
      * @param {Gio.Settings} settings
      */
     constructor(settings) {
-        super({id: 'web', name: _('Web Search')});
+        super({id: 'web', name: _('Web Search'), label: _('Web')});
         this._settings = settings;
     }
 

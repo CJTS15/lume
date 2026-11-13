@@ -13,7 +13,7 @@ import {toUrl} from '../lib/url.js';
 
 export class UrlProvider extends Provider {
     constructor() {
-        super({id: 'url', name: _('Web Address')});
+        super({id: 'url', name: _('Web Address'), label: _('Link')});
     }
 
     query(text) {
