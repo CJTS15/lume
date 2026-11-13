@@ -370,7 +370,15 @@ class LumeSearchWindow extends St.Widget {
             accessible_role: Atk.Role.LIST_ITEM,
         });
 
-        if (result.icon) {
+        // The colour comes from a parsed "#rrggbb" only; check again before
+        // it reaches CSS.
+        if (/^#[0-9a-f]{6}$/i.test(result.swatch ?? '')) {
+            row.add_child(new St.Widget({
+                style_class: 'lume-swatch',
+                style: `background-color: ${result.swatch};`,
+                y_align: Clutter.ActorAlign.CENTER,
+            }));
+        } else if (result.icon) {
             const icon = new St.Icon({
                 style_class: 'lume-result-icon',
                 icon_size: ICON_SIZE,
