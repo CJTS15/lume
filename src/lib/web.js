@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Web search URLs. No gi:// imports, so tests run under plain gjs.
+// Web search URLs and browser window titles. No gi:// imports, so tests
+// run under plain gjs.
 
 /** `%s` is replaced by the URL-encoded query. */
 export const ENGINES = {
@@ -56,4 +57,17 @@ export function buildSearchUrl(template, text) {
     if (!isValidSearchUrl(template))
         return null;
     return template.replaceAll('%s', encodeURIComponent(text));
+}
+
+// The suffix browsers add to a window title, after the active tab's title.
+const BROWSER_SUFFIX = /\s[—–-]\s(?:Mozilla Firefox(?: Private Browsing)?|Google Chrome|Chromium)$/;
+
+/**
+ * @param {string} windowTitle
+ * @returns {string|null} the active tab's title if this is a Firefox or
+ *   Chrome window ("Lofi Girl - YouTube — Mozilla Firefox"), else null
+ */
+export function browserTab(windowTitle) {
+    const tab = windowTitle.replace(BROWSER_SUFFIX, '');
+    return tab !== windowTitle && tab.trim() ? tab : null;
 }

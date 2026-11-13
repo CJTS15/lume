@@ -13,6 +13,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import {fuzzyScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {Provider} from '../lib/provider.js';
+import {browserTab} from '../lib/web.js';
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS = 5;
@@ -72,9 +73,13 @@ export class WindowsProvider extends Provider {
     }
 
     _toResult(window, app, score) {
+        // A browser window's title is its active tab's; show it as a tab.
+        const tab = browserTab(window.get_title() ?? '');
         const parts = [];
         if (app)
             parts.push(app.get_name());
+        if (tab)
+            parts.push(_('Active tab'));
         if (global.workspace_manager.n_workspaces > 1) {
             const workspace = window.get_workspace();
             // Windows on all workspaces have no single one.
@@ -84,7 +89,7 @@ export class WindowsProvider extends Provider {
 
         return {
             id: String(window.get_id()),
-            title: window.get_title() || app?.get_name() || _('Untitled window'),
+            title: tab ?? (window.get_title() || app?.get_name() || _('Untitled window')),
             subtitle: parts.join(' · ') || undefined,
             icon: app?.get_icon() ?? 'focus-windows-symbolic',
             score,

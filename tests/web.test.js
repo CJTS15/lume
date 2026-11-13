@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {ENGINES, SITES, buildSearchUrl, isValidSearchUrl, wikipediaLanguage} from '../src/lib/web.js';
+import {ENGINES, SITES, browserTab, buildSearchUrl, isValidSearchUrl, wikipediaLanguage} from '../src/lib/web.js';
 
 let failures = 0;
 
@@ -40,6 +40,13 @@ check('language from locale', wikipediaLanguage(['de_DE.UTF-8', 'de_DE', 'de', '
 check('three-letter language', wikipediaLanguage(['fil_PH']), 'fil');
 check('C locale', wikipediaLanguage(['C']), 'en');
 check('no locale', wikipediaLanguage([]), 'en');
+
+check('firefox tab', browserTab('Lofi Girl - YouTube — Mozilla Firefox'), 'Lofi Girl - YouTube');
+check('firefox private', browserTab('Trello — Mozilla Firefox Private Browsing'), 'Trello');
+check('chrome tab', browserTab('Basecamp - Google Chrome'), 'Basecamp');
+check('chromium tab', browserTab('New Tab - Chromium'), 'New Tab');
+check('not a browser', browserTab('notes.md - Text Editor'), null);
+check('browser name alone', browserTab('Mozilla Firefox'), null);
 
 if (failures > 0) {
     print(`${failures} web test(s) failed`);
