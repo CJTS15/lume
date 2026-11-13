@@ -27,6 +27,9 @@ const CONTENT_LIMIT = 20;
 // Longer loose queries make long regexes for little gain.
 const MAX_LOOSE_LENGTH = 40;
 const BROWSE_SCORE = 0.96;
+// Index queries scan every file name (about 50 to 150 ms in LocalSearch,
+// which keeps working after a cancel): wait for typing to pause.
+const DEBOUNCE_MS = 150;
 const BROWSE_MAX_ENTRIES = 2000;
 const BROWSE_CACHE_SECONDS = 10;
 
@@ -155,6 +158,7 @@ export class FilesProvider extends Provider {
         this._walk = null;
         this._walkCancellable = new Gio.Cancellable();
         this._listing = null;
+        this._debounce = null;
         this._destroyed = false;
         this._home = GLib.get_home_dir();
     }
@@ -167,6 +171,10 @@ export class FilesProvider extends Provider {
             return this._browse(target, level, cancellable);
 
         if (text.length < MIN_QUERY_LENGTH)
+            return [];
+
+        await this._wait();
+        if (cancellable.is_cancelled() || this._destroyed)
             return [];
 
         const byPath = text.includes('/');
@@ -192,6 +200,30 @@ export class FilesProvider extends Provider {
             .sort((a, b) => b.score - a.score)
             .slice(0, MAX_RESULTS)
             .map(file => this._toResult(file));
+    }
+
+    /**
+     * Resolve after DEBOUNCE_MS, or right away when a newer query replaces
+     * this one (the caller then sees its cancellable is cancelled).
+     */
+    _wait() {
+        this._cancelWait();
+        return new Promise(resolve => {
+            const id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, DEBOUNCE_MS, () => {
+                this._debounce = null;
+                resolve();
+                return GLib.SOURCE_REMOVE;
+            });
+            this._debounce = {id, resolve};
+        });
+    }
+
+    _cancelWait() {
+        if (!this._debounce)
+            return;
+        GLib.source_remove(this._debounce.id);
+        this._debounce.resolve();
+        this._debounce = null;
     }
 
     /**
@@ -475,6 +507,7 @@ export class FilesProvider extends Provider {
 
     destroy() {
         this._destroyed = true;
+        this._cancelWait();
         this._walkCancellable.cancel();
         this._closeConnection();
         this._walk = null;
