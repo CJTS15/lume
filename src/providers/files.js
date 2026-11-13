@@ -31,6 +31,7 @@ const CONTENT_LIMIT = 20;
 // Longer loose queries make long regexes for little gain.
 const MAX_LOOSE_LENGTH = 40;
 const BROWSE_SCORE = 0.96;
+const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
 // Index queries scan every file name (about 50 to 150 ms in LocalSearch,
 // which keeps working after a cancel): wait for typing to pause.
 const DEBOUNCE_MS = 150;
@@ -85,6 +86,7 @@ const WALK_CACHE_SECONDS = 300;
 const ENUMERATE_ATTRIBUTES = 'standard::name,standard::type,standard::is-hidden';
 
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
+Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 
@@ -506,6 +508,7 @@ export class FilesProvider extends Provider {
         const copyFile = () => St.Clipboard.get_default().set_content(St.ClipboardType.CLIPBOARD,
             'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
         const folderPath = folder ? path : GLib.path_get_dirname(path);
+        const preview = () => this._preview(uri, path, folder);
 
         return {
             id: uri,
@@ -518,6 +521,7 @@ export class FilesProvider extends Provider {
             icon,
             score,
             activate: open,
+            preview,
             ctrlActivate: showInFolder,
             altActivate: properties,
             copy: copyFile,
@@ -540,6 +544,32 @@ export class FilesProvider extends Provider {
                 },
             ],
         };
+    }
+
+    /** Type, size, date and location; a thumbnail for images. */
+    async _preview(uri, path, folder) {
+        const file = Gio.File.new_for_uri(uri);
+        const info = await file.query_info_async(
+            'standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon',
+            Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
+        const type = info.get_content_type();
+        const rows = [[_('Type'), Gio.content_type_get_description(type)]];
+        if (!folder)
+            rows.push([_('Size'), GLib.format_size(info.get_size())]);
+        const modified = info.get_modification_date_time()?.to_local();
+        if (modified)
+            rows.push([_('Modified'), modified.format('%x %H:%M')]);
+        rows.push([_('Location'), this._shortPath(GLib.path_get_dirname(path))]);
+
+        // An existing thumbnail, or the image itself when it is small
+        // enough to decode without stalling the Shell.
+        const thumbnail = info.get_attribute_byte_string('thumbnail::path');
+        let gicon = info.get_icon();
+        if (thumbnail)
+            gicon = new Gio.FileIcon({file: Gio.File.new_for_path(thumbnail)});
+        else if (type.startsWith('image/') && info.get_size() <= MAX_PREVIEW_IMAGE_BYTES)
+            gicon = new Gio.FileIcon({file});
+        return {gicon, rows};
     }
 
     _closeConnection() {

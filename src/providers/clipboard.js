@@ -110,6 +110,7 @@ export class ClipboardProvider extends Provider {
             icon: 'edit-paste-symbolic',
             score: 0.99 - 0.001 * index,
             activate: () => this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry),
+            preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
         }));
 
         if (showClear) {
