@@ -95,6 +95,8 @@ Start with one of these to see only one kind of result; the pill names it.
 | Prefix | Shows only |
 | --- | --- |
 | `? ` or `b ` | Web search |
+| `wiki ` | Search Wikipedia (in your language) |
+| `yt ` | Search YouTube |
 | `= ` | Calculator |
 | `f ` | Files |
 | `wd` | Open windows |

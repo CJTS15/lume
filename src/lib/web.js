@@ -11,6 +11,32 @@ export const ENGINES = {
 };
 
 /**
+ * Sites with their own prefix ("wiki ", "yt "). `url(language)` gives the
+ * template; `key` is the prefix settings key.
+ */
+export const SITES = {
+    wikipedia: {
+        name: 'Wikipedia',
+        key: 'prefix-wikipedia',
+        url: language => `https://${language}.wikipedia.org/wiki/Special:Search?search=%s`,
+    },
+    youtube: {
+        name: 'YouTube',
+        key: 'prefix-youtube',
+        url: () => 'https://www.youtube.com/results?search_query=%s',
+    },
+};
+
+/**
+ * @param {string[]} languageNames - GLib.get_language_names()
+ * @returns {string} the Wikipedia language code ("de" for de_DE.UTF-8)
+ */
+export function wikipediaLanguage(languageNames) {
+    const code = (languageNames[0] ?? '').split(/[_.@]/)[0].toLowerCase();
+    return /^[a-z]{2,3}$/.test(code) ? code : 'en';
+}
+
+/**
  * Whether a custom search URL is usable: http(s), no spaces, and a `%s`
  * placeholder for the query.
  *

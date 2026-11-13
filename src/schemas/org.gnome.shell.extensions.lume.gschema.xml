@@ -48,6 +48,14 @@
       <default>['?', 'b']</default>
       <summary>Prefixes for web search only</summary>
     </key>
+    <key name="prefix-wikipedia" type="as">
+      <default>['wiki']</default>
+      <summary>Prefixes for a Wikipedia search</summary>
+    </key>
+    <key name="prefix-youtube" type="as">
+      <default>['yt']</default>
+      <summary>Prefixes for a YouTube search</summary>
+    </key>
     <key name="prefix-calculator" type="as">
       <default>['=']</default>
       <summary>Prefixes for the calculator only</summary>
