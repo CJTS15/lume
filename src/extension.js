@@ -15,8 +15,10 @@ import {CliProvider} from './providers/cli.js';
 import {ClipboardProvider} from './providers/clipboard.js';
 import {CommandsProvider} from './providers/commands.js';
 import {DevToolsProvider} from './providers/devtools.js';
+import {EmojiProvider} from './providers/emoji.js';
 import {FilesProvider} from './providers/files.js';
 import {MediaProvider} from './providers/media.js';
+import {RemoteProvider} from './providers/remote.js';
 import {SettingsProvider} from './providers/settings.js';
 import {SystemProvider} from './providers/system.js';
 import {TogglesProvider} from './providers/toggles.js';
@@ -37,6 +39,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new CalculatorProvider());
         this._registry.register(new UnitsProvider());
         this._registry.register(new DevToolsProvider());
+        this._registry.register(new EmojiProvider(this._settings));
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));
         this._registry.register(new WindowsProvider(this._settings));
@@ -50,6 +53,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));
+        this._registry.register(new RemoteProvider());
         this._registry.register(new WebSearchProvider(this._settings));
 
         this._window = new SearchWindow(this._settings, this._registry);

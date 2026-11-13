@@ -32,6 +32,10 @@ import Gio from 'gi://Gio';
  *   copies the entry's selected text as usual.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
+ * @property {(size: number) => Clutter.Actor|null} [createIcon] - an icon
+ *   actor, used before `icon` (remote search providers).
+ * @property {string} [glyph] - text (an emoji) drawn large instead of the
+ *   icon.
  * @property {string} [swatch] - "#rrggbb": drawn as a colour square instead
  *   of the icon.
  * @property {string} [type] - Short type shown on the row's right; defaults

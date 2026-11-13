@@ -11,7 +11,7 @@ schemas:
 
 pack:
 	gnome-extensions pack $(SRC) --force --out-dir=. \
-		--extra-source=lib --extra-source=providers
+		--extra-source=lib --extra-source=providers --extra-source=data
 
 install: pack
 	gnome-extensions install --force $(ZIP)
