@@ -21,9 +21,18 @@ export class AgentsProvider extends Provider {
      * @param {() => void} openPreferences
      */
     constructor(settings, openPreferences) {
-        super({id: 'agents', name: _('AI Agents')});
+        super({id: 'agents', name: _('AI Agents'), label: _('Agent')});
         this._settings = settings;
         this._openPreferences = openPreferences;
+    }
+
+    scope(text) {
+        const [, word, rest = ''] = /^(\S+)(?:\s+([\s\S]*))?$/.exec(text) ?? [];
+        const keyword = word?.toLowerCase();
+        // A bare agent name ("claude") may be an app search.
+        if (keyword === KEYWORD || (Object.hasOwn(AGENTS, keyword) && rest.trim()))
+            return _('AI Agent');
+        return null;
     }
 
     query(text) {

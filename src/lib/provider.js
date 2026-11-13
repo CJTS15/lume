@@ -32,6 +32,8 @@ import Gio from 'gi://Gio';
  *   copies the entry's selected text as usual.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
+ * @property {string} [type] - Short type shown on the row's right; defaults
+ *   to the provider's label ("Folder" instead of "File").
  */
 
 /**
@@ -42,12 +44,25 @@ export class Provider {
      * @param {object} params
      * @param {string} params.id - Unique, stable provider id (e.g. 'apps').
      * @param {string} params.name - Human-readable name.
+     * @param {string} [params.label] - Short type shown on each row ("App").
      */
-    constructor({id, name}) {
+    constructor({id, name, label}) {
         if (!id)
             throw new Error('Provider needs an id');
         this.id = id;
         this.name = name ?? id;
+        this.label = label ?? this.name;
+    }
+
+    /**
+     * The scope shown in the search field's pill when a keyword of this
+     * provider owns the query ("clip" -> "Clipboard"), else null.
+     *
+     * @param {string} _text - The trimmed, non-empty query.
+     * @returns {string|null}
+     */
+    scope(_text) {
+        return null;
     }
 
     /**
@@ -85,6 +100,19 @@ export class ProviderRegistry {
 
     get providers() {
         return [...this.#providers];
+    }
+
+    /**
+     * @param {string} text
+     * @returns {string|null} the first provider scope for `text`
+     */
+    scopeFor(text) {
+        for (const provider of this.#providers) {
+            const scope = provider.scope(text);
+            if (scope)
+                return scope;
+        }
+        return null;
     }
 
     /**

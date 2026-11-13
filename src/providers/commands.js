@@ -13,7 +13,7 @@ export class CommandsProvider extends Provider {
      * @param {import('resource:///org/gnome/shell/extensions/extension.js').Extension} extension
      */
     constructor(extension) {
-        super({id: 'lume-commands', name: _('Lume')});
+        super({id: 'lume-commands', name: _('Lume'), label: _('Lume')});
 
         this._commands = [{
             id: 'preferences',

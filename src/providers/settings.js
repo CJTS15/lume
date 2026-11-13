@@ -17,7 +17,7 @@ const PANEL_ID = /^gnome-.+-panel\.desktop$/;
 
 export class SettingsProvider extends Provider {
     constructor() {
-        super({id: 'settings', name: _('Settings')});
+        super({id: 'settings', name: _('Settings'), label: _('Setting')});
         this._panels = null;
         // Panels come and go with packages; reload when apps change.
         this._monitor = Gio.AppInfoMonitor.get();

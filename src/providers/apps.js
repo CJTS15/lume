@@ -20,7 +20,7 @@ export class AppsProvider extends Provider {
      * @param {Gio.Settings} settings
      */
     constructor(settings) {
-        super({id: 'apps', name: _('Applications')});
+        super({id: 'apps', name: _('Applications'), label: _('App')});
         this._settings = settings;
         this._appSystem = Shell.AppSystem.get_default();
         this._parentalControls = ParentalControlsManager.getDefault();

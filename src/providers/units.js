@@ -12,7 +12,7 @@ import {convert} from '../lib/units.js';
 
 export class UnitsProvider extends Provider {
     constructor() {
-        super({id: 'units', name: _('Unit Conversion')});
+        super({id: 'units', name: _('Unit Conversion'), label: _('Conversion')});
     }
 
     query(text) {

@@ -149,7 +149,7 @@ export class FilesProvider extends Provider {
      * @param {Gio.Settings} settings
      */
     constructor(settings) {
-        super({id: 'files', name: _('Files')});
+        super({id: 'files', name: _('Files'), label: _('File')});
         this._settings = settings;
         this._sparql = undefined;
         this._connection = null;
@@ -161,6 +161,10 @@ export class FilesProvider extends Provider {
         this._debounce = null;
         this._destroyed = false;
         this._home = GLib.get_home_dir();
+    }
+
+    scope(text) {
+        return this._browseTarget(text) ? _('Folder') : null;
     }
 
     async query(text, cancellable) {
@@ -476,6 +480,7 @@ export class FilesProvider extends Provider {
         return {
             id: uri,
             title: folder && shownFolder ? `${name}/` : name,
+            type: folder ? _('Folder') : undefined,
             subtitle: inContents
                 // TRANSLATORS: %s is a folder path
                 ? _('%s · matches contents').format(location)

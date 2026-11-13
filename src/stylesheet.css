@@ -1,23 +1,55 @@
 /*
- * Layout only. Colors, borders, radii and shadows come from the Shell theme
+ * Layout only. Colors, borders and shadows come from the Shell theme
  * classes set in lib/searchWindow.js (popup-menu-content, popup-menu-item,
  * StEntry, ...), so Lume follows light, dark, high contrast and custom
- * Shell themes. Do not add colors here.
+ * Shell themes. The one exception is a translucent neutral grey behind the
+ * pill and key chips, which reads on light and dark backgrounds alike.
  */
 
 .lume-panel {
   spacing: 6px;
-  padding: 8px;
+  padding: 10px;
+  border-radius: 24px;
 }
 
-.lume-entry {
+.lume-search-row {
+  spacing: 12px;
+  padding: 2px 6px 2px 0;
+}
+
+/* Flat, like the panel around it; the text cursor shows focus. */
+.lume-entry,
+.lume-entry:focus,
+.lume-entry:hover {
   font-size: 1.25em;
   min-height: 2.2em;
+  background-color: transparent;
+  border-width: 0;
+  box-shadow: none;
 }
 
 .lume-entry-icon {
   icon-size: 1.1em;
   padding: 0 6px;
+}
+
+.lume-pill {
+  spacing: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background-color: rgba(127, 127, 127, 0.15);
+}
+
+/* The theme's accent color (GNOME 47+); older Shells leave it blank. */
+.lume-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background-color: -st-accent-color;
+}
+
+.lume-pill-label {
+  font-size: 0.9em;
 }
 
 .lume-separator {
@@ -30,21 +62,37 @@
 }
 
 .lume-result {
-  spacing: 12px;
+  spacing: 14px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 12px;
 }
 
 .lume-result-text {
   spacing: 2px;
 }
 
-.lume-result-title {
-  font-weight: bold;
-}
-
-.lume-result-subtitle {
+.lume-result-subtitle,
+.lume-result-type {
   font-size: 0.9em;
 }
 
 .lume-status {
   padding: 12px;
+}
+
+.lume-footer {
+  spacing: 8px;
+  padding: 8px 8px 2px;
+  font-size: 0.85em;
+}
+
+.lume-key {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background-color: rgba(127, 127, 127, 0.15);
+}
+
+.lume-hint {
+  margin-right: 6px;
 }

@@ -79,6 +79,9 @@ class LumeSearchWindow extends St.Widget {
         setVertical(this._panel);
         this.add_child(this._panel);
 
+        const searchRow = new St.BoxLayout({style_class: 'lume-search-row'});
+        this._panel.add_child(searchRow);
+
         this._entry = new St.Entry({
             style_class: 'lume-entry',
             hint_text: _('Search'),
@@ -90,7 +93,24 @@ class LumeSearchWindow extends St.Widget {
             }),
         });
         this._entry.accessible_name = _('Lume search');
-        this._panel.add_child(this._entry);
+        searchRow.add_child(this._entry);
+
+        // What the query searches: "All results", or a keyword's scope.
+        const pill = new St.BoxLayout({
+            style_class: 'lume-pill',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        pill.add_child(new St.Widget({
+            style_class: 'lume-pill-dot',
+            y_align: Clutter.ActorAlign.CENTER,
+        }));
+        this._scopeLabel = new St.Label({
+            style_class: 'lume-pill-label',
+            text: _('All results'),
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        pill.add_child(this._scopeLabel);
+        searchRow.add_child(pill);
 
         this._separator = new St.Widget({
             style_class: 'popup-separator-menu-item lume-separator',
@@ -129,6 +149,19 @@ class LumeSearchWindow extends St.Widget {
         });
         this._panel.add_child(this._statusLabel);
 
+        const footerSeparator = new St.Widget({
+            style_class: 'popup-separator-menu-item lume-separator',
+            layout_manager: new Clutter.BinLayout(),
+        });
+        footerSeparator.add_child(new St.Widget({
+            style_class: 'popup-separator-menu-item-separator',
+            x_expand: true,
+        }));
+        this._panel.add_child(footerSeparator);
+        this._panel.add_child(this._createFooter());
+
+        this._labels = new Map(registry.providers.map(p => [p.id, p.label]));
+
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKeyPress(event));
         // Enter: ClutterText emits 'activate' for Return/KP_Enter/ISO_Enter.
@@ -145,6 +178,28 @@ class LumeSearchWindow extends St.Widget {
         });
         this.connect('key-press-event', (_a, event) => this._onKeyPress(event));
         this.connect('destroy', () => this._onDestroy());
+    }
+
+    _createFooter() {
+        const footer = new St.BoxLayout({style_class: 'lume-footer'});
+        footer.add_child(new St.Widget({x_expand: true}));
+        for (const [key, action] of [
+            ['↑↓', _('Navigate')],
+            ['↵', _('Open')],
+            [_('Esc'), _('Close')],
+        ]) {
+            footer.add_child(new St.Label({
+                style_class: 'lume-key',
+                text: key,
+                y_align: Clutter.ActorAlign.CENTER,
+            }));
+            footer.add_child(new St.Label({
+                style_class: 'popup-inactive-menu-item lume-hint',
+                text: action,
+                y_align: Clutter.ActorAlign.CENTER,
+            }));
+        }
+        return footer;
     }
 
     get isOpen() {
@@ -229,6 +284,7 @@ class LumeSearchWindow extends St.Widget {
     _onTextChanged() {
         this._cancelQuery();
         const text = this._entry.text.trim();
+        this._scopeLabel.text = (text && this._registry.scopeFor(text)) || _('All results');
 
         if (!text) {
             this._clearResults();
@@ -269,7 +325,7 @@ class LumeSearchWindow extends St.Widget {
         const merged = [];
         for (const [providerId, results] of this._resultsByProvider) {
             for (const result of results)
-                merged.push({key: `${providerId}:${result.id}`, result});
+                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
         }
         // Array.prototype.sort is stable, so equal scores keep provider order.
         merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
@@ -278,10 +334,10 @@ class LumeSearchWindow extends St.Widget {
         merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
 
         this._resultsBox.destroy_all_children();
-        this._rows = merged.map(({key, result}, index) => ({
+        this._rows = merged.map(({key, result, type}, index) => ({
             key,
             result,
-            actor: this._createRow(result, index),
+            actor: this._createRow(result, type, index),
         }));
         for (const row of this._rows)
             this._resultsBox.add_child(row.actor);
@@ -303,7 +359,7 @@ class LumeSearchWindow extends St.Widget {
             (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
     }
 
-    _createRow(result, index) {
+    _createRow(result, type, index) {
         // Rows take key focus during keyboard navigation, so screen readers
         // announce them, as in the overview's search results.
         const row = new St.BoxLayout({
@@ -351,6 +407,17 @@ class LumeSearchWindow extends St.Widget {
                 Atk.RelationType.DESCRIBED_BY, subtitle.get_accessible());
         }
         row.add_child(text);
+
+        if (type) {
+            const typeLabel = new St.Label({
+                style_class: 'popup-inactive-menu-item lume-result-type',
+                text: type,
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            row.add_child(typeLabel);
+            row.get_accessible().add_relationship(
+                Atk.RelationType.DESCRIBED_BY, typeLabel.get_accessible());
+        }
 
         // Selection follows the pointer only when it actually moves, so a
         // pointer resting where the panel opens does not steal it.
