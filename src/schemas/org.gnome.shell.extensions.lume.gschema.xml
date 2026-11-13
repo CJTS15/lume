@@ -93,6 +93,15 @@
       <summary>Show the preview pane</summary>
       <description>Toggled with Ctrl+P in the search window.</description>
     </key>
+    <key name="preview-position" type="s">
+      <choices>
+        <choice value="start"/>
+        <choice value="end"/>
+      </choices>
+      <default>'end'</default>
+      <summary>Side of the preview pane</summary>
+      <description>“end” puts the preview after the results (right in left-to-right languages), “start” before them.</description>
+    </key>
     <key name="clipboard-history" type="b">
       <default>true</default>
       <summary>Remember clipboard history</summary>

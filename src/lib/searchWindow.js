@@ -150,7 +150,7 @@ class LumeSearchWindow extends St.Widget {
         // `child` works on both (add_actor() was removed in 46).
         this._scrollView.child = this._resultsBox;
 
-        // Results on the left, the preview pane (Ctrl+P) on the right.
+        // Results and the preview pane (Ctrl+P), in preview-position order.
         const body = new St.BoxLayout({style_class: 'lume-body', x_expand: true});
         this._scrollView.x_expand = true;
         body.add_child(this._scrollView);
@@ -164,6 +164,18 @@ class LumeSearchWindow extends St.Widget {
         setVertical(this._previewPane);
         body.add_child(this._previewPane);
         this._panel.add_child(body);
+        const placePreview = () => {
+            const start = settings.get_string('preview-position') === 'start';
+            body.set_child_at_index(this._previewPane, start ? 0 : 1);
+            // St has no logical borders: put the divider on the results side.
+            const rtl = Clutter.get_default_text_direction() === Clutter.TextDirection.RTL;
+            if (start !== rtl)
+                this._previewPane.add_style_class_name('lume-preview-left');
+            else
+                this._previewPane.remove_style_class_name('lume-preview-left');
+        };
+        placePreview();
+        this._previewPositionId = settings.connect('changed::preview-position', placePreview);
         this._previewToken = 0;
         this._previewChangedId = settings.connect('changed::show-preview', () => {
             this._updateGeometry();
@@ -300,6 +312,7 @@ class LumeSearchWindow extends St.Widget {
 
     _onDestroy() {
         this._settings.disconnect(this._previewChangedId);
+        this._settings.disconnect(this._previewPositionId);
         this._cancelQuery();
         if (this._grab) {
             Main.popModal(this._grab);

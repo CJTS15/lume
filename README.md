@@ -132,6 +132,7 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 Lume remembers whether it is shown. Files show their type, size, date and
 location, with a thumbnail for images; clipboard entries their full text;
 weather a 5-day forecast; other results their icon, title and subtitle.
+*Preferences → Preview Position* puts it on the left or right.
 
 ### User scripts
 

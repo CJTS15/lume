@@ -110,6 +110,15 @@ export default class LumePreferences extends ExtensionPreferences {
         spinRow('top-offset', _('Distance From Top'), _('Percentage of the monitor height'), 1);
         spinRow('max-results', _('Maximum Results'), _('How many results to show at most'), 1);
 
+        // Stored as start/end so right-to-left layouts mirror it.
+        const rtl = Gtk.Widget.get_default_direction() === Gtk.TextDirection.RTL;
+        const position = this._comboRow(settings, 'preview-position', _('Preview Position'), [
+            ['end', rtl ? _('Left') : _('Right')],
+            ['start', rtl ? _('Right') : _('Left')],
+        ]);
+        position.subtitle = _('Side of the results where Ctrl+P shows the preview');
+        group.add(position);
+
         return group;
     }
 
