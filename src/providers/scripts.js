@@ -106,19 +106,24 @@ export class ScriptsProvider extends Provider {
     }
 
     /**
-     * Whether another user could change the script or its folder: owned by
-     * someone other than the user or root, or writable by group or others.
-     * Checked right before each run, not from the last scan.
+     * Whether another user could change the script, or swap it by changing
+     * a folder above it: the script or any folder up to / is owned by
+     * someone other than the user or root, or writable by group or others
+     * (the rule ssh applies to ~/.ssh). Checked right before each run.
      *
      * @param {string} path
      * @returns {Promise<boolean>}
      */
     async _unsafe(path) {
-        for (const file of [Gio.File.new_for_path(SCRIPTS_DIR), Gio.File.new_for_path(path)]) {
+        // ponytail: a symlinked folder's own parents are not walked; the
+        // usual layout has none. Resolve symlinks first if that changes.
+        for (let file = Gio.File.new_for_path(path); file; file = file.get_parent()) {
             const info = await file.query_info_async('unix::uid,unix::mode',
                 Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
             const uid = info.get_attribute_uint32('unix::uid');
-            if ((uid !== this._uid && uid !== 0) || (info.get_attribute_uint32('unix::mode') & 0o022) !== 0)
+            const mode = info.get_attribute_uint32('unix::mode');
+            // A sticky folder (/tmp) is fine: others can't rename what is ours.
+            if ((uid !== this._uid && uid !== 0) || ((mode & 0o022) !== 0 && (mode & 0o1000) === 0))
                 return true;
         }
         return false;
@@ -129,21 +134,22 @@ export class ScriptsProvider extends Provider {
         if (!match)
             return [];
         const path = this._scripts.get(match.name);
+        await this._wait();
+        if (cancellable.is_cancelled() || this._destroyed)
+            return [];
+
+        // After the wait: right before the run, not 300 ms earlier.
         if (await this._unsafe(path)) {
             return [{
                 id: 'unsafe',
                 type: match.name,
                 title: _('Script “%s” not run').format(match.name),
-                subtitle: _('Other users can change it or its folder. Fix with: chmod go-w'),
+                subtitle: _('Other users can change it or a folder above it. Fix with: chmod go-w'),
                 icon: 'dialog-warning-symbolic',
                 score: 0.97,
                 activate: () => {},
             }];
         }
-
-        await this._wait();
-        if (cancellable.is_cancelled() || this._destroyed)
-            return [];
 
         const lines = await this._run(path, match.rest, cancellable);
         return lines.map(line => line.split('|'))

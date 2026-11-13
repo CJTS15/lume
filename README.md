@@ -150,8 +150,9 @@ under `timeout` at low CPU priority (`nice`), so anything it started ends
 with it. Lume runs only scripts you put there, and only when their name
 starts the search. New scripts are picked up within a few seconds.
 
-A script, and the `scripts` folder, must belong to you (or root) and must not
-be writable by other users; otherwise Lume shows "Script not run" instead.
+A script, the `scripts` folder and every folder above it must belong to you
+(or root) and must not be writable by other users; otherwise Lume shows
+"Script not run" instead.
 `chmod go-w ~/.config/lume/scripts ~/.config/lume/scripts/*` fixes it.
 
 ```sh

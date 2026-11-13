@@ -65,7 +65,8 @@ export class RemoteProvider extends Provider {
             return [];
 
         await this._wait();
-        if (cancellable.is_cancelled() || this._destroyed)
+        // Offline mode may have been turned on during the wait.
+        if (cancellable.is_cancelled() || this._destroyed || this._settings.get_boolean('offline-mode'))
             return [];
 
         const terms = text.toLowerCase().split(/\s+/).filter(t => t);

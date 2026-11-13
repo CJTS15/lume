@@ -26,13 +26,17 @@ export class Rates {
     }
 
     /**
-     * @param {boolean} offline - only use the cache, however old
+     * @param {boolean} offline - use the cache regardless of its age and
+     *   never fetch
      * @returns {Promise<{date: string, rates: Object<string, number>}>}
      *   rates per euro (EUR included); rejects only when there is neither
      *   a fresh answer nor any cache
      */
     get(offline) {
-        this._pending ??= this._load(offline).finally(() => {
+        // Never join a fetch already running: offline must not wait on one.
+        if (offline)
+            return this._load(true);
+        this._pending ??= this._load(false).finally(() => {
             this._pending = null;
         });
         return this._pending;
