@@ -71,14 +71,34 @@ What you can type:
 | Three or more letters of a file name, or part of a path | Up to 5 files from the LocalSearch index; Enter opens it |
 | A folder path (`~/Documents/`, `/etc/`, `~/Doc`) | That folder's contents, filtered by what follows the last `/` |
 | An expression (`4 + 3 * 8`, `2pi`, `sind(30)`) | The result; Enter copies it |
-| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`, `16px to rem`) | The converted value; Enter copies it |
+| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`, `16px to rem`, `100 eur to usd`) | The converted value; Enter copies it |
+| `uuid`, `base64 encode\|decode <text>`, `sha256 <text>`, `md5 <text>` | A new UUID, Base64, or a checksum; Enter copies it |
+| A colour (`#ff8800`, `rgb(255, 136, 0)`) | The other notation with a swatch; Enter copies it |
+| `unix`, or a 10- or 13-digit timestamp | The current Unix time, or that moment's date; Enter copies it |
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
 | `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
-| `ask <prompt>`, or `claude`/`codex`/`agy <prompt>` | Opens the AI agent's CLI in a terminal with your prompt |
+| `ask <prompt>` or `ai <prompt>`, or `claude`/`codex`/`agy <prompt>` | Opens the AI agent's CLI in a terminal with your prompt |
 | Anything that matches little else | Search the web for it |
 | `pref` | Lume Preferences |
+
+### Prefixes
+
+Start with one of these to see only one kind of result; the pill names it.
+
+| Prefix | Shows only |
+| --- | --- |
+| `? ` or `b ` | Web search |
+| `= ` | Calculator |
+| `e ` | Files |
+| `win` | Open windows |
+| `clip` | Clipboard history |
+| `ask ` or `ai ` | AI agent |
+| `> ` | The command, run in your terminal on Enter |
+
+`> ` is deliberate, so it also runs power commands (`> shutdown now`) that
+the command row otherwise leaves out; you see them in the terminal.
 
 ### Fuzzy matching
 
@@ -99,7 +119,12 @@ degrees: `sind(30)`, `asind(0.5)`. Constants: `pi` (or `π`) and `e`. It never
 uses `eval`.
 
 Conversions take `to`, `in`, `into`, `as` or `->` between units of one
-category; without a number, 1 is assumed (`cup to qt`). Categories: length,
+category; without a number, 1 is assumed (`cup to qt`). Currencies use ISO
+codes (`100 eur to usd`, `50 usd in php`) for the 30 currencies with ECB
+reference rates. Rates come from [Frankfurter](https://frankfurter.dev) at
+most every 12 hours and are cached in `~/.cache/lume/rates.json`, so
+conversions keep working offline with the last rates; the row shows their
+date. Only that request for the day's rates is sent, never what you type. Categories: length,
 mass, volume (US cups, pints, quarts, gallons), time, area, speed, storage
 (`kb`/`mb`/`gb` are 1000-based, `kib`/`mib`/`gib` 1024-based) and temperature.
 
@@ -320,11 +345,14 @@ src/
   lib/match.js        text match scoring (no gi imports)
   lib/web.js          search engine URLs (no gi imports)
   lib/units.js        unit conversion (no gi imports)
+  lib/rates.js        ECB exchange rates, cached
+  lib/devtools.js     UUID, Base64, checksums, colours, Unix time
   lib/url.js          web address recognition (no gi imports)
   lib/agents.js       agent and terminal argv (no gi imports)
   lib/terminal.js     run an argv in the user's terminal
   providers/          one file per provider: apps, windows, system,
-                      toggles, settings, files, calculator, units, url,
+                      toggles, settings, files, calculator, units,
+                      devtools, url,
                       cli, clipboard, media, weather, agents, web,
                       commands (Lume's own)
   schemas/            GSettings schema
