@@ -130,7 +130,9 @@ export class MediaProvider extends Provider {
                 subtitle: _('%s · %s · Ctrl+Enter next, Alt+Enter previous').format(
                     playing ? _('Playing') : _('Paused'), identity),
                 icon: playing ? 'media-playback-pause-symbolic' : 'media-playback-start-symbolic',
-                score: keyword ? 0.9 : 0.5 + 0.35 * Math.min(match, 0.9),
+                // A media word means the player, not an app called "Media
+                // Player": rank like the other keyword providers.
+                score: keyword ? 0.97 : 0.5 + 0.35 * Math.min(match, 0.9),
                 activate: call('PlayPause'),
                 ctrlActivate: call('Next'),
                 altActivate: call('Previous'),

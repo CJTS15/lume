@@ -11,13 +11,18 @@ import {keywordScore} from '../lib/match.js';
 import {Provider} from '../lib/provider.js';
 
 const MIN_QUERY_LENGTH = 2;
+// Every word must match ("night light", "dark mode"); one stray word is
+// not enough ("light mode" must not offer Night Light).
+const MIN_MATCH = 0.75;
 // N_ marks strings for translation; they are translated when used.
 const N_ = s => s;
 
 const TOGGLES = [{
     id: 'dark-style',
     name: N_('Dark Style'),
-    keywords: ['dark', 'light', 'theme', 'mode', 'style', 'appearance'],
+    keywords: ['dark', 'theme', 'mode', 'style', 'appearance'],
+    // "light mode" only makes sense as a way to turn dark style off.
+    keywordsWhenOn: ['light'],
     icon: 'dark-mode-symbolic',
     schema: 'org.gnome.desktop.interface',
     isOn: settings => settings.get_string('color-scheme') === 'prefer-dark',
@@ -55,10 +60,13 @@ export class TogglesProvider extends Provider {
             return [];
 
         return this._toggles
-            .map(toggle => ({toggle, match: keywordScore(_(toggle.name), toggle.keywords, text)}))
-            .filter(({match}) => match >= 0.5)
-            .map(({toggle, match}) => {
+            .map(toggle => {
                 const on = toggle.isOn(toggle.settings);
+                const keywords = on ? [...toggle.keywords, ...toggle.keywordsWhenOn ?? []] : toggle.keywords;
+                return {toggle, on, match: keywordScore(_(toggle.name), keywords, text)};
+            })
+            .filter(({match}) => match >= MIN_MATCH)
+            .map(({toggle, on, match}) => {
                 const name = _(toggle.name);
                 return {
                     id: toggle.id,

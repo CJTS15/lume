@@ -15,6 +15,13 @@ import {Provider} from '../lib/provider.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
+// Power commands act without GNOME's confirmation (polkit lets the active
+// user power off): leave them to the System provider, whose power off and
+// restart ask first.
+const POWER_PROGRAMS = new Set(['shutdown', 'poweroff', 'reboot', 'halt']);
+// ponytail: only direct calls are caught; wrappers (sh -c, env) are not.
+// sudo fails without a terminal to ask for the password.
+const POWER_VERBS = /^(systemctl|loginctl)\s+(-\S+\s+)*(poweroff|reboot|halt|kexec|soft-reboot|suspend|hibernate|hybrid-sleep|suspend-then-hibernate)\b/;
 // Exit status of sh when the program could not be found.
 const NOT_FOUND = 127;
 // Flags, paths, pipes, redirects, assignments: clearly a command line.
@@ -35,6 +42,8 @@ export class CliProvider extends Provider {
         if (!this._settings.get_boolean('run-commands'))
             return [];
         const program = text.split(/\s+/)[0];
+        if (POWER_PROGRAMS.has(program) || POWER_VERBS.test(text))
+            return [];
         // A path to a folder ("/etc/") is a file browse, not a command.
         if (!GLib.find_program_in_path(program))
             return [];

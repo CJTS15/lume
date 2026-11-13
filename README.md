@@ -138,7 +138,10 @@ fails; Ctrl+Enter opens it in your terminal and keeps the window open
 afterwards. Output is discarded. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
-Commands* in preferences.
+Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,
+`halt`, `systemctl poweroff`/`reboot`/`suspend`, …) are not offered: they
+would act without asking, so use *Power Off* or *Restart*, which open GNOME's
+confirmation.
 
 ### Web search, weather and AI agents
 
