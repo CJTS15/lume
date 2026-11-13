@@ -78,6 +78,8 @@ What you can type:
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
+| `:coffee` or `emoji coffee` | Emoji by name or keyword; Enter copies the emoji |
+| Anything apps can search (an event, a contact, an app to install, …) | Results from apps' GNOME search providers; Enter opens it in the app |
 | `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
 | `ask <prompt>` or `ai <prompt>`, or `claude`/`codex`/`agy <prompt>` | Opens the AI agent's CLI in a terminal with your prompt |
 | Anything that matches little else | Search the web for it |
@@ -94,6 +96,7 @@ Start with one of these to see only one kind of result; the pill names it.
 | `f ` | Files |
 | `win` | Open windows |
 | `clip` | Clipboard history |
+| `:` or `emoji ` | Emoji |
 | `ask ` or `ai ` | AI agent |
 | `> ` | The command, run in your terminal on Enter |
 
@@ -153,6 +156,23 @@ With `https://` anything opens. Without it, only `localhost`, IPv4 addresses
 and a list of common domain endings (`.com`, `.org`, `.io`, `.dev`, `.ai`,
 country codes, …) count as addresses, because many endings are also file
 extensions: `notes.md`, `archive.zip` and `script.sh` stay file searches.
+
+### Apps' search providers
+
+Apps like Calendar, Contacts, Software, Characters, Clocks and Firefox can
+answer searches the way they do in the overview, and their results show in
+Lume below its own. Lume uses GNOME's own code for this, so *Settings →
+Search* decides which apps are asked and in what order. Settings, Files,
+Calculator and Weather are skipped because Lume has its own versions of
+those. An app that has not answered within 2 seconds (for example while it
+starts) is left out of that search.
+
+### Emoji
+
+`:coffee` or `emoji coffee` finds emoji by English name and keyword
+(1914 emoji up to Emoji 17.0, without skin-tone variants). The list is
+built from Unicode's emoji data by `tools/emoji.py` and ships in
+`src/data/`, under the Unicode licence in `src/data/UNICODE-LICENSE.txt`.
 
 ### Commands
 
@@ -347,17 +367,20 @@ src/
   lib/units.js        unit conversion (no gi imports)
   lib/rates.js        ECB exchange rates, cached
   lib/devtools.js     UUID, Base64, checksums, colours, Unix time
+  lib/emoji.js        emoji search (no gi imports)
   lib/url.js          web address recognition (no gi imports)
   lib/agents.js       agent and terminal argv (no gi imports)
   lib/terminal.js     run an argv in the user's terminal
   providers/          one file per provider: apps, windows, system,
                       toggles, settings, files, calculator, units,
-                      devtools, url,
-                      cli, clipboard, media, weather, agents, web,
-                      commands (Lume's own)
+                      devtools, emoji, url, cli, clipboard, media,
+                      weather, agents, remote (apps' search providers),
+                      web, commands (Lume's own)
+  data/               emoji.json (generated) and its Unicode licence
   schemas/            GSettings schema
 tests/                gjs self-checks (`make test`), headless smoke test
                       (`make smoke`)
+tools/emoji.py        rebuilds src/data/emoji.json from Unicode data
 ```
 
 ## Version notes (GNOME 45–51)
@@ -393,4 +416,6 @@ Lume borrows ideas from these GNOME Shell launchers:
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](LICENSE).
+GPL-3.0-or-later. See [LICENSE](LICENSE). The emoji data in `src/data/` is
+derived from Unicode data under the
+[Unicode License v3](src/data/UNICODE-LICENSE.txt).
