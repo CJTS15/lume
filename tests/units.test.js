@@ -9,8 +9,8 @@ import {convert} from '../src/lib/units.js';
 
 let failures = 0;
 
-function check(input, expected) {
-    const result = convert(input);
+function check(input, expected, context) {
+    const result = convert(input, context);
     const actual = result && `${formatResult(result.amount)} ${result.from} = ${formatResult(result.value)} ${result.to}`;
     if (actual !== expected) {
         failures++;
@@ -47,6 +47,22 @@ check('1 GiB to MiB', '1 GiB = 1024 MiB');
 check('1 gib to b', '1 GiB = 1073741824 B');
 check('8 bit to b', '8 bit = 1 B');
 check('1 kn to km/h', '1 kn = 1.852 km/h');
+
+// Web units (CSS: 96 px per inch, 16 px per rem/em)
+const viewport = {viewport: {width: 1920, height: 1080}};
+check('16px to rem', '16 px = 1 rem');
+check('1in to px', '1 in = 96 px');
+check('12pt to px', '12 pt = 16 px');
+check('2em in px', '2 em = 32 px');
+check('1 pc to pt', '1 pc = 12 pt');
+check('qt to pt', '1 qt = 2 pt');
+check('1.5rem to px', '1.5 rem = 24 px');
+check('50vh to px', '50 vh = 540 px', viewport);
+check('10vw to px', '10 vw = 192 px', viewport);
+check('10vmin to px', '10 vmin = 108 px', viewport);
+check('10vmax to px', '10 vmax = 192 px', viewport);
+check('1080px to vh', '1080 px = 100 vh', viewport);
+check('50vh to px', null);
 
 // Not conversions
 check('10 km to kg', null);

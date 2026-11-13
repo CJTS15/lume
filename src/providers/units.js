@@ -4,6 +4,7 @@
 
 import St from 'gi://St';
 
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {formatResult} from '../lib/calculator.js';
@@ -16,7 +17,7 @@ export class UnitsProvider extends Provider {
     }
 
     query(text) {
-        const result = convert(text);
+        const result = convert(text, {viewport: this._viewport()});
         if (!result)
             return [];
 
@@ -33,5 +34,14 @@ export class UnitsProvider extends Provider {
             activate: copy,
             copy,
         }];
+    }
+
+    /** The monitor Lume opens on, in logical pixels (CSS px for vw/vh). */
+    _viewport() {
+        const monitor = Main.layoutManager.currentMonitor ?? Main.layoutManager.primaryMonitor;
+        if (!monitor)
+            return undefined;
+        const {scaleFactor} = St.ThemeContext.get_for_stage(global.stage);
+        return {width: monitor.width / scaleFactor, height: monitor.height / scaleFactor};
     }
 }

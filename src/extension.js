@@ -15,11 +15,15 @@ import {CliProvider} from './providers/cli.js';
 import {ClipboardProvider} from './providers/clipboard.js';
 import {CommandsProvider} from './providers/commands.js';
 import {FilesProvider} from './providers/files.js';
+import {MediaProvider} from './providers/media.js';
 import {SettingsProvider} from './providers/settings.js';
+import {SystemProvider} from './providers/system.js';
+import {TogglesProvider} from './providers/toggles.js';
 import {UnitsProvider} from './providers/units.js';
 import {UrlProvider} from './providers/url.js';
 import {WeatherProvider} from './providers/weather.js';
 import {WebSearchProvider} from './providers/web.js';
+import {WindowsProvider} from './providers/windows.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
 
@@ -33,10 +37,14 @@ export default class LumeExtension extends Extension {
         this._registry.register(new UnitsProvider());
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));
+        this._registry.register(new WindowsProvider(this._settings));
         this._registry.register(new CommandsProvider(this));
+        this._registry.register(new SystemProvider());
+        this._registry.register(new TogglesProvider());
         this._registry.register(new SettingsProvider());
         this._registry.register(new FilesProvider(this._settings));
         this._registry.register(new ClipboardProvider(this._settings));
+        this._registry.register(new MediaProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));

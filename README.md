@@ -52,8 +52,8 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 
 Each row shows its type on the right (App, Setting, File, Folder, Web, …),
 and the pill in the search field shows what you are searching: *All
-results*, or *Clipboard*, *Weather*, *AI Agent* or *Folder* when a keyword
-or path takes over. Enter on the search field opens the top (highlighted)
+results*, or *Clipboard*, *Weather*, *AI Agent*, *Windows*, *Media* or
+*Folder* when a keyword or path takes over. Enter on the search field opens the top (highlighted)
 result. Moving with the
 keyboard puts focus on the result itself, so screen readers such as Orca read
 its title and description; typing sends you back to the search field.
@@ -64,10 +64,14 @@ What you can type:
 | --- | --- |
 | Part or all of an app name (`term`, `vsc` on *Loose*) | Applications; Enter opens or focuses it |
 | A Settings panel or what you want to change (`wifi`, `night light`, `pointer speed`) | The best-matching Settings panels; Enter opens it |
+| A window title or app name, or `win` for all windows | Open windows; Enter focuses the window and its workspace |
+| `lock`, `suspend`, `restart`, `power off`, `log out` | GNOME's own system actions; power off, restart and log out ask for confirmation |
+| `dark`, `night light`, `dnd` | Turn Dark Style, Night Light or Do Not Disturb on or off |
+| `media`, `music`, `pause`, `next`, or a player, song or artist | Each playing or paused player; Enter plays/pauses, Ctrl+Enter next, Alt+Enter previous |
 | Three or more letters of a file name, or part of a path | Up to 5 files from the LocalSearch index; Enter opens it |
 | A folder path (`~/Documents/`, `/etc/`, `~/Doc`) | That folder's contents, filtered by what follows the last `/` |
 | An expression (`4 + 3 * 8`, `2pi`, `sind(30)`) | The result; Enter copies it |
-| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`) | The converted value; Enter copies it |
+| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`, `16px to rem`) | The converted value; Enter copies it |
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in the background; Ctrl+Enter runs it in a terminal |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
@@ -99,6 +103,13 @@ category; without a number, 1 is assumed (`cup to qt`). Categories: length,
 mass, volume (US cups, pints, quarts, gallons), time, area, speed, storage
 (`kb`/`mb`/`gb` are 1000-based, `kib`/`mib`/`gib` 1024-based) and temperature.
 
+Web units are lengths with CSS's fixed ratios: 96 `px` per inch, `pt`
+(1/72 in) and `pc` (12 pt), and `rem`/`em` at the browser default of 16 px
+(`em` ignores parent font sizes). `vw`, `vh`, `vmin` and `vmax` use the
+logical size of the monitor Lume opens on; a browser's real viewport is a
+little smaller because of its toolbars. `pt` means point next to another
+length (`12pt to px`) and pint next to a volume (`qt to pt`).
+
 ### Files
 
 Files come from GNOME's file index (LocalSearch, formerly Tracker), so only
@@ -127,7 +138,10 @@ fails; Ctrl+Enter opens it in your terminal and keeps the window open
 afterwards. Output is discarded. A bare program name ranks below matching
 apps, and a line ranks above Settings panels and apps only when it looks
 like a command (`-flag`, `/`, `|`, `>`, `=`, `$`). Turn this off with *Run
-Commands* in preferences.
+Commands* in preferences. Power commands (`shutdown`, `poweroff`, `reboot`,
+`halt`, `systemctl poweroff`/`reboot`/`suspend`, …) are not offered: they
+would act without asking, so use *Power Off* or *Restart*, which open GNOME's
+confirmation.
 
 ### Web search, weather and AI agents
 
@@ -309,9 +323,10 @@ src/
   lib/url.js          web address recognition (no gi imports)
   lib/agents.js       agent and terminal argv (no gi imports)
   lib/terminal.js     run an argv in the user's terminal
-  providers/          one file per provider: apps, settings, files,
-                      calculator, units, url, cli, clipboard, weather,
-                      agents, web, commands (Lume's own)
+  providers/          one file per provider: apps, windows, system,
+                      toggles, settings, files, calculator, units, url,
+                      cli, clipboard, media, weather, agents, web,
+                      commands (Lume's own)
   schemas/            GSettings schema
 tests/                gjs self-checks (`make test`), headless smoke test
                       (`make smoke`)
