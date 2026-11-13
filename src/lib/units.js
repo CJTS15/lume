@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Unit conversion: "10 km to mi", "5 ft in cm", "cup to qt",
-// "100 kph -> mph", "32 F to C". No gi:// imports, so tests run under
-// plain gjs.
+// "100 kph -> mph", "32 F to C", "16px to rem". No gi:// imports, so tests
+// run under plain gjs.
 
 // [category, factor to the category's base unit, names...]. The first name
-// is the symbol shown in results. Names are matched without case, so they
-// must be unique across categories. US customary volumes.
+// is the symbol shown in results. Names are matched without case; a name
+// in two categories ("pt": pint and point) resolves by the other unit's
+// category. US customary volumes.
 const LINEAR_UNITS = [
     ['length', 0.001, 'mm', 'millimeter', 'millimetre'],
     ['length', 0.01, 'cm', 'centimeter', 'centimetre'],
@@ -17,6 +18,13 @@ const LINEAR_UNITS = [
     ['length', 0.9144, 'yd', 'yard'],
     ['length', 1609.344, 'mi', 'mile'],
     ['length', 1852, 'nmi'],
+    // CSS units: 96 px per inch; rem and em assume the browser default
+    // 16 px root size (em ignores any parent font size).
+    ['length', 0.0254 / 96, 'px', 'pixel'],
+    ['length', 0.0254 / 72, 'pt', 'point'],
+    ['length', 0.0254 / 6, 'pc', 'pica'],
+    ['length', 0.0254 / 6, 'rem'],
+    ['length', 0.0254 / 6, 'em'],
 
     ['mass', 0.001, 'mg', 'milligram'],
     ['mass', 1, 'g', 'gram'],
@@ -90,26 +98,48 @@ const TEMPERATURES = [
     [{toKelvin: k => k, fromKelvin: k => k}, 'K', 'k', 'kelvin'],
 ];
 
+const linear = (category, factor, symbol) =>
+    ({category, symbol, toBase: v => v * factor, fromBase: v => v / factor});
+
+/** @type {Map<string, object[]>} name -> units with that name */
 const UNITS = new Map();
+function add(map, name, unit) {
+    const key = name.toLowerCase();
+    map.set(key, [...map.get(key) ?? [], unit]);
+}
 for (const [category, factor, ...names] of LINEAR_UNITS) {
-    const unit = {category, symbol: names[0], toBase: v => v * factor, fromBase: v => v / factor};
+    const unit = linear(category, factor, names[0]);
     for (const name of names)
-        UNITS.set(name.toLowerCase(), unit);
+        add(UNITS, name, unit);
 }
 for (const [{toKelvin, fromKelvin}, ...names] of TEMPERATURES) {
     const unit = {category: 'temperature', symbol: names[0], toBase: toKelvin, fromBase: fromKelvin};
     for (const name of names)
-        UNITS.set(name.toLowerCase(), unit);
+        add(UNITS, name, unit);
+}
+
+const PX = 0.0254 / 96;
+
+/** vw, vh, vmin, vmax for a viewport in CSS pixels. */
+function viewportUnits({width, height}) {
+    const units = new Map();
+    for (const [name, size] of [['vw', width], ['vh', height],
+        ['vmin', Math.min(width, height)], ['vmax', Math.max(width, height)]])
+        add(units, name, linear('length', size / 100 * PX, name));
+    return units;
 }
 
 /**
  * @param {string} name
- * @returns {object|undefined}
+ * @param {Map<string, object[]>} extra - units for this query only
+ * @returns {object[]} every unit with that name (empty if none)
  */
-function lookup(name) {
+function lookup(name, extra) {
     const key = name.toLowerCase().replace('²', '2').replace('³', '3').replace(/^°(?=[cf]$)/, '');
+    const find = k => [...UNITS.get(k) ?? [], ...extra.get(k) ?? []];
+    const units = find(key);
     // Plurals: "cups", "miles", "kilometers".
-    return UNITS.get(key) ?? (key.length > 3 && key.endsWith('s') ? UNITS.get(key.slice(0, -1)) : undefined);
+    return units.length > 0 || key.length <= 3 || !key.endsWith('s') ? units : find(key.slice(0, -1));
 }
 
 // [amount] unit (to|in|into|as|->) unit. The amount is optional ("cup to
@@ -121,19 +151,30 @@ const PATTERN = /^\s*(-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)?\s*([^\s\d.-]\S*?
  * Parse and convert a conversion query.
  *
  * @param {string} text
+ * @param {object} [context]
+ * @param {{width: number, height: number}} [context.viewport] - in CSS px;
+ *   without it vw/vh/vmin/vmax are not recognised
  * @returns {{amount: number, value: number, from: string, to: string}|null}
  *   from/to are display symbols; null if `text` is not a conversion between
  *   two known units of the same category
  */
-export function convert(text) {
+export function convert(text, {viewport} = {}) {
     const match = PATTERN.exec(text);
     if (!match)
         return null;
 
     const amount = match[1] === undefined ? 1 : parseFloat(match[1]);
-    const from = lookup(match[2]);
-    const to = lookup(match[3]);
-    if (!from || !to || from.category !== to.category || !Number.isFinite(amount))
+    const extra = viewport ? viewportUnits(viewport) : new Map();
+    const tos = lookup(match[3], extra);
+    let from, to;
+    for (const candidate of lookup(match[2], extra)) {
+        to = tos.find(t => t.category === candidate.category);
+        if (to) {
+            from = candidate;
+            break;
+        }
+    }
+    if (!from || !Number.isFinite(amount))
         return null;
 
     const value = to.fromBase(from.toBase(amount));
