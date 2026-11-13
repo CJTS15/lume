@@ -281,8 +281,11 @@ only by you); turning it off deletes the file. `clip` also offers *Clear
 Clipboard History*.
 
 Copies that a password manager marks as secret (`x-kde-passwordManagerHint`,
-set by KeePassXC and others) are skipped. Password managers that don't set
-it are not excluded; turn off *Remember Copied Text* if that matters to you.
+set by KeePassXC and KWallet) are skipped. Bitwarden and 1Password don't set
+it, so Lume also skips copies that look like a secret: GitHub, AWS, Slack and
+AI API tokens (`sk-…`), JWTs, private keys and card numbers. A plain password
+from such a manager can't be recognised; turn off *Remember Copied Text* if
+that matters to you.
 
 **Why not <kbd>Super</kbd>+<kbd>Space</kbd>?** GNOME uses it to switch input
 sources. To use it for Lume, first clear or change *Settings → Keyboard →

@@ -153,7 +153,7 @@ export default class LumePreferences extends ExtensionPreferences {
     _buildClipboardGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Clipboard History'),
-            description: _('Search “clip” to see copied text. Copies that password managers mark as secret are skipped.'),
+            description: _('Search “clip” to see copied text. Copies that password managers mark as secret, and ones that look like tokens, keys or card numbers, are skipped.'),
         });
 
         const history = new Adw.SwitchRow({title: _('Remember Copied Text')});

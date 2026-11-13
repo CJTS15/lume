@@ -105,7 +105,7 @@
     <key name="clipboard-history" type="b">
       <default>true</default>
       <summary>Remember clipboard history</summary>
-      <description>Keep a list of copied text, shown by searching “clip”. Copies that password managers mark as secret are skipped.</description>
+      <description>Keep a list of copied text, shown by searching “clip”. Copies that password managers mark as secret, and ones that look like tokens, keys or card numbers, are skipped.</description>
     </key>
     <key name="clipboard-persist" type="b">
       <default>false</default>

@@ -17,13 +17,15 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import {matchScore} from '../lib/match.js';
 import {Provider} from '../lib/provider.js';
 import {matchPrefix} from '../lib/prefix.js';
+import {looksSecret} from '../lib/secrets.js';
 
 // Large copies (logs, files' contents) are not worth keeping or rendering.
 const MAX_ENTRY_LENGTH = 20000;
 const TITLE_LENGTH = 80;
 const SAVE_DELAY_SECONDS = 2;
 // Password managers (KeePassXC, KDE Wallet, ...) add this type to secret
-// copies. Managers that do not set it are not excluded.
+// copies. For managers that do not set it (Bitwarden, 1Password), copies
+// that look like tokens, keys or card numbers are skipped (lib/secrets.js).
 const SECRET_HINT_MIMETYPE = 'x-kde-passwordManagerHint';
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
@@ -140,7 +142,7 @@ export class ClipboardProvider extends Provider {
     }
 
     _add(text) {
-        if (!text?.trim() || text.length > MAX_ENTRY_LENGTH)
+        if (!text?.trim() || text.length > MAX_ENTRY_LENGTH || looksSecret(text))
             return;
 
         // Copying an item again (also from Lume itself) moves it to the top.
@@ -185,9 +187,13 @@ export class ClipboardProvider extends Provider {
             return;
 
         // Entries copied since enable() stay on top.
-        const loaded = saved.filter(entry => typeof entry === 'string' && entry.length <= MAX_ENTRY_LENGTH);
+        const valid = saved.filter(entry => typeof entry === 'string' && entry.length <= MAX_ENTRY_LENGTH);
+        // Saved before secrets were skipped: drop them, also from the file.
+        const loaded = valid.filter(entry => !looksSecret(entry));
         this._history = [...new Set([...this._history, ...loaded])];
         this._trim();
+        if (loaded.length < valid.length)
+            this._scheduleSave();
     }
 
     _scheduleSave() {
