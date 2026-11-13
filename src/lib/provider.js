@@ -66,6 +66,18 @@ export class Provider {
     }
 
     /**
+     * Whether this provider's prefix leads the query ("clip …", "b …").
+     * The registry then asks only this provider, so its rows are the only
+     * ones shown.
+     *
+     * @param {string} _text - The trimmed, non-empty query.
+     * @returns {boolean}
+     */
+    owns(_text) {
+        return false;
+    }
+
+    /**
      * Return results for `text`. May be synchronous or return a Promise.
      * Async providers should stop work and reject (or return []) when
      * `cancellable` is cancelled; a newer query has replaced theirs.
@@ -125,7 +137,8 @@ export class ProviderRegistry {
      * @returns {Promise<void>} resolves when every provider has answered
      */
     async query(text, cancellable, onResults) {
-        await Promise.all(this.#providers.map(async provider => {
+        const owner = this.#providers.find(p => p.owns(text));
+        await Promise.all((owner ? [owner] : this.#providers).map(async provider => {
             let results;
             try {
                 results = await provider.query(text, cancellable);

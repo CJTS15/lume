@@ -27,8 +27,12 @@ export class WindowsProvider extends Provider {
         this._tracker = Shell.WindowTracker.get_default();
     }
 
+    owns(text) {
+        return this._keywordFilter(text) !== null;
+    }
+
     scope(text) {
-        return this._keywordFilter(text) !== null ? _('Windows') : null;
+        return this.owns(text) ? _('Windows') : null;
     }
 
     /** @returns {string|null} the filter after "win", or null without it */
