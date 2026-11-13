@@ -6,31 +6,83 @@
 //
 // Grammar:
 //   expr    := term (('+' | '-') term)*
-//   term    := unary (('*' | '/' | '%') unary)*
+//   term    := unary (('*' | '/' | '%') unary | power)*   the bare power is
+//                                            implicit multiplication: 2pi
 //   unary   := ('+' | '-') unary | power
 //   power   := primary ('^' unary)?          right-associative, -2^2 = -4
-//   primary := number | constant | function '(' expr ')' | '(' expr ')'
+//   primary := number | constant | function '(' args ')' | '(' expr ')'
+//   args    := expr (',' expr)*
 
 const MAX_LENGTH = 200;
 const MAX_DEPTH = 50;
+const MAX_FACTORIAL = 170; // 171! is not a finite double
 
+const toRadians = x => x * Math.PI / 180;
+const toDegrees = x => x * 180 / Math.PI;
+
+function factorial(n) {
+    if (!Number.isInteger(n) || n < 0 || n > MAX_FACTORIAL)
+        return NaN;
+    let result = 1;
+    for (let i = 2; i <= n; i++)
+        result *= i;
+    return result;
+}
+
+// Round half to even, as C's rint() does in the default rounding mode.
+function rint(x) {
+    const floor = Math.floor(x);
+    const diff = x - floor;
+    if (diff !== 0.5)
+        return Math.round(x);
+    return floor % 2 === 0 ? floor : floor + 1;
+}
+
+// [arity, function]; arity -1 takes one or more arguments.
 const FUNCTIONS = {
-    sqrt: Math.sqrt,
-    cbrt: Math.cbrt,
-    abs: Math.abs,
-    exp: Math.exp,
-    ln: Math.log,
-    log: Math.log10,
-    sin: Math.sin,
-    cos: Math.cos,
-    tan: Math.tan,
-    asin: Math.asin,
-    acos: Math.acos,
-    atan: Math.atan,
-    round: Math.round,
-    floor: Math.floor,
-    ceil: Math.ceil,
+    sqrt: [1, Math.sqrt],
+    cbrt: [1, Math.cbrt],
+    abs: [1, Math.abs],
+    exp: [1, Math.exp],
+    ln: [1, Math.log],
+    log: [1, Math.log10],
+    log10: [1, Math.log10],
+    log2: [1, Math.log2],
+    // Half away from zero, like C's round(); Math.round rounds -2.5 to -2.
+    round: [1, x => Math.sign(x) * Math.round(Math.abs(x))],
+    rint: [1, rint],
+    floor: [1, Math.floor],
+    ceil: [1, Math.ceil],
+    fact: [1, factorial],
+    rad: [1, toRadians],
+    deg: [1, toDegrees],
+    sin: [1, Math.sin],
+    cos: [1, Math.cos],
+    tan: [1, Math.tan],
+    asin: [1, Math.asin],
+    acos: [1, Math.acos],
+    atan: [1, Math.atan],
+    sinh: [1, Math.sinh],
+    cosh: [1, Math.cosh],
+    tanh: [1, Math.tanh],
+    asinh: [1, Math.asinh],
+    acosh: [1, Math.acosh],
+    atanh: [1, Math.atanh],
+    pow: [2, Math.pow],
+    // JS % is C's fmod: the result takes the sign of the dividend.
+    fmod: [2, (a, b) => a % b],
+    hypot: [-1, Math.hypot],
+    min: [-1, Math.min],
+    max: [-1, Math.max],
 };
+
+// Degree variants: sind(30) = 0.5, asind(0.5) = 30. Values within rounding
+// noise of zero (sind(180)) become exactly zero.
+const snap = x => (Math.abs(x) < 1e-15 ? 0 : x);
+for (const name of ['sin', 'cos', 'tan'])
+    FUNCTIONS[`${name}d`] = [1, x => snap(Math[name](toRadians(x)))];
+for (const name of ['asin', 'acos', 'atan'])
+    FUNCTIONS[`${name}d`] = [1, x => toDegrees(Math[name](x))];
 
 const CONSTANTS = {
     pi: Math.PI,
@@ -65,12 +117,13 @@ function tokenize(text) {
             continue;
         }
 
-        const name = /^[a-zπ]+/i.exec(text.slice(i));
+        const name = /^(π|[a-z][a-z0-9]*)/i.exec(text.slice(i));
         if (name) {
             const id = name[0].toLowerCase();
-            if (id in FUNCTIONS)
+            // hasOwn: "constructor" must not find Object.prototype's.
+            if (Object.hasOwn(FUNCTIONS, id))
                 tokens.push({type: 'function', value: id});
-            else if (id in CONSTANTS)
+            else if (Object.hasOwn(CONSTANTS, id))
                 tokens.push({type: 'number', value: CONSTANTS[id], constant: true});
             else
                 return null;
@@ -85,7 +138,7 @@ function tokenize(text) {
         }
 
         const op = OPERATOR_ALIASES[ch] ?? ch;
-        if ('+-*/%^()'.includes(op)) {
+        if ('+-*/%^(),'.includes(op)) {
             tokens.push({type: 'op', value: op});
             i++;
             continue;
@@ -142,17 +195,43 @@ class Parser {
 
     _term() {
         let value = this._unary();
-        while (this._isOp('*') || this._isOp('/') || this._isOp('%')) {
-            const op = this._tokens[this._pos++].value;
-            const rhs = this._unary();
-            if (op === '*')
-                value *= rhs;
-            else if (op === '/')
-                value /= rhs;
-            else
-                value %= rhs;
+        for (;;) {
+            if (this._isOp('*') || this._isOp('/') || this._isOp('%')) {
+                const op = this._tokens[this._pos++].value;
+                const rhs = this._unary();
+                if (op === '*')
+                    value *= rhs;
+                else if (op === '/')
+                    value /= rhs;
+                else
+                    value %= rhs;
+            } else if (this._implicitMultiplication()) {
+                value *= this._power();
+            } else {
+                return value;
+            }
         }
-        return value;
+    }
+
+    /**
+     * Whether the next token multiplies the value before it without an
+     * operator: 2pi, 2(3+4), (2)(3), 2sqrt(4), pi 2. Two plain numbers
+     * ("2 3") do not, so a stray space is not read as multiplication.
+     */
+    _implicitMultiplication() {
+        const previous = this._tokens[this._pos - 1];
+        const next = this._peek();
+        if (!previous || !next)
+            return false;
+
+        const closesValue = previous.type === 'number' ||
+            (previous.type === 'op' && previous.value === ')');
+        if (!closesValue)
+            return false;
+        if (next.type === 'function' || (next.type === 'op' && next.value === '('))
+            return true;
+        return next.type === 'number' &&
+            (next.constant || previous.constant || previous.value === ')');
     }
 
     _unary() {
@@ -188,10 +267,19 @@ class Parser {
             return token.value;
 
         if (token.type === 'function') {
+            const [arity, fn] = FUNCTIONS[token.value];
+            this._enter();
             this._expect('(');
-            const arg = this._expr();
+            const args = [this._expr()];
+            while (this._isOp(',')) {
+                this._pos++;
+                args.push(this._expr());
+            }
             this._expect(')');
-            return FUNCTIONS[token.value](arg);
+            this._depth--;
+            if (arity !== -1 && args.length !== arity)
+                throw new Error(`${token.value} takes ${arity} argument(s)`);
+            return fn(...args);
         }
 
         if (token.type === 'op' && token.value === '(') {
@@ -223,9 +311,11 @@ export function evaluate(text) {
         return null;
 
     const tokens = tokenize(text);
-    if (!tokens || tokens.length < 2)
+    if (!tokens)
         return null;
-    if (!tokens.some(t => t.type === 'function' || (t.type === 'op' && t.value !== '(' && t.value !== ')')))
+    // A lone number or constant, even in parentheses, is not a calculation.
+    const values = tokens.filter(t => !(t.type === 'op' && (t.value === '(' || t.value === ')')));
+    if (values.length < 2 && !values.some(t => t.type === 'function'))
         return null;
 
     let value;
