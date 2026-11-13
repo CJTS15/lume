@@ -26,16 +26,16 @@ make install          # packs src/ and runs `gnome-extensions install --force`
 Then log out and back in (Wayland can't restart the Shell in place) and run:
 
 ```sh
-gnome-extensions enable lume@cjts15
+gnome-extensions enable lume@cjts15.github.io
 ```
 
-To remove: `gnome-extensions uninstall lume@cjts15`.
+To remove: `gnome-extensions uninstall lume@cjts15.github.io`.
 
 ### Development install
 
 `make link` compiles the schema and symlinks `src/` into
-`~/.local/share/gnome-shell/extensions/lume@cjts15`, so edits are picked up
-the next time a Shell starts. `make unlink` removes only that symlink.
+`~/.local/share/gnome-shell/extensions/lume@cjts15.github.io`, so edits are
+picked up the next time a Shell starts. `make unlink` removes only that symlink.
 
 ## Use
 
@@ -114,7 +114,7 @@ it in Lume's preferences.
 
 ## Preferences
 
-`gnome-extensions prefs lume@cjts15`, or search "Lume Preferences" in Lume.
+`gnome-extensions prefs lume@cjts15.github.io`, or search "Lume Preferences" in Lume.
 
 - **Open Lume**: click the row and press a combination. It needs Super, Ctrl
   or Alt. Esc cancels, Backspace disables the shortcut, the arrow button
@@ -149,8 +149,8 @@ package separately. On Fedora, find the package with
 (undo with `sudo dnf remove <name>`).
 
 Inside the nested session, open a terminal there and run
-`gnome-extensions enable lume@cjts15`, or enable it before starting with
-`gsettings set org.gnome.shell enabled-extensions "['lume@cjts15']"`
+`gnome-extensions enable lume@cjts15.github.io`, or enable it before starting with
+`gsettings set org.gnome.shell enabled-extensions "['lume@cjts15.github.io']"`
 (this changes your real settings too). Set the window size with
 `MUTTER_DEBUG_DUMMY_MODE_SPECS=1600x1000` (the Makefile does).
 
