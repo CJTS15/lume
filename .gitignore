@@ -1,3 +1,5 @@
 src/schemas/gschemas.compiled
 *.shell-extension.zip
 /docs/
+.github/
+.claude/
