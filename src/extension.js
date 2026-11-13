@@ -55,7 +55,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new CliProvider(this._settings));
         this._registry.register(new RemoteProvider());
-        // After the built-in scopes, so a script never hides "win" or "clip".
+        // After the built-in scopes, so a script never hides "wd" or "clip".
         this._registry.register(new ScriptsProvider());
         this._registry.register(new WebSearchProvider(this._settings));
 

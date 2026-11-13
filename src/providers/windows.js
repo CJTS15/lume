@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Open windows. Matching windows show in normal results below their app;
-// "win" lists every window, most recently used first. Enter focuses the
+// "wd" lists every window, most recently used first. Enter focuses the
 // window, switching workspace if needed.
 
 import Meta from 'gi://Meta';
@@ -35,7 +35,7 @@ export class WindowsProvider extends Provider {
         return this.owns(text) ? _('Windows') : null;
     }
 
-    /** @returns {string|null} the filter after "win", or null without it */
+    /** @returns {string|null} the filter after "wd", or null without it */
     _keywordFilter(text) {
         return matchPrefix(text, this._settings.get_strv('prefix-windows'));
     }

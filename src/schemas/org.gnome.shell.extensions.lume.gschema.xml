@@ -57,7 +57,7 @@
       <summary>Prefixes for files only</summary>
     </key>
     <key name="prefix-windows" type="as">
-      <default>['win']</default>
+      <default>['wd']</default>
       <summary>Prefixes for open windows only</summary>
     </key>
     <key name="prefix-clipboard" type="as">
