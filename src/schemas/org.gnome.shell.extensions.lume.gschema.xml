@@ -102,6 +102,11 @@
       <summary>Offline mode</summary>
       <description>Nothing leaves the computer: no weather or exchange-rate requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
     </key>
+    <key name="debug-timing" type="b">
+      <default>false</default>
+      <summary>Log search timings</summary>
+      <description>For profiling: log when each provider answers, how many renders a search took and their time. Never logs the query. Not shown in Preferences.</description>
+    </key>
     <key name="show-preview" type="b">
       <default>false</default>
       <summary>Show the preview pane</summary>

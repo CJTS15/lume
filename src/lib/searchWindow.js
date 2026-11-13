@@ -10,6 +10,7 @@
 import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -366,9 +367,16 @@ class LumeSearchWindow extends St.Widget {
         this._cancellable = cancellable;
         this._resultsByProvider.clear();
         this._userMoved = false;
+        // debug-timing: provider ids, counts and times only, never the query.
+        const timing = this._settings.get_boolean('debug-timing')
+            ? {start: GLib.get_monotonic_time(), renders: 0, renderUs: 0} : null;
+        const elapsed = () => ((GLib.get_monotonic_time() - timing.start) / 1000).toFixed(1);
+        this._timing = timing;
 
         this._registry.query(text, cancellable, (provider, results) => {
             this._resultsByProvider.set(provider.id, results);
+            if (timing)
+                console.log(`lume: timing ${provider.id} +${elapsed()} ms, ${results.length} rows`);
             this._render();
         }).then(() => {
             // Every provider has answered: show "No results" if none did.
@@ -376,6 +384,10 @@ class LumeSearchWindow extends St.Widget {
                 return;
             this._statusLabel.visible = this._rows.length === 0;
             this._separator.show();
+            if (timing) {
+                console.log(`lume: timing settled +${elapsed()} ms, ${timing.renders} renders, ` +
+                    `${(timing.renderUs / 1000).toFixed(1)} ms rendering`);
+            }
         });
     }
 
@@ -387,6 +399,7 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _render() {
+        const started = this._timing ? GLib.get_monotonic_time() : 0;
         // Keep the selection only if the user put it there; otherwise a
         // late, better result (files, weather) must take the top spot, or
         // Enter would open whatever answered first (e.g. web search).
@@ -419,6 +432,10 @@ class LumeSearchWindow extends St.Widget {
         // The focused row was just destroyed; focus its replacement.
         if (rowHadFocus)
             (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
+        if (this._timing) {
+            this._timing.renders++;
+            this._timing.renderUs += GLib.get_monotonic_time() - started;
+        }
     }
 
     _mergedResults() {
