@@ -139,6 +139,10 @@
       <default>['snip']</default>
       <summary>Prefixes for snippets only</summary>
     </key>
+    <key name="prefix-recent" type="as">
+      <default>['recent']</default>
+      <summary>Prefixes for recently used files only</summary>
+    </key>
     <key name="offline-mode" type="b">
       <default>false</default>
       <summary>Offline mode</summary>
