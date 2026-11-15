@@ -35,6 +35,7 @@ export function checkResults(results) {
             r.subtitle = typeof r.subtitle === 'string' ? cap(r.subtitle, MAX_SUBTITLE) : undefined;
             r.type = typeof r.type === 'string' ? cap(r.type, MAX_TYPE) : undefined;
             r.group = typeof r.group === 'string' ? cap(r.group, MAX_GROUP) : undefined;
+            r.paste = typeof r.paste === 'string' ? r.paste : undefined;
             r.score = Number.isFinite(r.score) ? r.score : 0;
             return r;
         });
@@ -60,9 +61,11 @@ export function checkResults(results) {
  *   Without it, Alt+Enter does what Enter does.
  * @property {() => void} [copy] - Ctrl+C on the row. Without it, Ctrl+C
  *   copies the entry's selected text as usual.
+ * @property {string} [paste] - text the Ctrl+K menu offers to paste into
+ *   the window that was in front before Lume opened.
  * @property {Array<{label: string, icon?: string, run: () => void}>} [actions]
  *   - the Ctrl+K menu. Without it the menu offers Open and, if there is
- *   `copy`, Copy.
+ *   `copy`, Copy; with `paste`, it also offers Paste.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
  * @property {(size: number) => Clutter.Actor|null} [createIcon] - an icon

@@ -12,6 +12,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {AGENTS} from './lib/agents.js';
+import {parseSnippets, snippetsPath} from './lib/snippets.js';
 import {CURRENCIES, homeCurrency} from './lib/units.js';
 import {ENGINES, isValidSearchUrl} from './lib/web.js';
 
@@ -58,6 +59,144 @@ export default class LumePreferences extends ExtensionPreferences {
         });
         prefixPage.add(this._buildPrefixGroup(settings));
         window.add(prefixPage);
+
+        window.add(this._buildSnippetsPage(window));
+    }
+
+    /**
+     * Edits the snippets file (lib/snippets.js); the Shell reloads it when
+     * it changes. Saved half a second after the last edit, and on close.
+     */
+    _buildSnippetsPage(window) {
+        const page = new Adw.PreferencesPage({
+            title: _('Snippets'),
+            icon_name: 'insert-text-symbolic',
+        });
+        const group = new Adw.PreferencesGroup({
+            title: _('Snippets'),
+            description: _('Type a snippet’s name, or “snip” to list them all. Enter pastes it into the window you were using; Ctrl+C copies it. {date}, {time} and {clipboard} are filled in when it is used.'),
+        });
+        page.add(group);
+
+        const add = new Gtk.Button({
+            icon_name: 'list-add-symbolic',
+            tooltip_text: _('Add Snippet'),
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat'],
+        });
+        add.update_property([Gtk.AccessibleProperty.LABEL], [_('Add Snippet')]);
+        group.set_header_suffix(add);
+
+        const file = Gio.File.new_for_path(snippetsPath());
+        let snippets;
+        try {
+            const [, contents] = file.load_contents(null);
+            snippets = parseSnippets(new TextDecoder().decode(contents));
+        } catch (e) {
+            if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
+                // Never overwrite a file that could not be read.
+                // TRANSLATORS: %s is a file path
+                group.description = _('%s could not be read. Fix or remove it, then open Preferences again.').format(file.get_path());
+                add.sensitive = false;
+                return page;
+            }
+            snippets = [];
+        }
+
+        let saveId = 0;
+        const save = () => {
+            if (saveId) {
+                GLib.source_remove(saveId);
+                saveId = 0;
+            }
+            // A snippet without a name could not be found; keep its text anyway.
+            const json = JSON.stringify(snippets.map(({name, text}) => ({name: name.trim() || _('Untitled Snippet'), text})), null, 2);
+            try {
+                GLib.mkdir_with_parents(file.get_parent().get_path(), 0o700);
+                // PRIVATE creates the file with mode 0600: snippets can hold an address.
+                file.replace_contents(new TextEncoder().encode(json), null, false,
+                    Gio.FileCreateFlags.PRIVATE | Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+            } catch (e) {
+                window.add_toast(new Adw.Toast({title: _('Could not save snippets: %s').format(e.message)}));
+            }
+        };
+        const scheduleSave = () => {
+            if (saveId)
+                GLib.source_remove(saveId);
+            saveId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+                saveId = 0;
+                save();
+                return GLib.SOURCE_REMOVE;
+            });
+        };
+        window.connect('close-request', () => {
+            if (saveId)
+                save();
+            return false;
+        });
+
+        const addRow = (snippet, isNew) => {
+            const row = new Adw.ExpanderRow({use_markup: false, expanded: isNew});
+            const remove = new Gtk.Button({
+                icon_name: 'user-trash-symbolic',
+                tooltip_text: _('Remove Snippet'),
+                valign: Gtk.Align.CENTER,
+                css_classes: ['flat'],
+            });
+            row.add_suffix(remove);
+            const sync = () => {
+                row.title = snippet.name.trim() || _('Untitled Snippet');
+                row.subtitle = snippet.text.split('\n')[0].slice(0, 80);
+                // TRANSLATORS: %s is a snippet's name
+                remove.update_property([Gtk.AccessibleProperty.LABEL], [_('Remove snippet %s').format(row.title)]);
+            };
+            sync();
+
+            const name = new Adw.EntryRow({title: _('Name'), text: snippet.name});
+            name.connect('changed', () => {
+                snippet.name = name.text;
+                sync();
+                scheduleSave();
+            });
+            row.add_row(name);
+
+            const text = new Gtk.TextView({
+                wrap_mode: Gtk.WrapMode.WORD_CHAR,
+                accepts_tab: false,
+                height_request: 120,
+                top_margin: 12,
+                bottom_margin: 12,
+                left_margin: 12,
+                right_margin: 12,
+            });
+            text.update_property([Gtk.AccessibleProperty.LABEL], [_('Text')]);
+            text.buffer.text = snippet.text;
+            text.buffer.connect('changed', () => {
+                snippet.text = text.buffer.text;
+                sync();
+                scheduleSave();
+            });
+            row.add_row(new Gtk.ListBoxRow({child: text, activatable: false, selectable: false}));
+
+            remove.connect('clicked', () => {
+                snippets.splice(snippets.indexOf(snippet), 1);
+                group.remove(row);
+                scheduleSave();
+            });
+            group.add(row);
+            if (isNew)
+                name.grab_focus();
+        };
+
+        for (const snippet of snippets)
+            addRow(snippet, false);
+        add.connect('clicked', () => {
+            const snippet = {name: _('New Snippet'), text: ''};
+            snippets.push(snippet);
+            addRow(snippet, true);
+            scheduleSave();
+        });
+        return page;
     }
 
     _buildShortcutGroup(window, settings) {
@@ -296,6 +435,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-agent', _('AI Agent')],
             ['prefix-terminal', _('Run in Terminal')],
             ['prefix-emoji', _('Emoji')],
+            ['prefix-snippets', _('Snippets')],
         ];
         const rows = new Map();
         const words = key => settings.get_strv(key).map(w => w.toLowerCase());

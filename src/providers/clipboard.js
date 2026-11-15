@@ -105,15 +105,20 @@ export class ClipboardProvider extends Provider {
             : this._history.slice(0, showClear ? maxResults - 1 : maxResults);
 
         // The keyword is an explicit request, so these rank above apps.
-        const results = entries.map((entry, index) => ({
-            id: `entry:${entry}`,
-            title: toTitle(entry),
-            subtitle: _('Copy to clipboard'),
-            icon: 'edit-paste-symbolic',
-            score: 0.99 - 0.001 * index,
-            activate: () => this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry),
-            preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
-        }));
+        const results = entries.map((entry, index) => {
+            const copy = () => this._clipboard.set_text(St.ClipboardType.CLIPBOARD, entry);
+            return {
+                id: `entry:${entry}`,
+                title: toTitle(entry),
+                subtitle: _('Copy to clipboard'),
+                icon: 'edit-paste-symbolic',
+                score: 0.99 - 0.001 * index,
+                activate: copy,
+                copy,
+                paste: entry,
+                    preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
+            };
+        });
 
         if (showClear) {
             results.push({
