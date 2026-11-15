@@ -70,7 +70,9 @@ What you can type:
 | A window title or app name, or `wd` for all windows | Open windows; Enter focuses the window and its workspace. Firefox and Chrome windows show their active tab |
 | `ws`, `ws 2`, `ws firefox` | Workspaces with their apps; Enter switches to the workspace |
 | `lock`, `suspend`, `restart`, `power off`, `log out` | GNOME's own system actions; power off, restart and log out ask for confirmation |
-| `dark`, `night light`, `dnd` | Turn Dark Style, Night Light or Do Not Disturb on or off |
+| `dark`, `night light`, `dnd`, `bluetooth` | Turn Dark Style, Night Light, Do Not Disturb or Bluetooth on or off |
+| `mute`, `mute mic` | Mute or unmute the sound output or the microphone |
+| `power mode`, `power saver`, `performance` | Switch the power mode (power-profiles-daemon), as in quick settings |
 | `media`, `music`, `pause`, `next`, or a player, song or artist | Each playing or paused player; Enter plays/pauses, Ctrl+Enter next, Alt+Enter previous |
 | Three or more letters of a file name, or part of a path | Up to 5 files from the LocalSearch index; Enter opens it |
 | A folder path (`~/Documents/`, `/etc/`, `~/Doc`) | That folder's contents, filtered by what follows the last `/` |
