@@ -85,6 +85,8 @@ What you can type:
 | `uuid`, `base64 encode\|decode <text>`, `sha256 <text>`, `md5 <text>` | A new UUID, Base64, or a checksum; Enter copies it |
 | A colour (`#ff8800`, `rgb(255, 136, 0)`) | The other notation with a swatch; Enter copies it |
 | `unix`, or a 10- or 13-digit timestamp | The current Unix time, or that moment's date; Enter copies it |
+| `time in tokyo`, `3pm est in london`, `15:00 in manila` | The time there, or that time converted; Enter copies it |
+| `in 3 hours`, `2 days ago`, `next monday`, `days until dec 25`, `unix 2026-12-25` | That date, a day count or a Unix time; Enter copies it |
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in your terminal; Ctrl+Enter runs it in the background |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
@@ -284,6 +286,23 @@ set, otherwise `xdg-terminal-exec`, GNOME's default terminal setting, or the
 first of Ptyxis, Console, GNOME Terminal, Konsole, kitty, Alacritty, foot,
 WezTerm and xterm that is installed.
 
+### Time and dates
+
+`time in <place>` shows the time there; `3pm in <place>` converts a local
+time, and `3pm est in <place>` one from another place or zone. A place is a
+city or country from GNOME's own list (offline, the same as GNOME Clocks), a
+zone abbreviation (`EST`, `JST`, `UTC`; your own zone's abbreviation means
+your zone) or an IANA name (`Asia/Manila`). A city that isn't in GNOME's list
+(Pagadian), or a name several cities share (London, Paris), is looked up with
+Open-Meteo, so you get the best-known one; `london, canada` picks another.
+In offline mode a shared name shows a row for each. Times follow your 12/24-hour
+clock setting.
+
+Dates: `in 3 hours`, `in 2 weeks`, `3 days ago`, `next friday`, `last monday`,
+`days until dec 25` (or `since`, with `2026-12-25`, `25 December 2027`, …) and
+`unix <date>` for that day's midnight as a Unix time. Day and month names are
+English only.
+
 ### Clipboard history
 
 Copied text is shown only when you search `clip`, never in ordinary results.
@@ -305,6 +324,8 @@ that matters to you.
 Lume sends nothing unless one of these happens:
 
 - `weather …`: the city to Open-Meteo.com (geocoding and forecast).
+- `time in …` for a city GNOME's list lacks or several cities share: the
+  name to Open-Meteo.com (geocoding).
 - A currency conversion: one fixed request for the day's ECB rates to
   frankfurter.dev, at most every 12 hours. Your query is never sent.
 - Results from apps' GNOME search providers: Lume asks the apps, as the
@@ -312,7 +333,7 @@ Lume sends nothing unless one of these happens:
 - Choosing a web, Wikipedia or YouTube search row or a web address: your
   browser opens it.
 
-*Preferences → Privacy → Offline Mode* turns off the first three and the web
+*Preferences → Privacy → Offline Mode* turns off the first four and the web
 search rows. Saved exchange rates are still used. Commands, AI agents and
 web addresses you choose to open are not affected.
 
@@ -459,8 +480,10 @@ src/
   lib/calculator.js   expression parser (no gi imports)
   lib/match.js        text match scoring (no gi imports)
   lib/web.js          search engine URLs (no gi imports)
-  lib/units.js        unit conversion (no gi imports)
+  lib/units.js        unit conversion, currency shorthand (no gi imports)
   lib/rates.js        ECB exchange rates, cached
+  lib/dates.js        time zone and date query parsing (GLib only)
+  lib/openMeteo.js    Open-Meteo requests (weather, time zones)
   lib/devtools.js     UUID, Base64, checksums, colours, Unix time
   lib/emoji.js        emoji search (no gi imports)
   lib/url.js          web address recognition (no gi imports)
@@ -469,7 +492,7 @@ src/
   lib/prefix.js       prefix scope matching (no gi imports)
   providers/          one file per provider: apps, windows, system,
                       toggles, settings, files, calculator, units,
-                      devtools, emoji, url, cli, clipboard, media,
+                      devtools, time, emoji, url, cli, clipboard, media,
                       weather, agents, remote (apps' search providers),
                       scripts (user scripts), web, commands (Lume's own)
   data/               emoji.json (generated) and its Unicode licence

@@ -22,6 +22,7 @@ import {RemoteProvider} from './providers/remote.js';
 import {ScriptsProvider} from './providers/scripts.js';
 import {SettingsProvider} from './providers/settings.js';
 import {SystemProvider} from './providers/system.js';
+import {TimeProvider} from './providers/time.js';
 import {TogglesProvider} from './providers/toggles.js';
 import {UnitsProvider} from './providers/units.js';
 import {UrlProvider} from './providers/url.js';
@@ -41,6 +42,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new CalculatorProvider(this._settings));
         this._registry.register(new UnitsProvider(this._settings));
         this._registry.register(new DevToolsProvider());
+        this._registry.register(new TimeProvider(this._settings));
         this._registry.register(new EmojiProvider(this._settings));
         this._registry.register(new UrlProvider());
         this._registry.register(new AppsProvider(this._settings));

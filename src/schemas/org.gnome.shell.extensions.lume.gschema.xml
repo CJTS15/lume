@@ -138,7 +138,7 @@
     <key name="offline-mode" type="b">
       <default>false</default>
       <summary>Offline mode</summary>
-      <description>Nothing leaves the computer: no weather or exchange-rate requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
+      <description>Nothing leaves the computer: no weather, exchange-rate or time-zone requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
     </key>
     <key name="debug-timing" type="b">
       <default>false</default>

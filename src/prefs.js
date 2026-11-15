@@ -172,7 +172,7 @@ export default class LumePreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({title: _('Privacy')});
         const offline = new Adw.SwitchRow({
             title: _('Offline Mode'),
-            subtitle: _('Nothing leaves this computer: no weather or exchange-rate requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
+            subtitle: _('Nothing leaves this computer: no weather, exchange-rate or time-zone requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
         });
         settings.bind('offline-mode', offline, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(offline);
