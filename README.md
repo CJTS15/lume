@@ -53,8 +53,12 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Open Lume Preferences (also the gear button in the footer) |
 | <kbd>Esc</kbd> or a click outside | Close |
 
-Each row shows its type on the right (App, Setting, File, Folder, Web, …),
-and the pill in the search field shows what you are searching: *All
+The best match comes first, under *Top Hit*; the other results are grouped
+by kind (Applications, Settings, Files, or the app for apps' search
+results), the group with the best match first. A prefix scope, or results
+of only one kind, show a plain list. The Top Hit shows its type on the
+right (App, Setting, …), and so do rows whose type differs from their group
+(a Folder among Files), and the pill in the search field shows what you are searching: *All
 results*, or *Clipboard*, *Weather*, *AI Agent*, *Windows*, *Media* or
 *Folder* when a keyword or path takes over. Enter on the search field opens the top (highlighted)
 result. Moving with the

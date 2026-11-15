@@ -20,6 +20,16 @@ const MIN_CITY_LENGTH = 2;
 const DEBOUNCE_MS = 400;
 const FORECAST_TTL_SECONDS = 600;
 const SCORE = 0.97;
+// Places and forecasts remembered; the oldest go first.
+const CACHE_SIZE = 50;
+
+/** Map#set that keeps `map` at CACHE_SIZE, dropping the oldest entry. */
+function remember(map, key, value) {
+    map.delete(key);
+    map.set(key, value);
+    if (map.size > CACHE_SIZE)
+        map.delete(map.keys().next().value);
+}
 
 Gio._promisify(Soup.Session.prototype, 'send_and_read_async');
 
@@ -214,7 +224,7 @@ export class WeatherProvider extends Provider {
                 longitude: result.longitude,
             }
             : null;
-        this._places.set(city.toLowerCase(), place);
+        remember(this._places, city.toLowerCase(), place);
         return place;
     }
 
@@ -255,7 +265,7 @@ export class WeatherProvider extends Provider {
                 code: daily.weather_code?.[i],
             })),
         };
-        this._forecasts.set(this._forecastKey(place, imperial),
+        remember(this._forecasts, this._forecastKey(place, imperial),
             {time: GLib.get_monotonic_time() / 1e6, forecast});
         return forecast;
     }

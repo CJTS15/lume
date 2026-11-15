@@ -14,6 +14,7 @@ import Gio from 'gi://Gio';
 const MAX_TITLE = 256;
 const MAX_SUBTITLE = 512;
 const MAX_TYPE = 32;
+const MAX_GROUP = 64;
 
 const cap = (text, max) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
 
@@ -33,6 +34,7 @@ export function checkResults(results) {
             r.title = cap(r.title, MAX_TITLE);
             r.subtitle = typeof r.subtitle === 'string' ? cap(r.subtitle, MAX_SUBTITLE) : undefined;
             r.type = typeof r.type === 'string' ? cap(r.type, MAX_TYPE) : undefined;
+            r.group = typeof r.group === 'string' ? cap(r.group, MAX_GROUP) : undefined;
             r.score = Number.isFinite(r.score) ? r.score : 0;
             return r;
         });
@@ -71,6 +73,8 @@ export function checkResults(results) {
  *   of the icon.
  * @property {string} [type] - Short type shown on the row's right; defaults
  *   to the provider's label ("Folder" instead of "File").
+ * @property {string} [group] - Header the row is grouped under; defaults
+ *   to the provider's name (remote search providers use the app's name).
  */
 
 /**

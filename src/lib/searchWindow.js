@@ -10,7 +10,9 @@
 import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
@@ -73,6 +75,7 @@ class LumeSearchWindow extends St.Widget {
         this._openPreferences = openPreferences;
         this._grab = null;
         this._cancellable = null;
+        this._renderLater = 0;
         this._resultsByProvider = new Map();
         this._rows = [];
         this._selected = -1;
@@ -201,6 +204,7 @@ class LumeSearchWindow extends St.Widget {
         this._panel.add_child(this._createFooter());
 
         this._labels = new Map(registry.providers.map(p => [p.id, p.label]));
+        this._names = new Map(registry.providers.map(p => [p.id, p.name]));
 
         this._entry.clutter_text.connect('text-changed', () => this._onTextChanged());
         this._entry.clutter_text.connect('key-press-event', (_a, event) => this._onKeyPress(event));
@@ -313,6 +317,7 @@ class LumeSearchWindow extends St.Widget {
     _onDestroy() {
         this._settings.disconnect(this._previewChangedId);
         this._settings.disconnect(this._previewPositionId);
+        this._cancelRender();
         this._cancelQuery();
         if (this._grab) {
             Main.popModal(this._grab);
@@ -366,16 +371,29 @@ class LumeSearchWindow extends St.Widget {
         this._cancellable = cancellable;
         this._resultsByProvider.clear();
         this._userMoved = false;
+        // debug-timing: provider ids, counts and times only, never the query.
+        const timing = this._settings.get_boolean('debug-timing')
+            ? {start: GLib.get_monotonic_time(), renders: 0, renderUs: 0} : null;
+        const elapsed = () => ((GLib.get_monotonic_time() - timing.start) / 1000).toFixed(1);
+        this._timing = timing;
 
         this._registry.query(text, cancellable, (provider, results) => {
             this._resultsByProvider.set(provider.id, results);
-            this._render();
+            if (timing)
+                console.log(`lume: timing ${provider.id} +${elapsed()} ms, ${results.length} rows`);
+            this._scheduleRender();
         }).then(() => {
             // Every provider has answered: show "No results" if none did.
             if (cancellable.is_cancelled())
                 return;
+            if (this._renderLater)
+                this._render();
             this._statusLabel.visible = this._rows.length === 0;
             this._separator.show();
+            if (timing) {
+                console.log(`lume: timing settled +${elapsed()} ms, ${timing.renders} renders, ` +
+                    `${(timing.renderUs / 1000).toFixed(1)} ms rendering`);
+            }
         });
     }
 
@@ -386,23 +404,50 @@ class LumeSearchWindow extends St.Widget {
         this._separator.hide();
     }
 
+    /**
+     * Render once before the next frame, however many providers answer
+     * until then (most answer within the same main-loop turn).
+     */
+    _scheduleRender() {
+        this._renderLater ||= global.compositor.get_laters().add(Meta.LaterType.BEFORE_REDRAW, () => {
+            this._renderLater = 0;
+            this._render();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _cancelRender() {
+        if (this._renderLater)
+            global.compositor.get_laters().remove(this._renderLater);
+        this._renderLater = 0;
+    }
+
     _render() {
+        this._cancelRender();
+        const started = this._timing ? GLib.get_monotonic_time() : 0;
         // Keep the selection only if the user put it there; otherwise a
         // late, better result (files, weather) must take the top spot, or
         // Enter would open whatever answered first (e.g. web search).
         const previous = this._userMoved ? this._rows[this._selected]?.key : undefined;
         const rowHadFocus = this._rows.some(r => r.actor.has_key_focus());
 
-        const merged = this._actionsOf ? this._actionItems(this._actionsOf) : this._mergedResults();
+        const items = this._actionsOf ? this._actionItems(this._actionsOf) : this._grouped(this._mergedResults());
 
         this._resultsBox.destroy_all_children();
-        this._rows = merged.map(({key, result, type}, index) => ({
-            key,
-            result,
-            actor: this._createRow(result, type, index),
-        }));
-        for (const row of this._rows)
-            this._resultsBox.add_child(row.actor);
+        this._rows = [];
+        let header = null;
+        for (const item of items) {
+            if (item.header) {
+                header = this._createHeader(item.header);
+                this._resultsBox.add_child(header);
+                continue;
+            }
+            const actor = this._createRow(item.result, item.type, this._rows.length, header);
+            // `header` only on a group's first row: scrolling up to it shows the header.
+            this._rows.push({key: item.key, result: item.result, actor, header});
+            this._resultsBox.add_child(actor);
+            header = null;
+        }
 
         const hasRows = this._rows.length > 0;
         this._scrollView.visible = hasRows;
@@ -419,13 +464,23 @@ class LumeSearchWindow extends St.Widget {
         // The focused row was just destroyed; focus its replacement.
         if (rowHadFocus)
             (this._rows[this._selected]?.actor ?? this._entry).grab_key_focus();
+        if (this._timing) {
+            this._timing.renders++;
+            this._timing.renderUs += GLib.get_monotonic_time() - started;
+        }
     }
 
     _mergedResults() {
         const merged = [];
         for (const [providerId, results] of this._resultsByProvider) {
-            for (const result of results)
-                merged.push({key: `${providerId}:${result.id}`, result, type: result.type ?? this._labels.get(providerId)});
+            for (const result of results) {
+                merged.push({
+                    key: `${providerId}:${result.id}`,
+                    result,
+                    type: result.type ?? this._labels.get(providerId),
+                    group: result.group ?? this._names.get(providerId),
+                });
+            }
         }
         // Array.prototype.sort is stable, so equal scores keep provider order.
         merged.sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
@@ -433,6 +488,38 @@ class LumeSearchWindow extends St.Widget {
             merged.splice(0, merged.length, ...merged.filter(r => !r.result.fallback));
         merged.length = Math.min(merged.length, this._settings.get_int('max-results'));
         return merged;
+    }
+
+    /**
+     * The best row under "Top Hit", then the others grouped by provider
+     * (or `result.group`), groups ordered by their best row. Flat when
+     * all rows are of one kind or a prefix scope is active.
+     */
+    _grouped(merged) {
+        const text = this._entry.text.trim();
+        if (new Set(merged.map(item => item.group)).size < 2 || (text && this._registry.scopeFor(text)))
+            return merged;
+
+        const groups = new Map();
+        for (const item of merged.slice(1)) {
+            if (!groups.has(item.group))
+                groups.set(item.group, []);
+            // The header names the group; keep a type label only when it
+            // says more ("Folder" among files).
+            groups.get(item.group).push({...item, type: item.result.type !== item.group ? item.result.type : undefined});
+        }
+        return [
+            {header: _('Top Hit')}, merged[0],
+            ...[...groups].flatMap(([group, items]) => [{header: group}, ...items]),
+        ];
+    }
+
+    _createHeader(text) {
+        return new St.Label({
+            style_class: 'popup-inactive-menu-item lume-group-header',
+            text,
+            accessible_role: Atk.Role.HEADING,
+        });
     }
 
     /** Rows for the actions of `result`: its own, or Open and Copy. */
@@ -537,7 +624,7 @@ class LumeSearchWindow extends St.Widget {
         this._render();
     }
 
-    _createRow(result, type, index) {
+    _createRow(result, type, index, header = null) {
         // Rows take key focus during keyboard navigation, so screen readers
         // announce them, as in the overview's search results.
         const row = new St.BoxLayout({
@@ -605,6 +692,12 @@ class LumeSearchWindow extends St.Widget {
         }
         row.add_child(text);
 
+        // The first row of a group also announces the group's name.
+        if (header) {
+            row.get_accessible().add_relationship(
+                Atk.RelationType.DESCRIBED_BY, header.get_accessible());
+        }
+
         if (type) {
             const typeLabel = new St.Label({
                 style_class: 'popup-inactive-menu-item lume-result-type',
@@ -661,7 +754,7 @@ class LumeSearchWindow extends St.Widget {
         this._updatePreview();
 
         if (scroll)
-            this._ensureVisible(actor);
+            this._ensureVisible(actor, this._rows[index].header);
     }
 
     /**
@@ -684,13 +777,15 @@ class LumeSearchWindow extends St.Widget {
         return this._scrollView.vadjustment ?? this._scrollView.vscroll.adjustment;
     }
 
-    _ensureVisible(actor) {
+    _ensureVisible(actor, header = null) {
         const adjustment = this._scrollAdjustment();
         const box = actor.get_allocation_box();
+        // Scrolling up to a group's first row also shows its header.
+        const top = (header ?? actor).get_allocation_box().y1;
         const [value, , , , , pageSize] = adjustment.get_values();
 
-        if (box.y1 < value)
-            adjustment.value = box.y1;
+        if (top < value)
+            adjustment.value = top;
         else if (box.y2 > value + pageSize)
             adjustment.value = box.y2 - pageSize;
     }
@@ -701,6 +796,11 @@ class LumeSearchWindow extends St.Widget {
      *   row's second action, if it has one
      */
     _activate(index, modifiers = 0) {
+        // Rows waiting for the next frame belong to the current text: act on them.
+        if (this._renderLater) {
+            this._render();
+            index = this._selected;
+        }
         const result = this._rows[index]?.result;
         if (!result)
             return;
@@ -725,6 +825,9 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _onKeyPress(event) {
+        // Keys act on the rows for the current text, never on the last frame's.
+        if (this._renderLater)
+            this._render();
         const symbol = event.get_key_symbol();
         const state = event.get_state();
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
