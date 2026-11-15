@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Quick toggles: Dark Style, Night Light, Do Not Disturb, sound and
-// microphone mute, Bluetooth, and the power mode. The row says what Enter
+// microphone mute, Wi-Fi, Bluetooth, and the power mode. The row says what Enter
 // will do ("Turn On Night Light") and the current state. Hardware uses the
 // same services as the Shell's quick settings.
 
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GnomeBluetooth from 'gi://GnomeBluetooth?version=3.0';
+import NM from 'gi://NM';
 
 import * as Volume from 'resource:///org/gnome/shell/ui/status/volume.js';
 import {loadInterfaceXML} from 'resource:///org/gnome/shell/misc/fileUtils.js';
@@ -63,6 +65,9 @@ const PROFILES = {
 };
 const PROFILE_KEYWORDS = ['power', 'mode', 'profile', 'battery', 'energy'];
 
+Gio._promisify(NM.Client, 'new_async');
+Gio._promisify(NM.Client.prototype, 'dbus_set_property');
+
 const profilesInterface = name => `<node><interface name="${name}">
 <property name="ActiveProfile" type="s" access="readwrite"/>
 <property name="Profiles" type="aa{sv}" access="read"/>
@@ -85,6 +90,7 @@ export class TogglesProvider extends Provider {
             });
         this._destroyed = false;
         this._addSound();
+        this._addWifi();
         this._addBluetooth();
         this._connectProfiles(0);
     }
@@ -108,6 +114,29 @@ export class TogglesProvider extends Provider {
                 subtitle: on => on ? _('Currently muted') : _('Currently not muted'),
             });
         }
+    }
+
+    _addWifi() {
+        NM.Client.new_async(null)
+            .then(client => {
+                if (!this._destroyed)
+                    this._network = client;
+            })
+            .catch(e => console.debug(`lume: no NetworkManager: ${e.message}`));
+        this._toggles.push({
+            id: 'wifi',
+            name: N_('Wi-Fi'),
+            keywords: ['wifi', 'wi-fi', 'wlan', 'wireless', 'network', 'internet'],
+            icon: 'network-wireless-symbolic',
+            // A hardware switch can't be turned back on from software.
+            available: () => Boolean(this._network?.wireless_hardware_enabled) &&
+                this._network.get_devices().some(device => device.get_device_type() === NM.DeviceType.WIFI),
+            isOn: () => this._network.wireless_enabled,
+            // As the Shell's Wi-Fi toggle does.
+            set: on => this._network.dbus_set_property(NM.DBUS_PATH, NM.DBUS_INTERFACE,
+                'WirelessEnabled', new GLib.Variant('b', on), 2000, null)
+                .catch(e => console.error(`lume: could not switch Wi-Fi: ${e.message}`)),
+        });
     }
 
     _addBluetooth() {
@@ -155,6 +184,8 @@ export class TogglesProvider extends Provider {
     }
 
     query(text) {
+        // "turn off wifi" asks for the Wi-Fi toggle; the verb is the row's job.
+        text = text.replace(/^(?:turn\s+(?:on|off)|switch\s+(?:on|off)|enable|disable|toggle)\s+/i, '');
         if (text.length < MIN_QUERY_LENGTH)
             return [];
 
@@ -206,6 +237,7 @@ export class TogglesProvider extends Provider {
     destroy() {
         this._destroyed = true;
         this._profiles = null;
+        this._network = null;
         this._bluetooth = null;
         this._rfkill = null;
     }
