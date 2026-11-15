@@ -432,6 +432,7 @@ export default class LumePreferences extends ExtensionPreferences {
         const scopes = [
             ['prefix-web', _('Web Search')],
             ['prefix-wikipedia', _('Wikipedia')],
+            ['prefix-bookmarks', _('Bookmarks')],
             ['prefix-youtube', _('YouTube')],
             ['prefix-calculator', _('Calculator')],
             ['prefix-files', _('Files')],

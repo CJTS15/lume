@@ -143,6 +143,10 @@
       <default>['recent']</default>
       <summary>Prefixes for recently used files only</summary>
     </key>
+    <key name="prefix-bookmarks" type="as">
+      <default>['bm']</default>
+      <summary>Prefixes for browser bookmarks only</summary>
+    </key>
     <key name="offline-mode" type="b">
       <default>false</default>
       <summary>Offline mode</summary>

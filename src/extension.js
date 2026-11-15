@@ -11,6 +11,7 @@ import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
 import {AgentsProvider} from './providers/agents.js';
 import {AppsProvider} from './providers/apps.js';
+import {BookmarksProvider} from './providers/bookmarks.js';
 import {CalculatorProvider} from './providers/calculator.js';
 import {CliProvider} from './providers/cli.js';
 import {ClipboardProvider} from './providers/clipboard.js';
@@ -57,6 +58,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new FilesProvider(this._settings));
         this._registry.register(new ClipboardProvider(this._settings));
         this._registry.register(new SnippetsProvider(this._settings, () => this.openPreferences()));
+        this._registry.register(new BookmarksProvider(this._settings));
         this._registry.register(new MediaProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
