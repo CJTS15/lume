@@ -341,8 +341,10 @@ Snippets are saved in `~/.config/lume/snippets.json`, readable only by you.
 
 **Pasting** puts the text on the clipboard, then presses
 <kbd>Ctrl</kbd>+<kbd>V</kbd> in that window
-(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> in a terminal, without a
-trailing newline, so a pasted line never runs by itself). The text stays on
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> in a terminal, without
+trailing newlines, so a single line never runs by itself; whether text with
+several lines runs depends on your shell's bracketed paste, which bash, zsh
+and fish turn on by default). The text stays on
 the clipboard, and with clipboard history on it is added there too. With no
 window to paste into (the desktop, the overview), it is only copied. Keyboard
 layouts without a Latin <kbd>V</kbd> (Russian, Greek) only copy too.

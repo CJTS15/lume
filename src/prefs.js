@@ -12,7 +12,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {AGENTS} from './lib/agents.js';
-import {parseSnippets, snippetsPath} from './lib/snippets.js';
+import {snippetsPath} from './lib/snippets.js';
 import {CURRENCIES, homeCurrency} from './lib/units.js';
 import {ENGINES, isValidSearchUrl} from './lib/web.js';
 
@@ -91,12 +91,18 @@ export default class LumePreferences extends ExtensionPreferences {
         let snippets;
         try {
             const [, contents] = file.load_contents(null);
-            snippets = parseSnippets(new TextDecoder().decode(contents));
+            // Stricter than the Shell, which skips bad entries: saving here
+            // rewrites the whole file, so anything not understood is kept
+            // by not editing at all.
+            const saved = JSON.parse(new TextDecoder().decode(contents));
+            if (!Array.isArray(saved) || !saved.every(s => typeof s?.name === 'string' && typeof s.text === 'string'))
+                throw new TypeError('not a list of snippets');
+            snippets = saved.map(({name, text}) => ({name, text}));
         } catch (e) {
             if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 // Never overwrite a file that could not be read.
                 // TRANSLATORS: %s is a file path
-                group.description = _('%s could not be read. Fix or remove it, then open Preferences again.').format(file.get_path());
+                group.description = _('%s is not a valid snippets file. Fix or remove it, then open Preferences again.').format(file.get_path());
                 add.sensitive = false;
                 return page;
             }

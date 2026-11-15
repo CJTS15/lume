@@ -63,7 +63,7 @@ export function paste(text) {
     const terminal = window !== null && isTerminal(window);
     // A shell without bracketed paste would run a line that ends in a newline.
     St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD,
-        terminal ? text.replace(/\r?\n$/, '') : text);
+        terminal ? text.replace(/[\r\n]+$/, '') : text);
     if (!window)
         return;
 
@@ -92,7 +92,8 @@ export function paste(text) {
 }
 
 function pressPaste(terminal) {
-    keyboard ??= global.stage.context.get_backend().get_default_seat()
+    // GNOME 48+ has stage.context; 45-47 only the default backend.
+    keyboard ??= (global.stage.context?.get_backend() ?? Clutter.get_default_backend()).get_default_seat()
         .create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
     const keys = terminal
         ? [Clutter.KEY_Control_L, Clutter.KEY_Shift_L, Clutter.KEY_v]

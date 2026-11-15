@@ -18,6 +18,12 @@ import {Provider} from '../lib/provider.js';
 import {expandSnippet, parseSnippets, snippetsPath} from '../lib/snippets.js';
 
 const ICON = 'insert-text-symbolic';
+const MIN_UNSCOPED_LENGTH = 3;
+
+// Enter pastes into another app, so without the keyword a snippet ranks
+// below an app that matches as well (apps: 0.5–0.59); only its exact name
+// makes it the top hit.
+const unscopedScore = match => match === 1 ? 0.9 : 0.5 + 0.08 * match;
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 
@@ -71,7 +77,9 @@ export class SnippetsProvider extends Provider {
         }
 
         // Behind the keyword, the text matches too and every snippet is
-        // listed; otherwise only a good name match is shown.
+        // listed; otherwise only a good name match of 3+ letters is shown.
+        if (filter === null && text.length < MIN_UNSCOPED_LENGTH)
+            return [];
         const scored = this._snippets.map(snippet => ({
             snippet,
             score: filter === null ? matchScore(snippet.name, text)
@@ -90,8 +98,10 @@ export class SnippetsProvider extends Provider {
                 title: snippet.name,
                 subtitle: pasteLabel ?? _('Copy to clipboard'),
                 icon: ICON,
-                score: filter === null ? 0.5 + 0.4 * score : 0.99 - 0.001 * index,
+                score: filter === null ? unscopedScore(score) : 0.99 - 0.001 * index,
                 activate: pasteIt,
+                // Alt is still held then, so the app would get Ctrl+Alt+V.
+                altActivate: copy,
                 copy,
                 actions: [
                     ...pasteLabel ? [{label: pasteLabel, icon: 'edit-paste-symbolic', run: pasteIt}] : [],
