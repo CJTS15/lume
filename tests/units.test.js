@@ -5,7 +5,7 @@
 import System from 'system';
 
 import {formatResult} from '../src/lib/calculator.js';
-import {convert, needsRates} from '../src/lib/units.js';
+import {convert, expandCurrency, homeCurrency, needsRates} from '../src/lib/units.js';
 
 let failures = 0;
 
@@ -84,6 +84,49 @@ needs('usd to php', true);
 needs('10 km to mi', false);
 needs('100 eur to km', false);
 needs('100 abc to usd', false);
+
+// Currency symbols and the home currency
+const expand = (text, home, expected) => {
+    const actual = expandCurrency(text, home);
+    if (actual !== expected) {
+        failures++;
+        print(`FAIL expandCurrency(${JSON.stringify(text)}, ${home}): expected ${expected}, got ${actual}`);
+    }
+};
+expand('$100', 'PHP', '100 USD to PHP');
+expand('$100 to eur', 'PHP', '100 USD to eur');
+expand('$100', 'CAD', '100 CAD'); // "$" is the home dollar: nothing to convert to
+expand('€50', 'PHP', '50 EUR to PHP');
+expand('£1,250.50 in usd', 'PHP', '1250.50 GBP in usd');
+expand('₱500 to $', 'USD', '500 PHP to USD');
+expand('100 eur', 'PHP', '100 EUR to PHP');
+expand('100 EUR', 'EUR', '100 EUR');
+expand('¥1000', 'USD', '1000 JPY to USD');
+expand('¥1000', 'CNY', '1000 CNY');
+expand('US$20', 'CAD', '20 USD to CAD');
+expand('100 eur to usd', 'PHP', '100 eur to usd');
+expand('10 km', 'PHP', '10 km');
+expand('100 apples', 'PHP', '100 apples');
+check(expandCurrency('$100', 'PHP'), '100 USD = 5818.18181818 PHP', rates);
+check(expandCurrency('100 eur', 'PHP'), '100 EUR = 6400 PHP', rates);
+needs(expandCurrency('€50', 'USD'), true);
+needs(expandCurrency('$100', 'USD'), false);
+
+const home = (names, expected) => {
+    const actual = homeCurrency(names);
+    if (actual !== expected) {
+        failures++;
+        print(`FAIL homeCurrency(${JSON.stringify(names)}): expected ${expected}, got ${actual}`);
+    }
+};
+home(['en_US.UTF-8', 'en_US', 'en', 'C'], 'USD');
+home(['en_PH.UTF-8'], 'PHP');
+home(['fil_PH'], 'PHP');
+home(['de_DE.UTF-8@euro'], 'EUR');
+home(['ja_JP.UTF-8'], 'JPY');
+home(['C'], 'USD');
+home(['en'], 'USD');
+home(['xx_AQ'], 'USD');
 
 // Not conversions
 check('10 km to kg', null);

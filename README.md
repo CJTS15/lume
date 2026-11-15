@@ -81,7 +81,7 @@ What you can type:
 | Three or more letters of a file name, or part of a path | Up to 5 files from the LocalSearch index; Enter opens it |
 | A folder path (`~/Documents/`, `/etc/`, `~/Doc`) | That folder's contents, filtered by what follows the last `/` |
 | An expression (`4 + 3 * 8`, `2pi`, `sind(30)`) | The result; Enter copies it |
-| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`, `16px to rem`, `100 eur to usd`) | The converted value; Enter copies it |
+| A conversion (`10 km to mi`, `cup to qt`, `32 F to C`, `16px to rem`, `100 eur to usd`, `$100`, `€50 to $`) | The converted value; Enter copies it |
 | `uuid`, `base64 encode\|decode <text>`, `sha256 <text>`, `md5 <text>` | A new UUID, Base64, or a checksum; Enter copies it |
 | A colour (`#ff8800`, `rgb(255, 136, 0)`) | The other notation with a swatch; Enter copies it |
 | `unix`, or a 10- or 13-digit timestamp | The current Unix time, or that moment's date; Enter copies it |
@@ -192,7 +192,12 @@ uses `eval`.
 Conversions take `to`, `in`, `into`, `as` or `->` between units of one
 category; without a number, 1 is assumed (`cup to qt`). Currencies use ISO
 codes (`100 eur to usd`, `50 usd in php`) for the 30 currencies with ECB
-reference rates. Rates come from [Frankfurter](https://frankfurter.dev) at
+reference rates, or symbols (`€50`, `£20 to usd`, `₱500 to $`). An amount
+without a target (`$100`, `100 eur`) converts to your home currency
+(*Preferences → Search → Home Currency*; *Automatic* takes it from your
+locale's region, so `en_PH` gives PHP). `$` means your home currency if it
+is a dollar (CAD, AUD, …), otherwise USD; `¥` means CNY if that is your home
+currency, otherwise JPY; `US$`, `C$`, `A$`, `HK$` are explicit. Rates come from [Frankfurter](https://frankfurter.dev) at
 most every 12 hours and are cached in `~/.cache/lume/rates.json`, so
 conversions keep working offline with the last rates; the row shows their
 date. Only that request for the day's rates is sent, never what you type. Categories: length,
