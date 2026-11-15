@@ -85,6 +85,8 @@ class LumeSearchWindow extends St.Widget {
         this._userMoved = false;
         // The result whose actions (Ctrl+K) replace the list, or null.
         this._actionsOf = null;
+        // An action waiting for Enter on its confirm row, or null.
+        this._confirm = null;
 
         this._panel = new St.BoxLayout({
             style_class: 'popup-menu popup-menu-content lume-panel',
@@ -313,6 +315,7 @@ class LumeSearchWindow extends St.Widget {
         this._grab = null;
         this.hide();
         this._actionsOf = null;
+        this._confirm = null;
         this._entry.text = '';
         this._clearResults();
     }
@@ -362,6 +365,7 @@ class LumeSearchWindow extends St.Widget {
         this._cancelQuery();
         // Typing leaves the action list.
         this._actionsOf = null;
+        this._confirm = null;
         const text = this._entry.text.trim();
         this._scopeLabel.text = (text && this._registry.scopeFor(text)) || _('All results');
 
@@ -527,6 +531,18 @@ class LumeSearchWindow extends St.Widget {
 
     /** Rows for the actions of `result`: its own, or Open and Copy; and Paste. */
     _actionItems(result) {
+        if (this._confirm) {
+            return [{
+                key: 'action:confirm',
+                result: {
+                    id: 'confirm',
+                    title: this._confirm.text,
+                    subtitle: _('Press Enter to confirm, Esc to go back'),
+                    icon: 'dialog-warning-symbolic',
+                    activate: this._confirm.run,
+                },
+            }];
+        }
         const target = result.paste !== undefined ? pasteTargetName() : null;
         const actions = [
             ...result.actions?.length ? result.actions : [
@@ -544,6 +560,7 @@ class LumeSearchWindow extends St.Widget {
                 subtitle: index === 0 ? result.title : undefined,
                 icon: action.icon ?? 'system-run-symbolic',
                 activate: action.run,
+                confirm: action.confirm,
             },
         }));
     }
@@ -616,6 +633,7 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _toggleActions() {
+        this._confirm = null;
         if (this._actionsOf) {
             this._actionsOf = null;
         } else {
@@ -812,6 +830,13 @@ class LumeSearchWindow extends St.Widget {
         const result = this._rows[index]?.result;
         if (!result)
             return;
+        // A dangerous action first shows a confirm row; no modifier skips it.
+        if (result.confirm) {
+            this._confirm = {text: result.confirm, run: result.activate};
+            this._userMoved = false;
+            this._render();
+            return;
+        }
         let action = result.activate;
         if (modifiers & Clutter.ModifierType.CONTROL_MASK)
             action = result.ctrlActivate ?? action;
@@ -880,11 +905,15 @@ class LumeSearchWindow extends St.Widget {
 
         switch (symbol) {
         case Clutter.KEY_Escape:
-            // Esc leaves the action list first.
-            if (this._actionsOf)
+            // Esc leaves the confirm row, then the action list.
+            if (this._confirm) {
+                this._confirm = null;
+                this._render();
+            } else if (this._actionsOf) {
                 this._toggleActions();
-            else
+            } else {
                 this.close();
+            }
             return Clutter.EVENT_STOP;
         case Clutter.KEY_Down:
         case Clutter.KEY_KP_Down:

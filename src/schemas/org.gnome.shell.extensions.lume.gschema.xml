@@ -151,6 +151,10 @@
       <default>['proj']</default>
       <summary>Prefixes for Git projects only</summary>
     </key>
+    <key name="prefix-processes" type="as">
+      <default>['ps', 'kill']</default>
+      <summary>Prefixes for running processes only</summary>
+    </key>
     <key name="project-folders" type="as">
       <default>['~/Projects', '~/code', '~/src', '~/dev', '~/git']</default>
       <summary>Folders searched for Git projects</summary>

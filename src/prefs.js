@@ -513,6 +513,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-clipboard', _('Clipboard History')],
             ['prefix-agent', _('AI Agent')],
             ['prefix-terminal', _('Run in Terminal')],
+            ['prefix-processes', _('Processes')],
             ['prefix-emoji', _('Emoji')],
             ['prefix-snippets', _('Snippets')],
         ];

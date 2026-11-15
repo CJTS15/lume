@@ -63,8 +63,9 @@ export function checkResults(results) {
  *   copies the entry's selected text as usual.
  * @property {string} [paste] - text the Ctrl+K menu offers to paste into
  *   the window that was in front before Lume opened.
- * @property {Array<{label: string, icon?: string, run: () => void}>} [actions]
- *   - the Ctrl+K menu. Without it the menu offers Open and, if there is
+ * @property {Array<{label: string, icon?: string, run: () => void, confirm?: string}>} [actions]
+ *   - the Ctrl+K menu; an action with `confirm` first shows that question
+ *   on a row of its own, and runs on Enter there. Without it the menu offers Open and, if there is
  *   `copy`, Copy; with `paste`, it also offers Paste.
  * @property {boolean} [fallback] - Shown only when few other rows match
  *   (web search).
