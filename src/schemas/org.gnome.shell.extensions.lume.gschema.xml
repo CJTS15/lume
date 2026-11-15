@@ -39,6 +39,44 @@
       <summary>Search file contents</summary>
       <description>Also match text inside indexed files. Slower than matching names.</description>
     </key>
+    <key name="home-currency" type="s">
+      <choices>
+        <choice value="auto"/>
+        <choice value="AUD"/>
+        <choice value="BRL"/>
+        <choice value="CAD"/>
+        <choice value="CHF"/>
+        <choice value="CNY"/>
+        <choice value="CZK"/>
+        <choice value="DKK"/>
+        <choice value="EUR"/>
+        <choice value="GBP"/>
+        <choice value="HKD"/>
+        <choice value="HUF"/>
+        <choice value="IDR"/>
+        <choice value="ILS"/>
+        <choice value="INR"/>
+        <choice value="ISK"/>
+        <choice value="JPY"/>
+        <choice value="KRW"/>
+        <choice value="MXN"/>
+        <choice value="MYR"/>
+        <choice value="NOK"/>
+        <choice value="NZD"/>
+        <choice value="PHP"/>
+        <choice value="PLN"/>
+        <choice value="RON"/>
+        <choice value="SEK"/>
+        <choice value="SGD"/>
+        <choice value="THB"/>
+        <choice value="TRY"/>
+        <choice value="USD"/>
+        <choice value="ZAR"/>
+      </choices>
+      <default>'auto'</default>
+      <summary>Home currency</summary>
+      <description>“100 eur” and “€50” convert to it, and “$” means it when it is a dollar. “auto” uses the currency of the system locale’s region (USD if unknown).</description>
+    </key>
     <key name="run-commands" type="b">
       <default>true</default>
       <summary>Offer to run commands</summary>
@@ -100,7 +138,7 @@
     <key name="offline-mode" type="b">
       <default>false</default>
       <summary>Offline mode</summary>
-      <description>Nothing leaves the computer: no weather or exchange-rate requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
+      <description>Nothing leaves the computer: no weather, exchange-rate or time-zone requests, no results from apps' search providers, no web search rows. Saved exchange rates are still used.</description>
     </key>
     <key name="debug-timing" type="b">
       <default>false</default>

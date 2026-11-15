@@ -214,3 +214,76 @@ export function needsRates(text) {
     return Boolean(match) && CURRENCIES.has(match[2].toUpperCase()) &&
         CURRENCIES.has(match[3].toUpperCase());
 }
+
+// Currency symbols; the longest prefixes first so "US$" wins over "$".
+// "$" and "¥" mean the home currency when it uses them, else USD and JPY.
+const SYMBOLS = new Map([
+    ['NZ$', 'NZD'], ['HK$', 'HKD'], ['US$', 'USD'], ['A$', 'AUD'], ['C$', 'CAD'],
+    ['S$', 'SGD'], ['R$', 'BRL'], ['€', 'EUR'], ['£', 'GBP'], ['₱', 'PHP'],
+    ['₹', 'INR'], ['₩', 'KRW'], ['₺', 'TRY'], ['₪', 'ILS'], ['฿', 'THB'], ['zł', 'PLN'],
+]);
+const DOLLARS = new Set(['USD', 'AUD', 'CAD', 'NZD', 'HKD', 'SGD', 'MXN']);
+const SYMBOL = `(${[...SYMBOLS.keys(), '$', '¥'].map(s => s.replace('$', '\\$')).join('|')})`;
+const AMOUNT = '(\\d[\\d,]*(?:\\.\\d+)?)';
+const TARGET_SYMBOL = new RegExp(`(\\s(?:to|in|into|as)\\s+|->\\s*)${SYMBOL}\\s*$`, 'i');
+
+function symbolCode(symbol, home) {
+    if (symbol === '$')
+        return DOLLARS.has(home) ? home : 'USD';
+    if (symbol === '¥')
+        return home === 'CNY' ? 'CNY' : 'JPY';
+    return SYMBOLS.get(symbol);
+}
+
+/**
+ * Rewrite currency shorthand into a conversion `convert` understands:
+ * "$100" -> "100 USD to PHP", "€50 to $" -> "50 EUR to USD",
+ * "100 eur" -> "100 EUR to PHP" (home PHP). Anything else is returned
+ * unchanged.
+ *
+ * @param {string} text
+ * @param {string} home - the home currency code
+ * @returns {string}
+ */
+export function expandCurrency(text, home) {
+    const trimmed = text.trim();
+    let amount, code, rest;
+    const symbol = new RegExp(`^${SYMBOL}\\s*${AMOUNT}(.*)$`).exec(trimmed);
+    const word = new RegExp(`^${AMOUNT}\\s*([a-z]{3})\\b(.*)$`, 'i').exec(trimmed);
+    if (symbol) {
+        [, , amount, rest] = symbol;
+        code = symbolCode(symbol[1], home);
+    } else if (word && CURRENCIES.has(word[2].toUpperCase())) {
+        [, amount, , rest] = word;
+        code = word[2].toUpperCase();
+        // "100 eur to usd" needs no rewriting.
+        if (rest.trim() && !TARGET_SYMBOL.test(rest))
+            return text;
+    } else {
+        return text;
+    }
+
+    amount = amount.replace(/,/g, '');
+    if (!rest.trim())
+        return code === home ? `${amount} ${code}` : `${amount} ${code} to ${home}`;
+    return `${amount} ${code}${rest.replace(TARGET_SYMBOL, (_m, sep, s) => sep + symbolCode(s, home))}`;
+}
+
+// Regions whose currency has ECB rates; the rest fall back to USD.
+const EURO = 'AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK';
+const REGION_CURRENCY = {
+    ...Object.fromEntries(EURO.split(' ').map(region => [region, 'EUR'])),
+    AU: 'AUD', BR: 'BRL', CA: 'CAD', CH: 'CHF', CN: 'CNY', CZ: 'CZK', DK: 'DKK', GB: 'GBP',
+    HK: 'HKD', HU: 'HUF', ID: 'IDR', IL: 'ILS', IN: 'INR', IS: 'ISK', JP: 'JPY', KR: 'KRW',
+    MX: 'MXN', MY: 'MYR', NO: 'NOK', NZ: 'NZD', PH: 'PHP', PL: 'PLN', RO: 'RON', SE: 'SEK',
+    SG: 'SGD', TH: 'THB', TR: 'TRY', US: 'USD', ZA: 'ZAR',
+};
+
+/**
+ * @param {string[]} languageNames - GLib.get_language_names()
+ * @returns {string} the currency of the locale's region (en_PH -> PHP), or USD
+ */
+export function homeCurrency(languageNames) {
+    const region = /^[a-z]{2,3}_([A-Z]{2})/.exec(languageNames[0] ?? '')?.[1];
+    return REGION_CURRENCY[region] ?? 'USD';
+}

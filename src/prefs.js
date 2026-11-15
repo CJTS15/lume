@@ -12,6 +12,7 @@ import Gtk from 'gi://Gtk';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import {AGENTS} from './lib/agents.js';
+import {CURRENCIES, homeCurrency} from './lib/units.js';
 import {ENGINES, isValidSearchUrl} from './lib/web.js';
 
 const SHORTCUT_KEY = 'toggle-shortcut';
@@ -134,6 +135,14 @@ export default class LumePreferences extends ExtensionPreferences {
         fuzzy.subtitle = _('For app and file names. Loose also skips letters, so “vsc” finds Visual Studio Code.');
         group.add(fuzzy);
 
+        const currency = this._comboRow(settings, 'home-currency', _('Home Currency'), [
+            // TRANSLATORS: %s is a currency code, e.g. "USD"
+            ['auto', _('Automatic (%s)').format(homeCurrency(GLib.get_language_names()))],
+            ...[...CURRENCIES].sort().map(code => [code, code]),
+        ]);
+        currency.subtitle = _('“100 eur” and “€50” convert to it; “$” means it when it is a dollar');
+        group.add(currency);
+
         const contents = new Adw.SwitchRow({
             title: _('Search File Contents'),
             subtitle: _('Also match text inside indexed files. Slower.'),
@@ -163,7 +172,7 @@ export default class LumePreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({title: _('Privacy')});
         const offline = new Adw.SwitchRow({
             title: _('Offline Mode'),
-            subtitle: _('Nothing leaves this computer: no weather or exchange-rate requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
+            subtitle: _('Nothing leaves this computer: no weather, exchange-rate or time-zone requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
         });
         settings.bind('offline-mode', offline, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(offline);

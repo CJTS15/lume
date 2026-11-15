@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Unit conversion: "10 km to mi", "100 eur to usd". Enter copies the
+// Unit conversion: "10 km to mi", "100 eur to usd", "$100". Enter copies the
 // converted number. Currencies use ECB rates (lib/rates.js).
 
+import GLib from 'gi://GLib';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -11,7 +12,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import {formatResult} from '../lib/calculator.js';
 import {Provider} from '../lib/provider.js';
 import {Rates} from '../lib/rates.js';
-import {convert, needsRates} from '../lib/units.js';
+import {convert, expandCurrency, homeCurrency, needsRates} from '../lib/units.js';
 
 export class UnitsProvider extends Provider {
     /**
@@ -24,8 +25,11 @@ export class UnitsProvider extends Provider {
     }
 
     query(text) {
-        if (needsRates(text))
-            return this._currency(text);
+        // "$100", "€50 to $", "100 eur" (to the home currency).
+        const home = this._settings.get_string('home-currency');
+        const currency = expandCurrency(text, home === 'auto' ? homeCurrency(GLib.get_language_names()) : home);
+        if (needsRates(currency))
+            return this._currency(currency);
 
         const result = convert(text, {viewport: this._viewport()});
         if (!result)
@@ -57,8 +61,10 @@ export class UnitsProvider extends Provider {
         const value = formatResult(Math.abs(result.value) >= 1
             ? Math.round(result.value * 100) / 100
             : parseFloat(result.value.toPrecision(4)));
-        // TRANSLATORS: %s is a date; the rates are the ECB's of that day
-        return [this._toResult(result, value, _('ECB rates of %s · Enter to copy').format(rates.date))];
+        // Shown so "$100" says which dollar it was taken for.
+        // TRANSLATORS: "100 USD in PHP · ECB rates of 2026-11-13"
+        return [this._toResult(result, value, _('%s %s in %s · ECB rates of %s').format(
+            formatResult(result.amount), result.from, result.to, rates.date))];
     }
 
     _toResult(result, value, subtitle) {

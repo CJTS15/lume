@@ -12,6 +12,7 @@ import St from 'gi://St';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import {geocode, getJson} from '../lib/openMeteo.js';
 import {Provider} from '../lib/provider.js';
 
 const KEYWORD = 'weather';
@@ -30,8 +31,6 @@ function remember(map, key, value) {
     if (map.size > CACHE_SIZE)
         map.delete(map.keys().next().value);
 }
-
-Gio._promisify(Soup.Session.prototype, 'send_and_read_async');
 
 // WMO weather interpretation codes, as documented by Open-Meteo. N_ marks
 // strings for translation; they are translated when used, because gettext
@@ -187,43 +186,8 @@ export class WeatherProvider extends Provider {
         this._debounce = null;
     }
 
-    async _getJson(url, cancellable) {
-        const message = Soup.Message.new('GET', url);
-        // Named in errors: geocoding and forecasts use different servers.
-        const host = message.get_uri().get_host();
-        let bytes;
-        try {
-            bytes = await this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, cancellable);
-        } catch (e) {
-            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
-                throw e;
-            throw new Error(`${host}: ${e.message}`);
-        }
-        if (message.get_status() !== Soup.Status.OK)
-            // TRANSLATORS: %s is a server name, %d an HTTP status code
-            throw new Error(_('%s answered with HTTP %d').format(host, message.get_status()));
-        try {
-            return JSON.parse(new TextDecoder().decode(bytes.get_data()));
-        } catch (e) {
-            throw new Error(`${host}: ${e.message}`);
-        }
-    }
-
     async _geocode(city, cancellable) {
-        const language = GLib.get_language_names()[0].split(/[_.@]/)[0];
-        const data = await this._getJson('https://geocoding-api.open-meteo.com/v1/search' +
-            `?name=${encodeURIComponent(city)}&count=1&format=json&language=${encodeURIComponent(language)}`,
-        cancellable);
-
-        const result = data.results?.[0];
-        const place = result && Number.isFinite(result.latitude) && Number.isFinite(result.longitude)
-            ? {
-                name: String(result.name),
-                country: result.country ? String(result.country) : '',
-                latitude: result.latitude,
-                longitude: result.longitude,
-            }
-            : null;
+        const place = await geocode(this._session, city, cancellable);
         remember(this._places, city.toLowerCase(), place);
         return place;
     }
@@ -240,7 +204,7 @@ export class WeatherProvider extends Provider {
 
     async _fetchForecast(place, imperial, cancellable) {
         const units = imperial ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '';
-        const data = await this._getJson('https://api.open-meteo.com/v1/forecast' +
+        const data = await getJson(this._session, 'https://api.open-meteo.com/v1/forecast' +
             `?latitude=${place.latitude}&longitude=${place.longitude}` +
             '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
             '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=5' +
