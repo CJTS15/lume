@@ -68,6 +68,20 @@ export function cpuPercent(ticksBefore, ticksNow, seconds) {
     return seconds > 0 ? Math.max(0, (ticksNow - ticksBefore) / CLOCK_TICKS / seconds * 100) : 0;
 }
 
+// Your own processes whose end ends the session (logs you out), by kernel
+// name (cut at 15 characters): GDM's session helper, gnome-session, the
+// user's systemd and session bus.
+const SESSION = new Set(['gdm-wayland-ses', 'gdm-x-session', 'systemd', '(sd-pam)',
+    'dbus-broker', 'dbus-broker-lau', 'dbus-daemon']);
+
+/**
+ * @param {string} comm - the kernel's name for a process
+ * @returns {boolean} whether ending it would end the session
+ */
+export function isSessionProcess(comm) {
+    return SESSION.has(comm) || comm.startsWith('gnome-session');
+}
+
 /**
  * The pid and every ancestor's, as far as `parents` knows them.
  *

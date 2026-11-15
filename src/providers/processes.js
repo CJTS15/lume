@@ -2,8 +2,9 @@
 //
 // Your running processes, behind "ps" or "kill": CPU and memory, busiest
 // first. Enter ends the process (SIGTERM); Force Kill (SIGKILL) is under
-// Ctrl+K and asks first. GNOME Shell and the processes it runs under
-// (systemd --user) are never listed: ending them ends the session.
+// Ctrl+K and asks first. GNOME Shell, the processes it runs under and the
+// session's own (gnome-session, the session bus) are never listed: ending
+// them ends the session.
 // Command lines are shown in the preview only and never logged; they can
 // hold passwords.
 
@@ -16,7 +17,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 
 import {matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
-import {cpuPercent, parseCmdline, parseStat, withAncestors} from '../lib/procs.js';
+import {cpuPercent, isSessionProcess, parseCmdline, parseStat, withAncestors} from '../lib/procs.js';
 import {Provider} from '../lib/provider.js';
 
 // A sample this fresh is reused while typing a filter.
@@ -59,6 +60,8 @@ export class ProcessesProvider extends Provider {
         /** @type {{time: number, processes: Map<number, Process>}|null} */
         this._sample = null;
         this._sampling = null;
+        /** @type {{id: number, resolve: () => void}|null} */
+        this._measuring = null;
         this._destroyed = false;
     }
 
@@ -91,10 +94,7 @@ export class ProcessesProvider extends Provider {
             // No sample to compare with: show the list, measure, then refresh.
             if (!previous || now - previous.time > 10) {
                 update(this._rows(processes, filter));
-                await new Promise(resolve => GLib.timeout_add(GLib.PRIORITY_DEFAULT, MEASURE_MS, () => {
-                    resolve();
-                    return GLib.SOURCE_REMOVE;
-                }));
+                await this._measure();
                 if (cancellable.is_cancelled() || this._destroyed)
                     return [];
                 processes = await this._take(this._sample);
@@ -198,7 +198,7 @@ export class ProcessesProvider extends Provider {
         const processes = new Map();
         for (const {stat, argv} of all) {
             // Kernel threads have no command line; zombies are already gone.
-            if (hidden.has(stat.pid) || argv.length === 0 || stat.state === 'Z')
+            if (hidden.has(stat.pid) || isSessionProcess(stat.comm) || argv.length === 0 || stat.state === 'Z')
                 continue;
             const before = previous?.processes.get(stat.pid);
             // The program's file name, unless the process rewrote its command
@@ -216,6 +216,27 @@ export class ProcessesProvider extends Provider {
         if (!this._destroyed)
             this._sample = {time, processes};
         return processes;
+    }
+
+    /** Resolve after MEASURE_MS, or at once on destroy. */
+    _measure() {
+        this._stopMeasuring();
+        return new Promise(resolve => {
+            const id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, MEASURE_MS, () => {
+                this._measuring = null;
+                resolve();
+                return GLib.SOURCE_REMOVE;
+            });
+            this._measuring = {id, resolve};
+        });
+    }
+
+    _stopMeasuring() {
+        if (!this._measuring)
+            return;
+        GLib.source_remove(this._measuring.id);
+        this._measuring.resolve();
+        this._measuring = null;
     }
 
     /** Send `signal`, unless the pid now belongs to another process. */
@@ -241,6 +262,7 @@ export class ProcessesProvider extends Provider {
 
     destroy() {
         this._destroyed = true;
+        this._stopMeasuring();
         this._sample = null;
     }
 }

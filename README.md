@@ -368,7 +368,7 @@ under <kbd>Ctrl</kbd>+<kbd>K</kbd>.
 - **Recent files** (`recent`): the files GTK apps record as recently used,
   newest first, with the usual file actions. Files deleted since are left
   out. If *Settings → Privacy & Security → File History & Trash* is off,
-  Lume shows nothing.
+  Lume lists nothing and says where to turn it on.
 - **Git projects**: folders with a `.git` up to 3 levels inside the
   *Project Folders* in Lume's preferences (by default `~/Projects`, `~/code`,
   `~/src`, `~/dev` and `~/git`; add others, such as a second drive, there).
@@ -381,8 +381,9 @@ under <kbd>Ctrl</kbd>+<kbd>K</kbd>.
   Firefox's bookmarks come from Firefox's own search provider.
 - **Processes** (`ps`, `kill`): your own processes, busiest first. Enter ends
   one (SIGTERM). *Force Kill…* under <kbd>Ctrl</kbd>+<kbd>K</kbd> (SIGKILL)
-  asks first on a row of its own. GNOME Shell itself is never listed, since
-  ending it ends your session. Command lines show only in the preview.
+  asks first on a row of its own. GNOME Shell, gnome-session, GDM's session
+  helper, your systemd and the session bus are never listed, since ending
+  them ends your session. Command lines show only in the preview.
 
 Typed without their prefix, projects and bookmarks show up when their name
 matches, below apps that match as well.

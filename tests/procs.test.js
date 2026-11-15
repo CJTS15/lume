@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {cpuPercent, parseCmdline, parseStat, withAncestors} from '../src/lib/procs.js';
+import {cpuPercent, isSessionProcess, parseCmdline, parseStat, withAncestors} from '../src/lib/procs.js';
 
 let failures = 0;
 
@@ -39,6 +39,10 @@ const parents = new Map([[50, 40], [40, 1], [1, 0], [60, 60]]);
 check('ancestors', [...withAncestors(50, parents)], [50, 40, 1]);
 check('unknown parent', [...withAncestors(70, parents)], [70]);
 check('loop', [...withAncestors(60, parents)], [60]);
+
+check('session processes', ['gdm-wayland-ses', 'gnome-session-s', 'gnome-session-b', 'systemd', 'dbus-broker-lau'].map(isSessionProcess),
+    [true, true, true, true, true]);
+check('ordinary processes', ['firefox', 'gnome-shell-cal', 'systemd-oomd', 'Xwayland'].map(isSessionProcess), [false, false, false, false]);
 
 if (failures > 0) {
     print(`${failures} procs test(s) failed`);
