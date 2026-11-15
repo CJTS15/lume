@@ -91,6 +91,10 @@ What you can type:
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in your terminal; Ctrl+Enter runs it in the background |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
 | A snippet's name, or `snip` | Your saved text; Enter pastes it into the window you were using |
+| `recent`, or `recent <name>` | Recently used files, newest first; Enter opens it |
+| A Git project's name, or `proj` | Your projects; Enter opens it in your editor, Ctrl+Enter in a terminal |
+| A bookmark's name, or `bm <name or address>` | Chrome, Chromium, Brave, Edge and Vivaldi bookmarks; Enter opens it |
+| `ps`, `ps <name or PID>`, `kill <name>` | Your running processes with CPU and memory; Enter ends it |
 | `:coffee` or `emoji coffee` | Emoji by name or keyword; Enter copies the emoji |
 | Anything apps can search (an event, a contact, an app to install, …) | Results from apps' GNOME search providers; Enter opens it in the app |
 | `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
@@ -113,12 +117,17 @@ Start with one of these to see only one kind of result; the pill names it.
 | `ws` | Workspaces |
 | `clip` | Clipboard history |
 | `snip` | Snippets |
+| `recent` | Recently used files |
+| `proj` | Git projects |
+| `bm` | Browser bookmarks |
+| `ps` or `kill` | Running processes |
 | `:` or `emoji ` | Emoji |
 | `ask ` or `ai ` | AI agent |
 | `> ` | The command, run in your terminal on Enter |
 
 `> ` is deliberate, so it also runs power commands (`> shutdown now`) that
-the command row otherwise leaves out; you see them in the terminal.
+the command row otherwise leaves out; you see them in the terminal. Because
+`ps` and `kill` list processes, run those commands as `> ps aux`.
 
 These are the defaults. Change them on the *Prefixes* page of Lume's
 preferences: several per scope, separated by spaces, or none to turn a scope
@@ -137,6 +146,9 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 | Media player | Play or Pause, Next, Previous |
 | Command | Run in Background, Run in Terminal |
 | Snippet | Paste into *App*, Copy |
+| Git project | Open in *Editor*, Open in Terminal, Open in Files, Copy Path |
+| Process | End Process, Force Kill… (asks first), Copy PID |
+| Bookmark | Open, Copy, Paste into *App* |
 | Clipboard entry, calculation, devtools result | Copy, Paste into *App* |
 | Anything else | Open, and Copy where it can be copied |
 
@@ -351,6 +363,30 @@ layouts without a Latin <kbd>V</kbd> (Russian, Greek) only copy too.
 Clipboard entries, calculations and devtools results offer *Paste into …*
 under <kbd>Ctrl</kbd>+<kbd>K</kbd>.
 
+### Recent files, projects, bookmarks and processes
+
+- **Recent files** (`recent`): the files GTK apps record as recently used,
+  newest first, with the usual file actions. Files deleted since are left
+  out. If *Settings → Privacy & Security → File History & Trash* is off,
+  Lume shows nothing.
+- **Git projects**: folders with a `.git` up to 3 levels inside the
+  *Project Folders* in Lume's preferences (by default `~/Projects`, `~/code`,
+  `~/src`, `~/dev` and `~/git`; add others, such as a second drive, there).
+  Enter opens the project in the *Editor Command* if you set one (the folder
+  is added as its last argument), else the first installed of Visual Studio
+  Code, VSCodium, Zed and GNOME Builder, else Files. The preview shows the
+  branch. The list is refreshed every 5 minutes.
+- **Bookmarks**: every profile of Chrome, Chromium, Brave, Edge and Vivaldi,
+  also as Flatpaks; web addresses only, opened in your default browser.
+  Firefox's bookmarks come from Firefox's own search provider.
+- **Processes** (`ps`, `kill`): your own processes, busiest first. Enter ends
+  one (SIGTERM). *Force Kill…* under <kbd>Ctrl</kbd>+<kbd>K</kbd> (SIGKILL)
+  asks first on a row of its own. GNOME Shell itself is never listed, since
+  ending it ends your session. Command lines show only in the preview.
+
+Typed without their prefix, projects and bookmarks show up when their name
+matches, below apps that match as well.
+
 ### What leaves your computer
 
 Lume sends nothing unless one of these happens:
@@ -367,7 +403,8 @@ Lume sends nothing unless one of these happens:
 
 *Preferences → Privacy → Offline Mode* turns off the first four and the web
 search rows. Saved exchange rates are still used. Commands, AI agents and
-web addresses you choose to open are not affected.
+web addresses you choose to open are not affected. Snippets, recent files,
+projects, bookmarks and processes are read on this computer only.
 
 **Why not <kbd>Super</kbd>+<kbd>Space</kbd>?** GNOME uses it to switch input
 sources. To use it for Lume, first clear or change *Settings → Keyboard →
@@ -387,6 +424,7 @@ it in Lume's preferences.
   run commands.
 - **Prefixes** (own page): the prefixes for each scope.
 - **Snippets** (own page): add, edit and remove snippets.
+- **Projects**: the folders searched for Git projects, and the editor command.
 - **Clipboard History**: on/off, keep on disk, number of items (5–200).
 - **Web Search**: search engine, custom URL.
 - **Weather**: default city, units (°C or °F).
@@ -525,10 +563,12 @@ src/
   lib/prefix.js       prefix scope matching (no gi imports)
   lib/snippets.js     snippets file and variables (GLib only)
   lib/paste.js        paste into the previous window (virtual keyboard)
+  lib/bookmarks.js    Chromium bookmarks file (no gi imports)
+  lib/procs.js        /proc stat parsing, CPU use (no gi imports)
   providers/          one file per provider: apps, windows, system,
                       toggles, settings, files, calculator, units,
                       devtools, time, emoji, url, cli, clipboard,
-                      snippets, media,
+                      snippets, bookmarks, projects, processes, media,
                       weather, agents, remote (apps' search providers),
                       scripts (user scripts), web, commands (Lume's own)
   data/               emoji.json (generated) and its Unicode licence
