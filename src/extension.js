@@ -6,6 +6,7 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import * as Paste from './lib/paste.js';
 import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
 import {AgentsProvider} from './providers/agents.js';
@@ -21,6 +22,7 @@ import {MediaProvider} from './providers/media.js';
 import {RemoteProvider} from './providers/remote.js';
 import {ScriptsProvider} from './providers/scripts.js';
 import {SettingsProvider} from './providers/settings.js';
+import {SnippetsProvider} from './providers/snippets.js';
 import {SystemProvider} from './providers/system.js';
 import {TimeProvider} from './providers/time.js';
 import {TogglesProvider} from './providers/toggles.js';
@@ -54,6 +56,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new SettingsProvider());
         this._registry.register(new FilesProvider(this._settings));
         this._registry.register(new ClipboardProvider(this._settings));
+        this._registry.register(new SnippetsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new MediaProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
@@ -87,6 +90,7 @@ export default class LumeExtension extends Extension {
 
         this._registry?.destroy();
         this._registry = null;
+        Paste.destroy();
 
         this._settings = null;
     }

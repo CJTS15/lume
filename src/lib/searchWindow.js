@@ -19,6 +19,8 @@ import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import {paste, pasteTargetName, rememberWindow} from './paste.js';
+
 const ICON_SIZE = 24;
 const SCREEN_MARGIN = 16;
 // Fallback rows (web search) are hidden once this many other rows match.
@@ -285,6 +287,7 @@ class LumeSearchWindow extends St.Widget {
         if (this.isOpen)
             return;
 
+        rememberWindow();
         this._updateGeometry();
         this.show();
 
@@ -522,11 +525,16 @@ class LumeSearchWindow extends St.Widget {
         });
     }
 
-    /** Rows for the actions of `result`: its own, or Open and Copy. */
+    /** Rows for the actions of `result`: its own, or Open and Copy; and Paste. */
     _actionItems(result) {
-        const actions = result.actions?.length ? result.actions : [
-            ...result.activate !== result.copy ? [{label: _('Open'), icon: 'document-open-symbolic', run: result.activate}] : [],
-            ...result.copy ? [{label: _('Copy'), icon: 'edit-copy-symbolic', run: result.copy}] : [],
+        const target = result.paste !== undefined ? pasteTargetName() : null;
+        const actions = [
+            ...result.actions?.length ? result.actions : [
+                ...result.activate !== result.copy ? [{label: _('Open'), icon: 'document-open-symbolic', run: result.activate}] : [],
+                ...result.copy ? [{label: _('Copy'), icon: 'edit-copy-symbolic', run: result.copy}] : [],
+            ],
+            // TRANSLATORS: %s is an app, e.g. "Firefox"
+            ...target ? [{label: _('Paste into %s').format(target), icon: 'edit-paste-symbolic', run: () => paste(result.paste)}] : [],
         ];
         return actions.map((action, index) => ({
             key: `action:${index}:${action.label}`,

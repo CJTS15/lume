@@ -43,6 +43,7 @@ export class CalculatorProvider extends Provider {
             score: 0.95,
             activate: copy,
             copy,
+            paste: result,
         }];
     }
 }

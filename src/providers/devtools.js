@@ -97,6 +97,7 @@ export class DevToolsProvider extends Provider {
             score: SCORE,
             activate: copyable ? copy : () => {},
             copy: copyable ? copy : undefined,
+            paste: copyable ? value : undefined,
         };
     }
 }

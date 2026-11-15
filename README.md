@@ -90,6 +90,7 @@ What you can type:
 | A web address (`https://example.com`, `example.com`, `localhost:3000`, `192.168.1.1`) | Opens it in your browser |
 | A command line starting with a program on `PATH` (`htop`, `git status`) | Runs it in your terminal; Ctrl+Enter runs it in the background |
 | `clip`, or `clip <text>` | Clipboard history; Enter copies the item again |
+| A snippet's name, or `snip` | Your saved text; Enter pastes it into the window you were using |
 | `:coffee` or `emoji coffee` | Emoji by name or keyword; Enter copies the emoji |
 | Anything apps can search (an event, a contact, an app to install, …) | Results from apps' GNOME search providers; Enter opens it in the app |
 | `weather`, or `weather <city>` | Current weather from Open-Meteo.com; Enter opens GNOME Weather, or copies the summary if it isn't installed |
@@ -111,6 +112,7 @@ Start with one of these to see only one kind of result; the pill names it.
 | `wd` | Open windows |
 | `ws` | Workspaces |
 | `clip` | Clipboard history |
+| `snip` | Snippets |
 | `:` or `emoji ` | Emoji |
 | `ask ` or `ai ` | AI agent |
 | `> ` | The command, run in your terminal on Enter |
@@ -134,6 +136,8 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 | Window | Focus, Close Window |
 | Media player | Play or Pause, Next, Previous |
 | Command | Run in Background, Run in Terminal |
+| Snippet | Paste into *App*, Copy |
+| Clipboard entry, calculation, devtools result | Copy, Paste into *App* |
 | Anything else | Open, and Copy where it can be copied |
 
 <kbd>Ctrl</kbd>+<kbd>P</kbd> shows a preview pane beside the results, and
@@ -319,6 +323,34 @@ AI API tokens (`sk-…`), JWTs, private keys and card numbers. A plain password
 from such a manager can't be recognised; turn off *Remember Copied Text* if
 that matters to you.
 
+### Snippets
+
+Save text you type often (a signature, an address, a reply) on the
+*Snippets* page of Lume's preferences. Type its name, or `snip` to list them
+all (`snip <text>` also searches their text). Enter pastes it into the window
+that was in front before Lume opened; <kbd>Ctrl</kbd>+<kbd>C</kbd> copies it.
+These are filled in when it is used:
+
+| Variable | Becomes |
+| --- | --- |
+| `{date}` | Today's date, in your locale's format |
+| `{time}` | The time, following the desktop's 12/24-hour setting |
+| `{clipboard}` | The text on the clipboard |
+
+Snippets are saved in `~/.config/lume/snippets.json`, readable only by you.
+
+**Pasting** puts the text on the clipboard, then presses
+<kbd>Ctrl</kbd>+<kbd>V</kbd> in that window
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> in a terminal, without
+trailing newlines, so a single line never runs by itself; whether text with
+several lines runs depends on your shell's bracketed paste, which bash, zsh
+and fish turn on by default). The text stays on
+the clipboard, and with clipboard history on it is added there too. With no
+window to paste into (the desktop, the overview), it is only copied. Keyboard
+layouts without a Latin <kbd>V</kbd> (Russian, Greek) only copy too.
+Clipboard entries, calculations and devtools results offer *Paste into …*
+under <kbd>Ctrl</kbd>+<kbd>K</kbd>.
+
 ### What leaves your computer
 
 Lume sends nothing unless one of these happens:
@@ -354,6 +386,7 @@ it in Lume's preferences.
 - **Search**: fuzzy matching (strict, normal, loose), search file contents,
   run commands.
 - **Prefixes** (own page): the prefixes for each scope.
+- **Snippets** (own page): add, edit and remove snippets.
 - **Clipboard History**: on/off, keep on disk, number of items (5–200).
 - **Web Search**: search engine, custom URL.
 - **Weather**: default city, units (°C or °F).
@@ -490,9 +523,12 @@ src/
   lib/agents.js       agent and terminal argv (no gi imports)
   lib/terminal.js     run commands in the terminal or the background
   lib/prefix.js       prefix scope matching (no gi imports)
+  lib/snippets.js     snippets file and variables (GLib only)
+  lib/paste.js        paste into the previous window (virtual keyboard)
   providers/          one file per provider: apps, windows, system,
                       toggles, settings, files, calculator, units,
-                      devtools, time, emoji, url, cli, clipboard, media,
+                      devtools, time, emoji, url, cli, clipboard,
+                      snippets, media,
                       weather, agents, remote (apps' search providers),
                       scripts (user scripts), web, commands (Lume's own)
   data/               emoji.json (generated) and its Unicode licence
