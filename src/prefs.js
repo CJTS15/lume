@@ -52,6 +52,7 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildWebSearchGroup(settings));
         page.add(this._buildWeatherGroup(settings));
         page.add(this._buildAgentGroup(settings));
+        page.add(this._buildProjectsGroup(window, settings));
 
         const prefixPage = new Adw.PreferencesPage({
             title: _('Prefixes'),
@@ -61,6 +62,75 @@ export default class LumePreferences extends ExtensionPreferences {
         window.add(prefixPage);
 
         window.add(this._buildSnippetsPage(window));
+    }
+
+    _buildProjectsGroup(window, settings) {
+        const group = new Adw.PreferencesGroup({
+            title: _('Projects'),
+            description: _('Git repositories up to 3 levels inside these folders. Type a project’s name, or “proj” to list them; Enter opens it in the editor, Ctrl+Enter in a terminal.'),
+        });
+        const add = new Gtk.Button({
+            icon_name: 'list-add-symbolic',
+            tooltip_text: _('Add Project Folder'),
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat'],
+        });
+        add.update_property([Gtk.AccessibleProperty.LABEL], [_('Add Project Folder')]);
+        group.set_header_suffix(add);
+
+        const home = GLib.get_home_dir();
+        const short = path => path === home || path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path;
+        let rows = [];
+        const sync = () => {
+            for (const row of rows)
+                group.remove(row);
+            rows = settings.get_strv('project-folders').map(folder => {
+                const row = new Adw.ActionRow({title: folder, use_markup: false});
+                const remove = new Gtk.Button({
+                    icon_name: 'user-trash-symbolic',
+                    tooltip_text: _('Remove Folder'),
+                    valign: Gtk.Align.CENTER,
+                    css_classes: ['flat'],
+                });
+                // TRANSLATORS: %s is a folder path
+                remove.update_property([Gtk.AccessibleProperty.LABEL], [_('Remove %s').format(folder)]);
+                remove.connect('clicked', () =>
+                    settings.set_strv('project-folders', settings.get_strv('project-folders').filter(f => f !== folder)));
+                row.add_suffix(remove);
+                return row;
+            });
+            // Rows go before the editor row, which stays last.
+            for (const row of rows)
+                group.add(row);
+            group.remove(editor);
+            group.add(editor);
+        };
+
+        add.connect('clicked', () => {
+            new Gtk.FileDialog({title: _('Add Project Folder')}).select_folder(window, null, (dialog, res) => {
+                let folder;
+                try {
+                    folder = dialog.select_folder_finish(res)?.get_path();
+                } catch {
+                    return; // Cancelled.
+                }
+                const folders = settings.get_strv('project-folders');
+                if (folder && !folders.includes(short(folder)))
+                    settings.set_strv('project-folders', [...folders, short(folder)]);
+            });
+        });
+
+        const editor = new Adw.EntryRow({
+            title: _('Editor Command (empty: automatic)'),
+            text: settings.get_string('project-editor'),
+            show_apply_button: true,
+        });
+        editor.connect('apply', () => settings.set_string('project-editor', editor.text.trim()));
+        group.add(editor);
+
+        settings.connect('changed::project-folders', sync);
+        sync();
+        return group;
     }
 
     /**
@@ -436,6 +506,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-youtube', _('YouTube')],
             ['prefix-calculator', _('Calculator')],
             ['prefix-files', _('Files')],
+            ['prefix-projects', _('Projects')],
             ['prefix-recent', _('Recent Files')],
             ['prefix-windows', _('Open Windows')],
             ['prefix-workspaces', _('Workspaces')],

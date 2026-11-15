@@ -147,6 +147,20 @@
       <default>['bm']</default>
       <summary>Prefixes for browser bookmarks only</summary>
     </key>
+    <key name="prefix-projects" type="as">
+      <default>['proj']</default>
+      <summary>Prefixes for Git projects only</summary>
+    </key>
+    <key name="project-folders" type="as">
+      <default>['~/Projects', '~/code', '~/src', '~/dev', '~/git']</default>
+      <summary>Folders searched for Git projects</summary>
+      <description>Git repositories up to 3 levels inside these folders are offered as projects. "~" is the home folder; folders that don't exist are skipped.</description>
+    </key>
+    <key name="project-editor" type="s">
+      <default>''</default>
+      <summary>Command that opens a project</summary>
+      <description>The project's folder is added as the last argument. Empty: the first installed of Visual Studio Code, VSCodium, Zed and GNOME Builder.</description>
+    </key>
     <key name="offline-mode" type="b">
       <default>false</default>
       <summary>Offline mode</summary>

@@ -20,6 +20,7 @@ import {DevToolsProvider} from './providers/devtools.js';
 import {EmojiProvider} from './providers/emoji.js';
 import {FilesProvider} from './providers/files.js';
 import {MediaProvider} from './providers/media.js';
+import {ProjectsProvider} from './providers/projects.js';
 import {RemoteProvider} from './providers/remote.js';
 import {ScriptsProvider} from './providers/scripts.js';
 import {SettingsProvider} from './providers/settings.js';
@@ -59,6 +60,7 @@ export default class LumeExtension extends Extension {
         this._registry.register(new ClipboardProvider(this._settings));
         this._registry.register(new SnippetsProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new BookmarksProvider(this._settings));
+        this._registry.register(new ProjectsProvider(this._settings));
         this._registry.register(new MediaProvider(this._settings));
         this._registry.register(new WeatherProvider(this._settings, () => this.openPreferences()));
         this._registry.register(new AgentsProvider(this._settings, () => this.openPreferences()));
