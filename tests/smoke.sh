@@ -22,8 +22,9 @@ if [ -z "${LUME_SMOKE_DIR:-}" ]; then
 
     XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data \
     XDG_CACHE_HOME=$tmp/cache XDG_STATE_HOME=$tmp/state \
-    LUME_SMOKE_DIR=$tmp dbus-run-session -- "$0" > "$tmp/session.log" 2>&1
+    LUME_SMOKE_DIR=$tmp timeout --kill-after=10 300 dbus-run-session -- "$0" > "$tmp/session.log" 2>&1
     status=$?
+    [ "$status" -eq 124 ] && echo "smoke: timed out after 300 s" >&2
 
     # Shell JS errors and unhandled rejections, Lume's own log lines, and
     # warnings from the prefs process. Ignored: GJS's own property notes and
@@ -43,6 +44,8 @@ if [ -z "${LUME_SMOKE_DIR:-}" ]; then
 fi
 
 # Inside dbus-run-session.
+displays() { ls "${XDG_RUNTIME_DIR:-/nonexistent}" 2>/dev/null | grep -E '^wayland-[0-9]+$' | sort; }
+before=$(displays)
 gnome-shell --headless --virtual-monitor 1280x800 &
 pid=$!
 trap 'kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null' EXIT
@@ -51,6 +54,14 @@ for _ in $(seq 40); do
     gdbus introspect --session -d org.gnome.Shell -o /org/gnome/Shell >/dev/null 2>&1 && break
     sleep 0.5
 done
+
+# GNOME 45 gives its display only to gnome-session, which isn't running
+# here; services D-Bus starts (the preferences window) need it too.
+display=$(comm -13 <(echo "$before") <(displays) | head -n1)
+if [ -n "$display" ]; then
+    gdbus call --session -d org.freedesktop.DBus -o /org/freedesktop/DBus \
+        -m org.freedesktop.DBus.UpdateActivationEnvironment "{'WAYLAND_DISPLAY': '$display'}" >/dev/null
+fi
 
 gsettings set org.gnome.shell disable-user-extensions false
 gnome-extensions enable "$UUID" || exit 1
