@@ -7,6 +7,8 @@
 // - A path ("~/Documents/", "/etc/"): lists that folder, filtered by what
 //   follows the last slash.
 // - With file-contents on, also text inside indexed files.
+// - "recent" (editable): recently used files, newest first, from the list
+//   GTK apps keep (recently-used.xbel), unless File History is off.
 // Enter opens, Ctrl+Enter shows the file in its folder, Alt+Enter shows its
 // properties, Ctrl+C copies it (for pasting in Files).
 
@@ -37,6 +39,8 @@ const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
 const DEBOUNCE_MS = 150;
 const BROWSE_MAX_ENTRIES = 2000;
 const BROWSE_CACHE_SECONDS = 10;
+// Read more than shown: deleted files are dropped after a check.
+const RECENT_CHECKED = 40;
 
 // LocalSearch3 is the name since GNOME 47; the Tracker3 name is the older
 // one, and is still provided as an alias.
@@ -87,6 +91,7 @@ const ENUMERATE_ATTRIBUTES = 'standard::name,standard::type,standard::is-hidden'
 
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
 Gio._promisify(Gio.File.prototype, 'query_info_async');
+Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 
@@ -167,24 +172,40 @@ export class FilesProvider extends Provider {
         this._debounce = null;
         this._destroyed = false;
         this._home = GLib.get_home_dir();
+        this._privacy = new Gio.Settings({schema_id: 'org.gnome.desktop.privacy'});
+        this._recentFile = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_user_data_dir(), 'recently-used.xbel']));
+        /** @type {{modified: number, entries: object[]}|null} */
+        this._recent = null;
+    }
+
+    _recentFilter(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-recent'));
+    }
+
+    _filesFilter(text) {
+        // "f to c" is a temperature conversion, not a file search.
+        const filter = matchPrefix(text, this._settings.get_strv('prefix-files'));
+        return filter !== null && convert(text) === null && evaluate(text) === null ? filter : null;
     }
 
     owns(text) {
-        // "f to c" is a temperature conversion, not a file search.
-        return matchPrefix(text, this._settings.get_strv('prefix-files')) !== null &&
-            convert(text) === null && evaluate(text) === null;
+        return this._filesFilter(text) !== null || this._recentFilter(text) !== null;
     }
 
     scope(text) {
-        if (this.owns(text))
+        if (this._recentFilter(text) !== null)
+            return _('Recent Files');
+        if (this._filesFilter(text) !== null)
             return _('Files');
         return this._browseTarget(text) ? _('Folder') : null;
     }
 
     async query(text, cancellable) {
         const level = this._settings.get_string('fuzzy-matching');
-        if (this.owns(text))
-            text = matchPrefix(text, this._settings.get_strv('prefix-files'));
+        const recent = this._recentFilter(text);
+        if (recent !== null)
+            return this._recentQuery(recent, level, cancellable);
+        text = this._filesFilter(text) ?? text;
 
         const target = this._browseTarget(text);
         if (target)
@@ -220,6 +241,82 @@ export class FilesProvider extends Provider {
             .sort((a, b) => b.score - a.score)
             .slice(0, MAX_RESULTS)
             .map(file => this._toResult(file));
+    }
+
+    async _recentQuery(filter, level, cancellable) {
+        if (!this._privacy.get_boolean('remember-recent-files')) {
+            return [{
+                id: 'recent-off',
+                title: _('File History Is Off'),
+                subtitle: _('Turn it on in Settings → Privacy & Security → File History & Trash'),
+                icon: 'document-open-recent-symbolic',
+                score: 0.99,
+                activate: () => {},
+            }];
+        }
+        const candidates = (await this._recentEntries(cancellable))
+            .filter(entry => !filter || fuzzyScore(entry.name, filter, level) > 0)
+            .slice(0, RECENT_CHECKED);
+        // The list keeps files that were deleted or moved since.
+        const exists = await Promise.all(candidates.map(entry =>
+            Gio.File.new_for_path(entry.path).query_info_async('standard::type',
+                Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, cancellable).then(() => true, () => false)));
+        if (cancellable.is_cancelled())
+            return [];
+        return candidates.filter((_e, i) => exists[i])
+            .slice(0, this._settings.get_int('max-results'))
+            .map((entry, i) => this._toResult({...entry, score: 0.99 - 0.001 * i}));
+    }
+
+    /** The recently used files, newest first; read again only when changed. */
+    async _recentEntries(cancellable) {
+        let info;
+        try {
+            info = await this._recentFile.query_info_async('time::modified',
+                Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, cancellable);
+        } catch (e) {
+            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
+                throw e;
+            return []; // No list yet.
+        }
+        const modified = info.get_modification_date_time()?.to_unix() ?? 0;
+        if (this._recent?.modified === modified)
+            return this._recent.entries;
+
+        const [contents] = await this._recentFile.load_contents_async(cancellable);
+        const bookmarks = new GLib.BookmarkFile();
+        // About 7 ms for GTK's full list of 1000 files.
+        bookmarks.load_from_data(contents);
+        const time = (getter, uri) => {
+            try {
+                return bookmarks[getter](uri)?.to_unix() ?? 0;
+            } catch {
+                return 0;
+            }
+        };
+        const entries = [];
+        for (const uri of bookmarks.get_uris()) {
+            if (!uri.startsWith('file://'))
+                continue;
+            let path, mime = '';
+            try {
+                [path] = GLib.filename_from_uri(uri);
+                mime = bookmarks.get_mime_type(uri);
+            } catch {
+                if (!path)
+                    continue;
+            }
+            entries.push({
+                uri, path,
+                name: GLib.path_get_basename(path),
+                folder: mime === 'inode/directory',
+                used: Math.max(time('get_visited_date_time', uri), time('get_modified_date_time', uri)),
+            });
+        }
+        entries.sort((a, b) => b.used - a.used);
+        if (!this._destroyed)
+            this._recent = {modified, entries};
+        return entries;
     }
 
     /**
@@ -584,5 +681,6 @@ export class FilesProvider extends Provider {
         this._closeConnection();
         this._walk = null;
         this._listing = null;
+        this._recent = null;
     }
 }
