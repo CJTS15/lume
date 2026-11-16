@@ -225,6 +225,11 @@ class LumeSearchWindow extends St.Widget {
             return Clutter.EVENT_STOP;
         });
         this.connect('key-press-event', (_a, event) => this._onKeyPress(event));
+        // ClutterText's own bindings take Left and Right before its
+        // key-press-event on GNOME 51, so folder keys are caught on the way down.
+        this.connect('captured-event', (_a, event) =>
+            event.type() === Clutter.EventType.KEY_PRESS && this._onFolderKey(event.get_key_symbol())
+                ? Clutter.EVENT_STOP : Clutter.EVENT_PROPAGATE);
         this.connect('destroy', () => this._onDestroy());
 
     }
@@ -626,6 +631,48 @@ class LumeSearchWindow extends St.Widget {
             const shown = `${lines.slice(0, PREVIEW_TEXT_LINES).join('\n')}${cut ? '…' : ''}`;
             this._previewPane.add_child(wrapped('lume-preview-text', shown));
         }
+    }
+
+    /**
+     * Right on a folder row lists it; Left at a trailing "/" goes up. With
+     * the entry focused, only when its cursor is at the end, so editing
+     * the text still works.
+     *
+     * @returns {boolean} whether the key was used
+     */
+    _onFolderKey(symbol) {
+        const right = symbol === Clutter.KEY_Right || symbol === Clutter.KEY_KP_Right;
+        const left = symbol === Clutter.KEY_Left || symbol === Clutter.KEY_KP_Left;
+        if ((!right && !left) || this._actionsOf)
+            return false;
+        // Act on the rows for the current text, never on the last frame's.
+        if (this._renderLater)
+            this._render();
+        const text = this._entry.clutter_text;
+        const inEntry = text.has_key_focus();
+        const atEnd = !text.get_selection() && [-1, text.text.length].includes(text.get_cursor_position());
+        if (inEntry && !atEnd)
+            return false;
+
+        const complete = this._rows[this._selected]?.result.complete;
+        if (right && complete) {
+            this._setEntryText(complete);
+            return true;
+        }
+        // Only while browsing: folder rows, or an empty folder.
+        const parent = /^(.*\/)[^/]+\/$/.exec(this._entry.text)?.[1];
+        if (left && parent && (this._rows.length === 0 || this._rows.some(r => r.result.complete))) {
+            this._setEntryText(parent);
+            return true;
+        }
+        return false;
+    }
+
+    _setEntryText(text) {
+        this._entry.text = text;
+        this._entry.grab_key_focus();
+        this._entry.clutter_text.set_cursor_position(-1);
+        this._entry.clutter_text.set_selection_bound(-1);
     }
 
     _togglePreview() {

@@ -36,6 +36,7 @@ export function checkResults(results) {
             r.type = typeof r.type === 'string' ? cap(r.type, MAX_TYPE) : undefined;
             r.group = typeof r.group === 'string' ? cap(r.group, MAX_GROUP) : undefined;
             r.paste = typeof r.paste === 'string' ? r.paste : undefined;
+            r.complete = typeof r.complete === 'string' ? r.complete : undefined;
             r.score = Number.isFinite(r.score) ? r.score : 0;
             return r;
         });
@@ -63,6 +64,8 @@ export function checkResults(results) {
  *   copies the entry's selected text as usual.
  * @property {string} [paste] - text the Ctrl+K menu offers to paste into
  *   the window that was in front before Lume opened.
+ * @property {string} [complete] - search text that Right arrow puts in the
+ *   entry (a folder's path, to list it).
  * @property {Array<{label: string, icon?: string, run: () => void, confirm?: string}>} [actions]
  *   - the Ctrl+K menu; an action with `confirm` first shows that question
  *   on a row of its own, and runs on Enter there. Without it the menu offers Open and, if there is
