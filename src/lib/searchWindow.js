@@ -739,7 +739,8 @@ class LumeSearchWindow extends St.Widget {
             this._actionsOf = null;
         } else {
             const result = this._rows[this._selected]?.result;
-            if (!result)
+            // A row that only informs has nothing to do.
+            if (!result || (result.activate === noAction && !result.actions?.length))
                 return;
             this._actionsOf = result;
         }

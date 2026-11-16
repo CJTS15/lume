@@ -3,22 +3,26 @@
 #
 # Headless smoke test: starts a throwaway gnome-shell with its own config,
 # data, cache and state directories (your dconf is never touched), enables
-# Lume, cycles disable/enable, opens the preferences, and fails on JS errors.
-# It does not open the search window: test that in `make nested`.
+# Lume, cycles disable/enable, opens the search window (a search, a folder,
+# the action list, the preview), opens the preferences, and fails on JS
+# errors or a Shell crash.
 #
 # Run with: make smoke
 # LUME_SRC=<dir> tests it on another copy, such as the unpacked release zip.
 
 set -u
 UUID=lume@cjts15.github.io
+# Turns on Eval in the test Shell only; see its extension.js.
+HELPER=lume-smoke-helper@cjts15.github.io
 
 if [ -z "${LUME_SMOKE_DIR:-}" ]; then
     src=$(realpath "${LUME_SRC:-$(dirname "$0")/../src}")
     tmp=$(mktemp -d)
-    # Removes only the temp dir; the src symlink inside it is not followed.
+    # Removes only the temp dir; the symlinks inside it are not followed.
     trap 'rm -rf -- "$tmp"' EXIT
     mkdir -p "$tmp/data/gnome-shell/extensions"
     ln -s "$src" "$tmp/data/gnome-shell/extensions/$UUID"
+    ln -s "$(realpath "$(dirname "$0")")/$HELPER" "$tmp/data/gnome-shell/extensions/$HELPER"
 
     XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data \
     XDG_CACHE_HOME=$tmp/cache XDG_STATE_HOME=$tmp/state \
@@ -69,6 +73,29 @@ sleep 1
 state=$(gnome-extensions info "$UUID" | grep -E '^ *State:')
 echo "smoke-state:$state"
 grep -qE 'ACTIVE|ENABLED' <<<"$state" || exit 1
+
+# The search window, through its own methods (no input devices, which
+# differ between versions). Errors it logs are caught by the grep outside.
+gnome-extensions enable "$HELPER" || exit 1
+sleep 1
+window="const w = Main.extensionManager.lookup('$UUID').stateObj._window;"
+step() {
+    local out
+    out=$(gdbus call --session -d org.gnome.Shell -o /org/gnome/Shell -m org.gnome.Shell.Eval "$window $2" 2>&1)
+    echo "smoke-window:$1:$out"
+    [[ $out == "(true,"* ]] || exit 1
+}
+step search "w.open(); w._entry.text = 'set'; 'ok'"
+sleep 2
+step folder "w._entry.text = '~/'; 'ok'"
+sleep 2
+step rows "String(w._rows.length)"
+step actions "w._toggleActions(); w._toggleActions(); 'ok'"
+sleep 0.5
+step preview "w._togglePreview(); 'ok'"
+sleep 1
+step close "w._togglePreview(); w.close(); 'ok'"
+sleep 0.5
 
 gnome-extensions prefs "$UUID" || exit 1
 sleep 4

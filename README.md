@@ -495,9 +495,12 @@ make smoke            # headless gnome-shell: enable/disable cycles, prefs
 `make test` covers the pure modules in `src/lib/`. `make smoke` starts a
 throwaway headless Shell with its own config and data directories (your
 settings are not touched), enables Lume, disables and re-enables it five
-times, opens the preferences, and fails on any JS error or preferences
-warning. It does not open the search window; test that, and the providers,
-in a nested session.
+times, opens the search window (a search, a folder, the action list, the
+preview), opens the preferences, and fails on a Shell crash, any JS error
+or a preferences warning. To open the window it enables a test-only helper
+extension (`tests/lume-smoke-helper@cjts15.github.io`) that turns on Eval in
+that throwaway Shell; never install it. Test the providers' actions in a
+nested session.
 
 To smoke-test the release zip instead of `src/`, unpack it, compile its
 schemas, and point the test at it:
