@@ -153,9 +153,14 @@ class LumeSearchWindow extends St.Widget {
             overlay_scrollbars: true,
             visible: false,
         });
-        // St.ScrollView is an St.Bin on 45 and has its own `child` on 46+;
-        // `child` works on both (add_actor() was removed in 46).
-        this._scrollView.child = this._resultsBox;
+        // GNOME 45's St.ScrollView tracks its child only through
+        // add_actor(); setting `child` there aborts the Shell when the
+        // window is destroyed (st_bin_destroy assertion). 46 removed
+        // add_actor() and uses `child`.
+        if (this._scrollView.add_actor)
+            this._scrollView.add_actor(this._resultsBox);
+        else
+            this._scrollView.child = this._resultsBox;
 
         // Results and the preview pane (Ctrl+P), in preview-position order.
         const body = new St.BoxLayout({style_class: 'lume-body', x_expand: true});

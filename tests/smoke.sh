@@ -26,10 +26,10 @@ if [ -z "${LUME_SMOKE_DIR:-}" ]; then
     status=$?
     [ "$status" -eq 124 ] && echo "smoke: timed out after 300 s" >&2
 
-    # Shell JS errors and unhandled rejections, Lume's own log lines, and
-    # warnings from the prefs process. Ignored: GJS's own property notes and
-    # the missing a11y bus.
-    if grep -E 'JS ERROR|Gjs-CRITICAL|Unhandled promise rejection|lume: |Extensions:[0-9]+\): (Gtk|Adw|Gjs)-(WARNING|CRITICAL)' "$tmp/session.log" |
+    # Shell crashes, JS errors and unhandled rejections, Lume's own log
+    # lines, and warnings from the prefs process. Ignored: GJS's own
+    # property notes and the missing a11y bus.
+    if grep -E 'Bail out!|core dumped|JS ERROR|Gjs-CRITICAL|Unhandled promise rejection|lume: |Extensions:[0-9]+\): (Gtk|Adw|Gjs)-(WARNING|CRITICAL)' "$tmp/session.log" |
         grep -vE 'Falling back to slow path|accessibility bus' >&2; then
         echo "smoke: errors or warnings above" >&2
         status=1
@@ -44,8 +44,6 @@ if [ -z "${LUME_SMOKE_DIR:-}" ]; then
 fi
 
 # Inside dbus-run-session.
-displays() { ls "${XDG_RUNTIME_DIR:-/nonexistent}" 2>/dev/null | grep -E '^wayland-[0-9]+$' | sort; }
-before=$(displays)
 gnome-shell --headless --virtual-monitor 1280x800 &
 pid=$!
 trap 'kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null' EXIT
@@ -54,14 +52,6 @@ for _ in $(seq 40); do
     gdbus introspect --session -d org.gnome.Shell -o /org/gnome/Shell >/dev/null 2>&1 && break
     sleep 0.5
 done
-
-# GNOME 45 gives its display only to gnome-session, which isn't running
-# here; services D-Bus starts (the preferences window) need it too.
-display=$(comm -13 <(echo "$before") <(displays) | head -n1)
-if [ -n "$display" ]; then
-    gdbus call --session -d org.freedesktop.DBus -o /org/freedesktop/DBus \
-        -m org.freedesktop.DBus.UpdateActivationEnvironment "{'WAYLAND_DISPLAY': '$display'}" >/dev/null
-fi
 
 gsettings set org.gnome.shell disable-user-extensions false
 gnome-extensions enable "$UUID" || exit 1

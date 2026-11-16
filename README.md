@@ -619,8 +619,9 @@ Handled in code, listed here so they're easy to find:
 - **St.BoxLayout**: `vertical` became `orientation` in 48. `setVertical()`
   in `lib/searchWindow.js` uses whichever exists.
 - **St.ScrollView**: `add_actor()` is gone since 46 and `vadjustment` is new
-  in 46 (45 has `vscroll.adjustment`). Lume uses `child` and falls back for
-  the adjustment.
+  in 46 (45 has `vscroll.adjustment`). Lume uses `add_actor()` on 45, where
+  setting `child` crashes the Shell when the window is destroyed, and `child`
+  on 46+, and falls back for the adjustment.
 - **Theme selection state**: menu items highlight on `:hover` in 45–46 and
   on `:selected` in 47+. Lume sets both on the selected row.
 - **Modal grab**: 45–47 can fail to take the grab; Lume checks
