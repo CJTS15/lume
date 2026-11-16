@@ -19,6 +19,12 @@ const MAX_GROUP = 64;
 const cap = (text, max) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
 
 /**
+ * `activate` for a row that only informs ("Fetching weather…", an error):
+ * choosing it keeps the window open instead of closing it for nothing.
+ */
+export const noAction = () => {};
+
+/**
  * The boundary check every provider's rows pass before they are shown:
  * rows without a title or activate are dropped, text is capped and the
  * score made a finite number, so one bad row can never break rendering.
@@ -54,7 +60,7 @@ export function checkResults(results) {
  * @property {number} [score] - Relevance from 0 to 1. Higher sorts first.
  *   Defaults to 0.
  * @property {() => void} activate - Runs when the row is chosen. The window
- *   is already closed when this is called.
+ *   is already closed when this is called. `noAction` keeps it open.
  * @property {() => void} [ctrlActivate] - Ctrl+Enter, if the row has a
  *   second action (open the containing folder, run in a terminal).
  *   Without it, Ctrl+Enter does what Enter does.

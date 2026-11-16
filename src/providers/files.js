@@ -24,7 +24,7 @@ import {evaluate} from '../lib/calculator.js';
 import {fuzzyScore, matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 import {looksSecret} from '../lib/secrets.js';
 import {runInTerminal} from '../lib/terminal.js';
 
@@ -259,7 +259,7 @@ export class FilesProvider extends Provider {
                 subtitle: _('Turn it on in Settings → Privacy & Security → File History & Trash'),
                 icon: 'document-open-recent-symbolic',
                 score: 0.99,
-                activate: () => {},
+                activate: noAction,
             }];
         }
         const candidates = (await this._recentEntries(cancellable))

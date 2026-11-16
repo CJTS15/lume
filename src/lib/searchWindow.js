@@ -20,6 +20,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {paste, pasteTargetName, rememberWindow} from './paste.js';
+import {noAction} from './provider.js';
 
 const ICON_SIZE = 24;
 const SCREEN_MARGIN = 16;
@@ -928,7 +929,7 @@ class LumeSearchWindow extends St.Widget {
             index = this._selected;
         }
         const result = this._rows[index]?.result;
-        if (!result)
+        if (!result || result.activate === noAction)
             return;
         // Holding Enter must not confirm as well: ignore its key repeat.
         if (this._confirm &&

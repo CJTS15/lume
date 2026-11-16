@@ -16,7 +16,7 @@ import {gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/ext
 
 import {parseDateQuery, parseTimeQuery, zoneForAbbreviation} from '../lib/dates.js';
 import {geocode} from '../lib/openMeteo.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 
 const SCORE = 0.95;
 // Wait for typing to pause before asking Open-Meteo.
@@ -209,7 +209,7 @@ export class TimeProvider extends Provider {
     }
 
     _infoRow(title, subtitle) {
-        return {id: 'info', title, subtitle: subtitle || undefined, icon: 'preferences-system-time-symbolic', score: SCORE, activate: () => {}};
+        return {id: 'info', title, subtitle: subtitle || undefined, icon: 'preferences-system-time-symbolic', score: SCORE, activate: noAction};
     }
 
     /**

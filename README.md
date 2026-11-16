@@ -552,6 +552,8 @@ export class ExampleProvider extends Provider {
             icon: 'face-smile-symbolic',    // icon name or Gio.Icon
             score: 0.5,                     // 0..1, higher sorts first
             activate: () => console.log('chosen'),  // window is already closed
+            // (noAction from lib/provider.js: a row that only informs;
+            // choosing it keeps the window open)
             // Optional: ctrlActivate (Ctrl+Enter), altActivate (Alt+Enter),
             // copy (Ctrl+C), fallback: true (only shown when few rows match),
             // type: 'Folder' (overrides the provider's label on this row)

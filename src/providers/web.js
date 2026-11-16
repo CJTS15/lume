@@ -9,7 +9,7 @@ import GLib from 'gi://GLib';
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {ENGINES, SITES, buildSearchUrl, wikipediaLanguage} from '../lib/web.js';
 
@@ -57,7 +57,7 @@ export class WebSearchProvider extends Provider {
                 title: _('Web search is off in offline mode'),
                 icon: 'network-offline-symbolic',
                 score: 0.05,
-                activate: () => {},
+                activate: noAction,
             }] : [];
         }
 

@@ -15,7 +15,7 @@ import St from 'gi://St';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {matchPrefix} from '../lib/prefix.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 import {runInBackground} from '../lib/terminal.js';
 
 const SCRIPTS_DIR = GLib.build_filenamev([GLib.get_user_config_dir(), 'lume', 'scripts']);
@@ -147,7 +147,7 @@ export class ScriptsProvider extends Provider {
                 subtitle: _('Other users can change it or a folder above it. Fix with: chmod go-w'),
                 icon: 'dialog-warning-symbolic',
                 score: 0.97,
-                activate: () => {},
+                activate: noAction,
             }];
         }
 
