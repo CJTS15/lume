@@ -35,8 +35,14 @@ jobs:
           sed -i -e 's/^metalink=/#metalink=/' \
                  -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://archives.fedoraproject.org/pub/archive/fedora/linux|' \
                  /etc/yum.repos.d/fedora*.repo
+      # The openh264 repository has no archive copy; Lume doesn't need it.
       - name: Install GNOME Shell
-        run: dnf -y install --setopt=install_weak_deps=False gnome-shell gjs glib2 dbus-daemon mesa-dri-drivers make unzip git
+        run: dnf -y install --disablerepo=fedora-cisco-openh264 --setopt=install_weak_deps=False gnome-shell gjs glib2 dbus-daemon mesa-dri-drivers make unzip git
+      # The Shell needs it for its Wayland socket; containers have no login session.
+      - name: Create a runtime directory
+        run: |
+          mkdir -m 700 /tmp/runtime
+          echo XDG_RUNTIME_DIR=/tmp/runtime >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Unit tests
         run: make test
