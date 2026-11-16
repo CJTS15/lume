@@ -38,11 +38,16 @@ jobs:
       # The openh264 repository has no archive copy; Lume doesn't need it.
       - name: Install GNOME Shell
         run: dnf -y install --disablerepo=fedora-cisco-openh264 --setopt=install_weak_deps=False gnome-shell gjs glib2 dbus-daemon mesa-dri-drivers make unzip git
-      # The Shell needs it for its Wayland socket; containers have no login session.
-      - name: Create a runtime directory
+      # What a login session would provide: a runtime directory for the
+      # Wayland socket, the X11 socket folder for Xwayland, and a system bus
+      # (the Shell stops starting without one).
+      - name: Prepare a session
         run: |
           mkdir -m 700 /tmp/runtime
           echo XDG_RUNTIME_DIR=/tmp/runtime >> "$GITHUB_ENV"
+          mkdir -m 1777 /tmp/.X11-unix
+          mkdir -p /run/dbus
+          dbus-daemon --system --fork
       - uses: actions/checkout@v4
       - name: Unit tests
         run: make test
