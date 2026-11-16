@@ -14,8 +14,9 @@ pack:
 		--extra-source=lib --extra-source=providers --extra-source=data \
 		--podir=../po
 
-# Translation template. --no-git needs gettext 0.25+; without it, xgettext
-# asks git for dates, which fails in folders with spaces.
+# Translation template. --no-git (gettext 0.24.1+) skips xgettext's git
+# date lookup, which fails with gettext 1.0 ("vc-mtime: ... unexpected
+# file name").
 pot:
 	xgettext --no-git --from-code=UTF-8 --keyword=_ --keyword=N_ --keyword=ngettext:1,2 \
 		--add-comments=TRANSLATORS: --package-name=lume \

@@ -514,7 +514,7 @@ LUME_SRC=/tmp/lume-zip tests/smoke.sh
 `po/lume.pot` lists every string. To add a language, for example French:
 
 ```sh
-make pot                                  # refresh the template (gettext 0.25+)
+make pot                                  # refresh the template (gettext 0.24.1+)
 msginit -i po/lume.pot -l fr -o po/fr.po
 ```
 
