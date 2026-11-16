@@ -1,0 +1,6 @@
+{
+  "uuid": "lume-smoke-helper@cjts15.github.io",
+  "name": "Lume smoke test helper",
+  "description": "Lets tests/smoke.sh drive Lume's search window through Eval. Only for the throwaway test session; never install it.",
+  "shell-version": ["45", "46", "47", "48", "49", "50", "51"]
+}

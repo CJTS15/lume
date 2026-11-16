@@ -80,11 +80,15 @@ export class RemoteProvider extends Provider {
         let id;
         const timeout = new Promise(resolve => {
             id = GLib.timeout_add(GLib.PRIORITY_DEFAULT, PROVIDER_TIMEOUT_MS, () => {
+                id = 0; // Fired: removing it again would warn.
                 resolve([]);
                 return GLib.SOURCE_REMOVE;
             });
         });
-        return Promise.race([promise, timeout]).finally(() => GLib.source_remove(id));
+        return Promise.race([promise, timeout]).finally(() => {
+            if (id)
+                GLib.source_remove(id);
+        });
     }
 
     async _queryOne(provider, rank, terms, cancellable) {

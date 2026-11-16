@@ -43,7 +43,7 @@ export class SnippetsProvider extends Provider {
         this._file = Gio.File.new_for_path(snippetsPath());
         // Also notices the file (and its folder) being created later.
         this._monitor = this._file.monitor_file(Gio.FileMonitorFlags.NONE, null);
-        this._monitor.connect('changed', (_m, _f, _o, event) => {
+        this._monitorId = this._monitor.connect('changed', (_m, _f, _o, event) => {
             if (event === Gio.FileMonitorEvent.CHANGES_DONE_HINT || event === Gio.FileMonitorEvent.DELETED ||
                 event === Gio.FileMonitorEvent.CREATED)
                 this._load();
@@ -154,7 +154,10 @@ export class SnippetsProvider extends Provider {
 
     destroy() {
         this._destroyed = true;
+        this._monitor.disconnect(this._monitorId);
         this._monitor.cancel();
+        this._monitor = null;
+        this._clock = null;
         this._snippets = [];
     }
 }

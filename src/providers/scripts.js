@@ -15,7 +15,7 @@ import St from 'gi://St';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {matchPrefix} from '../lib/prefix.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 import {runInBackground} from '../lib/terminal.js';
 
 const SCRIPTS_DIR = GLib.build_filenamev([GLib.get_user_config_dir(), 'lume', 'scripts']);
@@ -147,7 +147,7 @@ export class ScriptsProvider extends Provider {
                 subtitle: _('Other users can change it or a folder above it. Fix with: chmod go-w'),
                 icon: 'dialog-warning-symbolic',
                 score: 0.97,
-                activate: () => {},
+                activate: noAction,
             }];
         }
 
@@ -200,7 +200,8 @@ export class ScriptsProvider extends Provider {
         }
 
         const stop = new Gio.Cancellable();
-        const timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, TIMEOUT_MS, () => {
+        let timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, TIMEOUT_MS, () => {
+            timeoutId = 0; // Fired: removing it again would warn.
             stop.cancel();
             return GLib.SOURCE_REMOVE;
         });
@@ -219,7 +220,8 @@ export class ScriptsProvider extends Provider {
             if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 console.debug(`lume: script ${path}: ${e.message}`);
         } finally {
-            GLib.source_remove(timeoutId);
+            if (timeoutId)
+                GLib.source_remove(timeoutId);
             cancellable.disconnect(cancelId);
             // Stopped early (timeout, enough lines, newer query): end it.
             // SIGTERM, which timeout(1) passes on to the script's group.

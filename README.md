@@ -6,7 +6,7 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: v2. Tested on GNOME 51 only; the code handles 45–50 (see
+> Status: v3. Tested on GNOME 51 only; the code handles 45–50 (see
 > [Version notes](#version-notes-gnome-4551)) but nobody has run it there
 > yet.
 
@@ -489,15 +489,39 @@ a separate process; watch `journalctl -f -o cat` while opening them.
 
 ```sh
 make test             # gjs self-checks for the pure modules in src/lib/
-make smoke            # headless gnome-shell: enable/disable cycles, prefs
+make smoke            # headless gnome-shell: enable/disable cycles, window, prefs
 ```
 
 `make test` covers the pure modules in `src/lib/`. `make smoke` starts a
 throwaway headless Shell with its own config and data directories (your
 settings are not touched), enables Lume, disables and re-enables it five
-times, opens the preferences, and fails on any JS error or preferences
-warning. It does not open the search window; test that, and the providers,
-in a nested session.
+times, opens the search window (a search, a folder, the action list, the
+preview), opens the preferences, and fails on a Shell crash, any JS error
+or a preferences warning. To open the window it enables a test-only helper
+extension (`tests/lume-smoke-helper@cjts15.github.io`) that turns on Eval in
+that throwaway Shell; never install it. Test the providers' actions in a
+nested session.
+
+To smoke-test the release zip instead of `src/`, unpack it, compile its
+schemas, and point the test at it:
+
+```sh
+make pack
+mkdir /tmp/lume-zip && unzip -q lume@cjts15.github.io.shell-extension.zip -d /tmp/lume-zip
+glib-compile-schemas /tmp/lume-zip/schemas
+LUME_SRC=/tmp/lume-zip tests/smoke.sh
+```
+
+## Translations
+
+`po/lume.pot` lists every string. To add a language, for example French:
+
+```sh
+make pot                                  # refresh the template (gettext 0.24.1+)
+msginit -i po/lume.pot -l fr -o po/fr.po
+```
+
+Translate `po/fr.po`; `make pack` compiles every `po/*.po` into the zip.
 
 ## Writing a provider
 
@@ -531,6 +555,8 @@ export class ExampleProvider extends Provider {
             icon: 'face-smile-symbolic',    // icon name or Gio.Icon
             score: 0.5,                     // 0..1, higher sorts first
             activate: () => console.log('chosen'),  // window is already closed
+            // (noAction from lib/provider.js: a row that only informs;
+            // choosing it keeps the window open)
             // Optional: ctrlActivate (Ctrl+Enter), altActivate (Alt+Enter),
             // copy (Ctrl+C), fallback: true (only shown when few rows match),
             // type: 'Folder' (overrides the provider's label on this row)
@@ -588,6 +614,7 @@ src/
 tests/                gjs self-checks (`make test`), headless smoke test
                       (`make smoke`)
 tools/emoji.py        rebuilds src/data/emoji.json from Unicode data
+po/lume.pot           translation template (`make pot`)
 ```
 
 ## Version notes (GNOME 45–51)
@@ -597,8 +624,9 @@ Handled in code, listed here so they're easy to find:
 - **St.BoxLayout**: `vertical` became `orientation` in 48. `setVertical()`
   in `lib/searchWindow.js` uses whichever exists.
 - **St.ScrollView**: `add_actor()` is gone since 46 and `vadjustment` is new
-  in 46 (45 has `vscroll.adjustment`). Lume uses `child` and falls back for
-  the adjustment.
+  in 46 (45 has `vscroll.adjustment`). Lume uses `add_actor()` on 45, where
+  setting `child` crashes the Shell when the window is destroyed, and `child`
+  on 46+, and falls back for the adjustment.
 - **Theme selection state**: menu items highlight on `:hover` in 45–46 and
   on `:selected` in 47+. Lume sets both on the selected row.
 - **Modal grab**: 45–47 can fail to take the grab; Lume checks

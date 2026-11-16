@@ -10,7 +10,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {formatResult} from '../lib/calculator.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 import {Rates} from '../lib/rates.js';
 import {convert, expandCurrency, homeCurrency, needsRates} from '../lib/units.js';
 
@@ -51,7 +51,7 @@ export class UnitsProvider extends Provider {
                 subtitle: offline ? _('Offline mode is on and no rates are saved yet') : e.message,
                 icon: 'network-offline-symbolic',
                 score: 0.95,
-                activate: () => {},
+                activate: noAction,
             }];
         }
         const result = convert(text, {rates: rates.rates});

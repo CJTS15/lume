@@ -67,7 +67,7 @@ export default class LumePreferences extends ExtensionPreferences {
     _buildProjectsGroup(window, settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Projects'),
-            description: _('Git repositories up to 3 levels inside these folders. Type a project’s name, or “proj” to list them; Enter opens it in the editor, Ctrl+Enter in a terminal.'),
+            description: _('Git repositories up to 3 levels inside these folders. Type a project’s name, or “proj” to list them; Enter opens it in the editor, Ctrl+Enter in a terminal. Leave Editor Command empty to use an installed editor.'),
         });
         const add = new Gtk.Button({
             icon_name: 'list-add-symbolic',
@@ -87,7 +87,7 @@ export default class LumePreferences extends ExtensionPreferences {
             rows = settings.get_strv('project-folders').map(folder => {
                 const row = new Adw.ActionRow({title: folder, use_markup: false});
                 const remove = new Gtk.Button({
-                    icon_name: 'user-trash-symbolic',
+                    icon_name: 'list-remove-symbolic',
                     tooltip_text: _('Remove Folder'),
                     valign: Gtk.Align.CENTER,
                     css_classes: ['flat'],
@@ -121,7 +121,7 @@ export default class LumePreferences extends ExtensionPreferences {
         });
 
         const editor = new Adw.EntryRow({
-            title: _('Editor Command (empty: automatic)'),
+            title: _('Editor Command'),
             text: settings.get_string('project-editor'),
             show_apply_button: true,
         });
@@ -172,7 +172,7 @@ export default class LumePreferences extends ExtensionPreferences {
             if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 // Never overwrite a file that could not be read.
                 // TRANSLATORS: %s is a file path
-                group.description = _('%s is not a valid snippets file. Fix or remove it, then open Preferences again.').format(file.get_path());
+                group.description = _('%s is not a valid snippets file. Fix or remove it, then open Preferences again.').format(GLib.markup_escape_text(file.get_path(), -1));
                 add.sensitive = false;
                 return page;
             }
@@ -193,7 +193,7 @@ export default class LumePreferences extends ExtensionPreferences {
                 file.replace_contents(new TextEncoder().encode(json), null, false,
                     Gio.FileCreateFlags.PRIVATE | Gio.FileCreateFlags.REPLACE_DESTINATION, null);
             } catch (e) {
-                window.add_toast(new Adw.Toast({title: _('Could not save snippets: %s').format(e.message)}));
+                window.add_toast(new Adw.Toast({title: _('Could not save snippets: %s').format(GLib.markup_escape_text(e.message, -1))}));
             }
         };
         const scheduleSave = () => {
@@ -255,9 +255,22 @@ export default class LumePreferences extends ExtensionPreferences {
             row.add_row(new Gtk.ListBoxRow({child: text, activatable: false, selectable: false}));
 
             remove.connect('clicked', () => {
-                snippets.splice(snippets.indexOf(snippet), 1);
-                group.remove(row);
+                // Hidden, not removed, so Undo puts it back in its place.
+                const index = snippets.indexOf(snippet);
+                snippets.splice(index, 1);
+                row.visible = false;
                 scheduleSave();
+                const toast = new Adw.Toast({
+                    // TRANSLATORS: %s is a snippet's name
+                    title: _('“%s” removed').format(GLib.markup_escape_text(row.title, -1)),
+                    button_label: _('Undo'),
+                });
+                toast.connect('button-clicked', () => {
+                    snippets.splice(Math.min(index, snippets.length), 0, snippet);
+                    row.visible = true;
+                    scheduleSave();
+                });
+                window.add_toast(toast);
             });
             group.add(row);
             if (isNew)
@@ -297,7 +310,7 @@ export default class LumePreferences extends ExtensionPreferences {
 
         const reset = new Gtk.Button({
             icon_name: 'edit-undo-symbolic',
-            tooltip_text: _('Reset to default'),
+            tooltip_text: _('Reset to Default'),
             valign: Gtk.Align.CENTER,
             css_classes: ['flat'],
         });
@@ -356,6 +369,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ...[...CURRENCIES].sort().map(code => [code, code]),
         ]);
         currency.subtitle = _('“100 eur” and “€50” convert to it; “$” means it when it is a dollar');
+        currency.enable_search = true;
         group.add(currency);
 
         const contents = new Adw.SwitchRow({
@@ -542,7 +556,7 @@ export default class LumePreferences extends ExtensionPreferences {
 
             const reset = new Gtk.Button({
                 icon_name: 'edit-undo-symbolic',
-                tooltip_text: _('Reset to default'),
+                tooltip_text: _('Reset to Default'),
                 valign: Gtk.Align.CENTER,
                 css_classes: ['flat'],
             });

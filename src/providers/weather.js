@@ -13,7 +13,7 @@ import St from 'gi://St';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {geocode, getJson} from '../lib/openMeteo.js';
-import {Provider} from '../lib/provider.js';
+import {noAction, Provider} from '../lib/provider.js';
 
 const KEYWORD = 'weather';
 const MIN_CITY_LENGTH = 2;
@@ -112,7 +112,7 @@ export class WeatherProvider extends Provider {
                     subtitle: _('Weather data by Open-Meteo.com'),
                     icon: 'content-loading-symbolic',
                     score: SCORE,
-                    activate: () => {},
+                    activate: noAction,
                 }]);
                 await this._wait();
                 if (cancellable.is_cancelled() || this._destroyed)
@@ -134,7 +134,7 @@ export class WeatherProvider extends Provider {
                 subtitle: e.message,
                 icon: 'network-offline-symbolic',
                 score: SCORE,
-                activate: () => {},
+                activate: noAction,
             }];
         }
 
@@ -145,7 +145,7 @@ export class WeatherProvider extends Provider {
                 subtitle: _('Weather data by Open-Meteo.com'),
                 icon: 'weather-severe-alert-symbolic',
                 score: SCORE,
-                activate: () => {},
+                activate: noAction,
             }];
         }
         return [this._toResult(place, forecast)];
