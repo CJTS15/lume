@@ -44,6 +44,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> | Open or close Lume (default, configurable) |
 | <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
+| <kbd>→</kbd> / <kbd>←</kbd> | On a folder, list it; at a path ending in `/`, go up a folder (in the search field, with the cursor at the end; with Shift or Ctrl they edit text as usual) |
 | <kbd>Enter</kbd> | Open the selected result |
 | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in the background |
 | <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
@@ -141,7 +142,7 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 | Result | Actions |
 | --- | --- |
 | App | Open, New Window, the app's own actions (New Private Window, …), launch on the other graphics card (dual-GPU machines), App Details (with GNOME Software) |
-| File or folder | Open, Show in Folder, Properties, Copy File, Copy Path, Open Folder in Terminal |
+| File or folder | Open, Show in Folder, Properties, Copy File, Copy Path, Open Folder in Terminal, Open in Yazi (if installed) |
 | Window | Focus, Close Window |
 | Media player | Play or Pause, Next, Previous |
 | Command | Run in Background, Run in Terminal |
@@ -154,7 +155,8 @@ a symbol does not (`?lume`). A user script's name works as a prefix too.
 
 <kbd>Ctrl</kbd>+<kbd>P</kbd> shows a preview pane beside the results, and
 Lume remembers whether it is shown. Files show their type, size, date and
-location, with a thumbnail for images; clipboard entries their full text;
+location, with a thumbnail for images, plus a folder's contents or a text
+file's first lines; clipboard entries their full text;
 weather a 5-day forecast; other results their icon, title and subtitle.
 *Preferences → Preview Position* puts it on the left or right.
 
@@ -237,6 +239,15 @@ folders and `node_modules` are skipped. Without an index, Lume searches the
 names in your home folder, three levels deep. Typing a path that starts with
 `/` or `~/` lists that folder instead (hidden files appear once the filter
 starts with `.`).
+
+Browse folders from the keyboard: <kbd>→</kbd> on a folder lists it, and
+<kbd>←</kbd> goes back up. With the preview pane on (<kbd>Ctrl</kbd>+<kbd>P</kbd>),
+a folder shows what it holds and a text file its first lines (files that
+aren't UTF-8 text show no lines, and a file that looks like it holds a key
+or token, such as `~/.ssh/id_ed25519`, is not shown). If [Yazi](https://yazi-rs.github.io) is
+installed, <kbd>Ctrl</kbd>+<kbd>K</kbd> offers *Open in Yazi*, in your
+terminal. Lume itself never renames, moves or deletes files; use Files or
+Yazi for that.
 
 *Search File Contents* (off by default) also matches text inside indexed
 files. It is slower, and only covers files LocalSearch extracts text from.

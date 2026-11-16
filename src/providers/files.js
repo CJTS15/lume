@@ -10,7 +10,9 @@
 // - "recent" (editable): recently used files, newest first, from the list
 //   GTK apps keep (recently-used.xbel), unless File History is off.
 // Enter opens, Ctrl+Enter shows the file in its folder, Alt+Enter shows its
-// properties, Ctrl+C copies it (for pasting in Files).
+// properties, Ctrl+C copies it (for pasting in Files). Right arrow on a
+// folder lists it; Left at a trailing "/" goes up (lib/searchWindow.js).
+// The preview lists a folder's entries or a text file's first lines.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -23,6 +25,7 @@ import {fuzzyScore, matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
+import {looksSecret} from '../lib/secrets.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const MIN_QUERY_LENGTH = 3;
@@ -34,6 +37,8 @@ const CONTENT_LIMIT = 20;
 const MAX_LOOSE_LENGTH = 40;
 const BROWSE_SCORE = 0.96;
 const MAX_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
+const PREVIEW_LINES = 40;
+const PREVIEW_BYTES = 64 * 1024;
 // Index queries scan every file name (about 50 to 150 ms in LocalSearch,
 // which keeps working after a cancel): wait for typing to pause.
 const DEBOUNCE_MS = 150;
@@ -94,6 +99,9 @@ Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
+Gio._promisify(Gio.File.prototype, 'read_async');
+Gio._promisify(Gio.InputStream.prototype, 'read_bytes_async');
+Gio._promisify(Gio.InputStream.prototype, 'close_async');
 
 /**
  * TinySPARQL is `Tsparql` since GNOME 47 and `Tracker` before; a static
@@ -372,8 +380,12 @@ export class FilesProvider extends Provider {
             .map(entry => this._toResult({...entry, score: BROWSE_SCORE}, shown));
     }
 
-    /** Folder entries, cached briefly so typing a filter does not re-read. */
-    async _list(dir, cancellable) {
+    /**
+     * Folder entries, cached briefly so typing a filter does not re-read.
+     * A preview passes `remember` false, so it never replaces the listing
+     * being typed in.
+     */
+    async _list(dir, cancellable, remember = true) {
         const now = GLib.get_monotonic_time() / 1e6;
         if (this._listing?.dir === dir && now - this._listing.time < BROWSE_CACHE_SECONDS)
             return this._listing.entries;
@@ -408,7 +420,8 @@ export class FilesProvider extends Provider {
         } finally {
             enumerator.close_async(GLib.PRIORITY_LOW, null).catch(() => {});
         }
-        this._listing = {dir, time: now, entries};
+        if (remember)
+            this._listing = {dir, time: now, entries};
         return entries;
     }
 
@@ -606,6 +619,8 @@ export class FilesProvider extends Provider {
             'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
         const folderPath = folder ? path : GLib.path_get_dirname(path);
         const preview = () => this._preview(uri, path, folder);
+        // ponytail: looked up once; installing Yazi later needs a re-enable.
+        this._yazi ??= GLib.find_program_in_path('yazi') ?? '';
 
         return {
             id: uri,
@@ -622,6 +637,8 @@ export class FilesProvider extends Provider {
             ctrlActivate: showInFolder,
             altActivate: properties,
             copy: copyFile,
+            // Right arrow: list this folder.
+            complete: folder ? `${this._shortPath(path)}/` : undefined,
             actions: [
                 {label: _('Open'), icon: 'document-open-symbolic', run: open},
                 {label: _('Show in Folder'), icon: 'folder-open-symbolic', run: showInFolder},
@@ -639,6 +656,12 @@ export class FilesProvider extends Provider {
                     run: () => runInTerminal(this._settings,
                         ['/bin/sh', '-c', 'cd -- "$1" && exec "${SHELL:-/bin/sh}"', 'sh', folderPath]),
                 },
+                // Yazi opens a folder, or a file's folder with the file selected.
+                ...this._yazi ? [{
+                    label: _('Open in Yazi'),
+                    icon: 'utilities-terminal-symbolic',
+                    run: () => runInTerminal(this._settings, [this._yazi, path]),
+                }] : [],
             ],
         };
     }
@@ -647,7 +670,7 @@ export class FilesProvider extends Provider {
     async _preview(uri, path, folder) {
         const file = Gio.File.new_for_uri(uri);
         const info = await file.query_info_async(
-            'standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon',
+            'standard::type,standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon',
             Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
         const type = info.get_content_type();
         const rows = [[_('Type'), Gio.content_type_get_description(type)]];
@@ -666,7 +689,45 @@ export class FilesProvider extends Provider {
             gicon = new Gio.FileIcon({file: Gio.File.new_for_path(thumbnail)});
         else if (type.startsWith('image/') && info.get_size() <= MAX_PREVIEW_IMAGE_BYTES)
             gicon = new Gio.FileIcon({file});
-        return {gicon, rows};
+
+        let text;
+        if (folder)
+            text = await this._folderText(file);
+        // Regular files only: reading a FIFO or a device would never end.
+        else if (info.get_file_type() === Gio.FileType.REGULAR && Gio.content_type_is_a(type, 'text/plain'))
+            text = await this._fileText(file);
+        return {gicon, rows, text};
+    }
+
+    /** A folder's first entries, folders first, as preview text. */
+    async _folderText(file) {
+        const entries = (await this._list(file.get_path(), null, false)).filter(entry => !entry.hidden)
+            .sort((a, b) => b.folder - a.folder || a.name.localeCompare(b.name));
+        if (entries.length === 0)
+            return _('Empty folder');
+        const lines = entries.slice(0, PREVIEW_LINES).map(entry => entry.folder ? `${entry.name}/` : entry.name);
+        if (entries.length > PREVIEW_LINES)
+            lines.push(_('… and %d more').format(entries.length - PREVIEW_LINES));
+        return lines.join('\n');
+    }
+
+    /** A text file's first lines; nothing if it isn't UTF-8 text. */
+    async _fileText(file) {
+        const stream = await file.read_async(GLib.PRIORITY_DEFAULT, null);
+        let bytes;
+        try {
+            bytes = (await stream.read_bytes_async(PREVIEW_BYTES, GLib.PRIORITY_DEFAULT, null)).toArray();
+        } finally {
+            stream.close_async(GLib.PRIORITY_DEFAULT, null).catch(() => {});
+        }
+        // The read may end inside a character: drop its broken tail.
+        const text = new TextDecoder().decode(bytes).replace(/\uFFFD{1,3}$/, '');
+        if (text.includes('\0') || text.includes('\uFFFD'))
+            return undefined;
+        // Arrowing past ~/.ssh/id_ed25519 or a .env must not show the key.
+        if (looksSecret(text))
+            return _('Not shown: it looks like it holds a key or token');
+        return text.split('\n').slice(0, PREVIEW_LINES).join('\n');
     }
 
     _closeConnection() {
