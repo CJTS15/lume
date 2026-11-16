@@ -1,7 +1,7 @@
 {
   "uuid": "lume@cjts15.github.io",
   "name": "Lume",
-  "description": "A lightweight Spotlight-style search window for GNOME Shell.",
+  "description": "A lightweight Spotlight-style search window for GNOME Shell.\n\nClipboard access: Lume keeps a clipboard history (it can be turned off, and is saved to disk only if you choose). Snippets, calculator and clipboard results can be copied to the clipboard and pasted into the window you were using.",
   "shell-version": ["45", "46", "47", "48", "49", "50", "51"],
   "settings-schema": "org.gnome.shell.extensions.lume",
   "gettext-domain": "lume",

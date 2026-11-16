@@ -172,7 +172,7 @@ export default class LumePreferences extends ExtensionPreferences {
             if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND)) {
                 // Never overwrite a file that could not be read.
                 // TRANSLATORS: %s is a file path
-                group.description = _('%s is not a valid snippets file. Fix or remove it, then open Preferences again.').format(file.get_path());
+                group.description = _('%s is not a valid snippets file. Fix or remove it, then open Preferences again.').format(GLib.markup_escape_text(file.get_path(), -1));
                 add.sensitive = false;
                 return page;
             }
@@ -193,7 +193,7 @@ export default class LumePreferences extends ExtensionPreferences {
                 file.replace_contents(new TextEncoder().encode(json), null, false,
                     Gio.FileCreateFlags.PRIVATE | Gio.FileCreateFlags.REPLACE_DESTINATION, null);
             } catch (e) {
-                window.add_toast(new Adw.Toast({title: _('Could not save snippets: %s').format(e.message)}));
+                window.add_toast(new Adw.Toast({title: _('Could not save snippets: %s').format(GLib.markup_escape_text(e.message, -1))}));
             }
         };
         const scheduleSave = () => {

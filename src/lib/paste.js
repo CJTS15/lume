@@ -118,7 +118,5 @@ function cancelWait() {
 export function destroy() {
     cancelWait();
     target = null;
-    // Releases any key the device still holds down.
-    keyboard?.run_dispose();
     keyboard = null;
 }
