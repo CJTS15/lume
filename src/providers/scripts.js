@@ -200,7 +200,8 @@ export class ScriptsProvider extends Provider {
         }
 
         const stop = new Gio.Cancellable();
-        const timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, TIMEOUT_MS, () => {
+        let timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, TIMEOUT_MS, () => {
+            timeoutId = 0; // Fired: removing it again would warn.
             stop.cancel();
             return GLib.SOURCE_REMOVE;
         });
@@ -219,7 +220,8 @@ export class ScriptsProvider extends Provider {
             if (!e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
                 console.debug(`lume: script ${path}: ${e.message}`);
         } finally {
-            GLib.source_remove(timeoutId);
+            if (timeoutId)
+                GLib.source_remove(timeoutId);
             cancellable.disconnect(cancelId);
             // Stopped early (timeout, enough lines, newer query): end it.
             // SIGTERM, which timeout(1) passes on to the script's group.

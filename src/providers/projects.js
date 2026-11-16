@@ -7,6 +7,7 @@
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
@@ -146,7 +147,8 @@ export class ProjectsProvider extends Provider {
             }
         }
         for (const id of EDITORS) {
-            const app = Gio.DesktopAppInfo.new(id);
+            // Through the Shell: Gio.DesktopAppInfo warns on GNOME 51.
+            const app = Shell.AppSystem.get_default().lookup_app(id)?.get_app_info();
             if (app) {
                 return {
                     name: app.get_name(),
