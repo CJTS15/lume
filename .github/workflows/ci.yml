@@ -1,0 +1,51 @@
+# Unit tests and a headless smoke test of the release zip on every GNOME
+# Shell version Lume supports, one Fedora release per Shell version.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: GNOME ${{ matrix.gnome }} (Fedora ${{ matrix.fedora }})
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:${{ matrix.fedora }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {fedora: 39, gnome: 45}
+          - {fedora: 40, gnome: 46}
+          - {fedora: 41, gnome: 47}
+          - {fedora: 42, gnome: 48}
+          - {fedora: 43, gnome: 49}
+          - {fedora: 44, gnome: 50}
+          - {fedora: 45, gnome: 51}
+    steps:
+      # Releases past end of life move to the archive server.
+      - name: Use the archive for end-of-life releases
+        if: matrix.fedora <= 42
+        run: |
+          sed -i -e 's/^metalink=/#metalink=/' \
+                 -e 's|^#baseurl=http://download.example/pub/fedora/linux|baseurl=https://archives.fedoraproject.org/pub/archive/fedora/linux|' \
+                 /etc/yum.repos.d/fedora*.repo
+      - name: Install GNOME Shell
+        run: dnf -y install --setopt=install_weak_deps=False gnome-shell gjs glib2 dbus-daemon mesa-dri-drivers make unzip git
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: make test
+      - name: Smoke test of src/
+        run: make smoke
+      - name: Smoke test of the release zip
+        run: |
+          make pack
+          mkdir /tmp/zip
+          unzip -q lume@cjts15.github.io.shell-extension.zip -d /tmp/zip
+          glib-compile-schemas --strict /tmp/zip/schemas
+          LUME_SRC=/tmp/zip tests/smoke.sh
