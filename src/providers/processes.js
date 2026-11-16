@@ -250,6 +250,7 @@ export class ProcessesProvider extends Provider {
             return;
         }
         try {
+            // GJS has no kill(2); the pid and start time were checked above.
             const kill = Gio.Subprocess.new(['kill', '-s', signal, '--', String(stat.pid)],
                 Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_SILENCE);
             await kill.wait_check_async(null);

@@ -8,7 +8,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GnomeBluetooth from 'gi://GnomeBluetooth?version=3.0';
-import NM from 'gi://NM';
 
 import * as Volume from 'resource:///org/gnome/shell/ui/status/volume.js';
 import {loadInterfaceXML} from 'resource:///org/gnome/shell/misc/fileUtils.js';
@@ -65,8 +64,8 @@ const PROFILES = {
 };
 const PROFILE_KEYWORDS = ['power', 'mode', 'profile', 'battery', 'energy'];
 
-Gio._promisify(NM.Client, 'new_async');
-Gio._promisify(NM.Client.prototype, 'dbus_set_property');
+// Loaded on enable: the Shell can be built without NetworkManager.
+let NM = null;
 
 const profilesInterface = name => `<node><interface name="${name}">
 <property name="ActiveProfile" type="s" access="readwrite"/>
@@ -117,7 +116,15 @@ export class TogglesProvider extends Provider {
     }
 
     _addWifi() {
-        NM.Client.new_async(null)
+        import('gi://NM')
+            .then(({default: module}) => {
+                if (!NM) {
+                    NM = module;
+                    Gio._promisify(NM.Client, 'new_async');
+                    Gio._promisify(NM.Client.prototype, 'dbus_set_property');
+                }
+                return NM.Client.new_async(null);
+            })
             .then(client => {
                 if (!this._destroyed)
                     this._network = client;

@@ -882,6 +882,10 @@ class LumeSearchWindow extends St.Widget {
         const result = this._rows[index]?.result;
         if (!result)
             return;
+        // Holding Enter must not confirm as well: ignore its key repeat.
+        if (this._confirm &&
+            (Clutter.get_current_event()?.get_flags() ?? 0) & (Clutter.EventFlags.FLAG_REPEATED ?? 0))
+            return;
         // A dangerous action first shows a confirm row; no modifier skips it.
         if (result.confirm) {
             this._confirm = {text: result.confirm, run: result.activate};
