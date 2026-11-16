@@ -17,7 +17,7 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {gettext as _, ngettext} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {paste, pasteTargetName, rememberWindow} from './paste.js';
 
@@ -172,7 +172,9 @@ class LumeSearchWindow extends St.Widget {
             visible: false,
             // Never taller than the results area (see _updateGeometry).
             clip_to_allocation: true,
+            accessible_name: _('Preview'),
         });
+        this._previewLink = null;
         setVertical(this._previewPane);
         body.add_child(this._previewPane);
         this._panel.add_child(body);
@@ -263,7 +265,8 @@ class LumeSearchWindow extends St.Widget {
         hint(_('Esc'), _('Close'));
 
         const preferences = new St.Button({
-            style_class: 'lume-footer-button',
+            // The theme's menu item hover, so high contrast outlines it too.
+            style_class: 'popup-menu-item lume-footer-button',
             child: new St.Icon({
                 style_class: 'popup-inactive-menu-item lume-footer-icon',
                 icon_name: 'emblem-system-symbolic',
@@ -407,11 +410,20 @@ class LumeSearchWindow extends St.Widget {
                 this._render();
             this._statusLabel.visible = this._rows.length === 0;
             this._separator.show();
+            this._announce(this._rows.length === 0 ? _('No results')
+                : ngettext('%d result', '%d results', this._rows.length).format(this._rows.length));
             if (timing) {
                 console.log(`lume: timing settled +${elapsed()} ms, ${timing.renders} renders, ` +
                     `${(timing.renderUs / 1000).toFixed(1)} ms rendering`);
             }
         });
+    }
+
+    /** Have a screen reader speak `text` without moving focus (ATK 2.46+). */
+    _announce(text) {
+        const accessible = this._resultsBox.get_accessible();
+        if (accessible && GObject.signal_lookup('announcement', Atk.Object.$gtype))
+            accessible.emit('announcement', text);
     }
 
     _clearResults() {
@@ -584,8 +596,10 @@ class LumeSearchWindow extends St.Widget {
         const result = this._actionsOf ? null : this._rows[this._selected]?.result;
         const show = this._settings.get_boolean('show-preview') && Boolean(result);
         this._previewPane.visible = show;
-        if (!show)
+        if (!show) {
+            this._unlinkPreview();
             return;
+        }
 
         let preview = null;
         try {
@@ -599,8 +613,24 @@ class LumeSearchWindow extends St.Widget {
         this._fillPreview(result, preview ?? {});
     }
 
+    /** Drop the selected row's link to the preview text (see _fillPreview). */
+    _unlinkPreview() {
+        const link = this._previewLink;
+        this._previewLink = null;
+        // A row destroyed by a render took its relations with it.
+        if (!link || !this._rows.some(r => r.actor === link.row))
+            return;
+        for (const target of link.targets) {
+            link.row.get_accessible().remove_relationship(
+                Atk.RelationType.DESCRIBED_BY, target.get_accessible());
+        }
+    }
+
     _fillPreview(result, {gicon, icon, text, rows = []}) {
+        this._unlinkPreview();
         this._previewPane.destroy_all_children();
+        // Read to a screen reader as part of the selected row's description.
+        const described = [];
 
         const image = gicon ?? icon ?? result.icon;
         if (result.glyph) {
@@ -626,15 +656,28 @@ class LumeSearchWindow extends St.Widget {
 
         for (const [label, value] of rows) {
             const line = new St.BoxLayout({style_class: 'lume-preview-row'});
-            line.add_child(new St.Label({style_class: 'popup-inactive-menu-item lume-preview-label', text: label}));
-            line.add_child(wrapped('lume-preview-value', String(value)));
+            const key = new St.Label({style_class: 'popup-inactive-menu-item lume-preview-label', text: label});
+            const valueLabel = wrapped('lume-preview-value', String(value));
+            line.add_child(key);
+            line.add_child(valueLabel);
             this._previewPane.add_child(line);
+            described.push(key, valueLabel);
         }
         if (text) {
             const lines = text.slice(0, PREVIEW_TEXT_LENGTH).split('\n');
             const cut = lines.length > PREVIEW_TEXT_LINES || text.length > PREVIEW_TEXT_LENGTH;
             const shown = `${lines.slice(0, PREVIEW_TEXT_LINES).join('\n')}${cut ? '…' : ''}`;
-            this._previewPane.add_child(wrapped('lume-preview-text', shown));
+            const textLabel = wrapped('lume-preview-text', shown);
+            this._previewPane.add_child(textLabel);
+            described.push(textLabel);
+        }
+
+        // The pane can't take focus, so its text is reached through the row.
+        const row = this._rows[this._selected]?.actor;
+        if (row && described.length > 0) {
+            for (const target of described)
+                row.get_accessible().add_relationship(Atk.RelationType.DESCRIBED_BY, target.get_accessible());
+            this._previewLink = {row, targets: described};
         }
     }
 

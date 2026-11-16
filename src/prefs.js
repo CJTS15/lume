@@ -255,9 +255,22 @@ export default class LumePreferences extends ExtensionPreferences {
             row.add_row(new Gtk.ListBoxRow({child: text, activatable: false, selectable: false}));
 
             remove.connect('clicked', () => {
-                snippets.splice(snippets.indexOf(snippet), 1);
-                group.remove(row);
+                // Hidden, not removed, so Undo puts it back in its place.
+                const index = snippets.indexOf(snippet);
+                snippets.splice(index, 1);
+                row.visible = false;
                 scheduleSave();
+                const toast = new Adw.Toast({
+                    // TRANSLATORS: %s is a snippet's name
+                    title: _('“%s” removed').format(GLib.markup_escape_text(row.title, -1)),
+                    button_label: _('Undo'),
+                });
+                toast.connect('button-clicked', () => {
+                    snippets.splice(Math.min(index, snippets.length), 0, snippet);
+                    row.visible = true;
+                    scheduleSave();
+                });
+                window.add_toast(toast);
             });
             group.add(row);
             if (isNew)
