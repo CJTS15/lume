@@ -44,7 +44,7 @@ picked up the next time a Shell starts. `make unlink` removes only that symlink.
 | <kbd>Super</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> | Open or close Lume (default, configurable) |
 | <kbd>↑</kbd> / <kbd>↓</kbd>, <kbd>Tab</kbd> / <kbd>Shift</kbd>+<kbd>Tab</kbd> | Move the selection; <kbd>↑</kbd> on the first result goes back to the search field |
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | First / last result |
-| <kbd>→</kbd> / <kbd>←</kbd> | On a folder, list it; at a path ending in `/`, go up a folder (in the search field, with the cursor at the end) |
+| <kbd>→</kbd> / <kbd>←</kbd> | On a folder, list it; at a path ending in `/`, go up a folder (in the search field, with the cursor at the end; with Shift or Ctrl they edit text as usual) |
 | <kbd>Enter</kbd> | Open the selected result |
 | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Second action: show a file in its folder, run a command in the background |
 | <kbd>Alt</kbd>+<kbd>Enter</kbd> | File properties |
@@ -243,7 +243,8 @@ starts with `.`).
 Browse folders from the keyboard: <kbd>→</kbd> on a folder lists it, and
 <kbd>←</kbd> goes back up. With the preview pane on (<kbd>Ctrl</kbd>+<kbd>P</kbd>),
 a folder shows what it holds and a text file its first lines (files that
-aren't UTF-8 text show no lines). If [Yazi](https://yazi-rs.github.io) is
+aren't UTF-8 text show no lines, and a file that looks like it holds a key
+or token, such as `~/.ssh/id_ed25519`, is not shown). If [Yazi](https://yazi-rs.github.io) is
 installed, <kbd>Ctrl</kbd>+<kbd>K</kbd> offers *Open in Yazi*, in your
 terminal. Lume itself never renames, moves or deletes files; use Files or
 Yazi for that.

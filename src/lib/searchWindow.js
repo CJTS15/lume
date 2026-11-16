@@ -228,7 +228,7 @@ class LumeSearchWindow extends St.Widget {
         // ClutterText's own bindings take Left and Right before its
         // key-press-event on GNOME 51, so folder keys are caught on the way down.
         this.connect('captured-event', (_a, event) =>
-            event.type() === Clutter.EventType.KEY_PRESS && this._onFolderKey(event.get_key_symbol())
+            event.type() === Clutter.EventType.KEY_PRESS && this._onFolderKey(event.get_key_symbol(), event.get_state())
                 ? Clutter.EVENT_STOP : Clutter.EVENT_PROPAGATE);
         this.connect('destroy', () => this._onDestroy());
 
@@ -638,12 +638,17 @@ class LumeSearchWindow extends St.Widget {
      * the entry focused, only when its cursor is at the end, so editing
      * the text still works.
      *
+     * @param {number} symbol
+     * @param {Clutter.ModifierType} state
      * @returns {boolean} whether the key was used
      */
-    _onFolderKey(symbol) {
+    _onFolderKey(symbol, state) {
         const right = symbol === Clutter.KEY_Right || symbol === Clutter.KEY_KP_Right;
         const left = symbol === Clutter.KEY_Left || symbol === Clutter.KEY_KP_Left;
-        if ((!right && !left) || this._actionsOf)
+        // Shift/Ctrl+arrows select and jump words as usual.
+        const modifiers = state & (Clutter.ModifierType.SHIFT_MASK | Clutter.ModifierType.CONTROL_MASK |
+            Clutter.ModifierType.MOD1_MASK | Clutter.ModifierType.SUPER_MASK);
+        if ((!right && !left) || modifiers || this._actionsOf)
             return false;
         // Act on the rows for the current text, never on the last frame's.
         if (this._renderLater)

@@ -25,6 +25,7 @@ import {fuzzyScore, matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {Provider} from '../lib/provider.js';
+import {looksSecret} from '../lib/secrets.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const MIN_QUERY_LENGTH = 3;
@@ -723,6 +724,9 @@ export class FilesProvider extends Provider {
         const text = new TextDecoder().decode(bytes).replace(/\uFFFD{1,3}$/, '');
         if (text.includes('\0') || text.includes('\uFFFD'))
             return undefined;
+        // Arrowing past ~/.ssh/id_ed25519 or a .env must not show the key.
+        if (looksSecret(text))
+            return _('Not shown: it looks like it holds a key or token');
         return text.split('\n').slice(0, PREVIEW_LINES).join('\n');
     }
 
