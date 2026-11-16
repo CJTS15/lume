@@ -39,15 +39,18 @@ jobs:
       - name: Install GNOME Shell
         run: dnf -y install --disablerepo=fedora-cisco-openh264 --setopt=install_weak_deps=False gnome-shell gjs glib2 dbus-daemon mesa-dri-drivers make unzip git
       # What a login session would provide: a runtime directory for the
-      # Wayland socket, the X11 socket folder for Xwayland, and a system bus
-      # (the Shell stops starting without one).
+      # Wayland socket, the X11 socket folder for Xwayland, and a system bus.
+      # Without /run/systemd/seats the Shell uses its stand-in for logind,
+      # which a container doesn't run.
       - name: Prepare a session
         run: |
           mkdir -m 700 /tmp/runtime
           echo XDG_RUNTIME_DIR=/tmp/runtime >> "$GITHUB_ENV"
-          mkdir -m 1777 /tmp/.X11-unix
+          mkdir -p /tmp/.X11-unix
+          chmod 1777 /tmp/.X11-unix
           mkdir -p /run/dbus
           dbus-daemon --system --fork
+          rmdir /run/systemd/seats 2>/dev/null || true
       - uses: actions/checkout@v4
       - name: Unit tests
         run: make test
