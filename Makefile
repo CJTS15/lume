@@ -3,7 +3,7 @@ SRC      := src
 EXT_DIR  := $(HOME)/.local/share/gnome-shell/extensions/$(UUID)
 ZIP      := $(UUID).shell-extension.zip
 
-.PHONY: schemas pack install link unlink nested test smoke clean
+.PHONY: schemas pack pot install link unlink nested test smoke clean
 
 # Needed for `make link`; `gnome-extensions install` compiles schemas itself.
 schemas:
@@ -11,7 +11,16 @@ schemas:
 
 pack:
 	gnome-extensions pack $(SRC) --force --out-dir=. \
-		--extra-source=lib --extra-source=providers --extra-source=data
+		--extra-source=lib --extra-source=providers --extra-source=data \
+		--podir=../po
+
+# Translation template. --no-git needs gettext 0.25+; without it, xgettext
+# asks git for dates, which fails in folders with spaces.
+pot:
+	xgettext --no-git --from-code=UTF-8 --keyword=_ --keyword=N_ --keyword=ngettext:1,2 \
+		--add-comments=TRANSLATORS: --package-name=lume \
+		--msgid-bugs-address=https://github.com/CJTS15/lume/issues \
+		-o po/lume.pot $$(git ls-files '$(SRC)/*.js' '$(SRC)/schemas/*.xml' | sort)
 
 install: pack
 	gnome-extensions install --force $(ZIP)

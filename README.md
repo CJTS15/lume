@@ -6,7 +6,7 @@ Press a shortcut, type, pick a result with the arrow keys and Enter. Lume is
 styled entirely by your Shell theme, so it follows light, dark, high contrast
 and custom Shell themes.
 
-> Status: v2. Tested on GNOME 51 only; the code handles 45–50 (see
+> Status: v3. Tested on GNOME 51 only; the code handles 45–50 (see
 > [Version notes](#version-notes-gnome-4551)) but nobody has run it there
 > yet.
 
@@ -499,6 +499,27 @@ times, opens the preferences, and fails on any JS error or preferences
 warning. It does not open the search window; test that, and the providers,
 in a nested session.
 
+To smoke-test the release zip instead of `src/`, unpack it, compile its
+schemas, and point the test at it:
+
+```sh
+make pack
+mkdir /tmp/lume-zip && unzip -q lume@cjts15.github.io.shell-extension.zip -d /tmp/lume-zip
+glib-compile-schemas /tmp/lume-zip/schemas
+LUME_SRC=/tmp/lume-zip tests/smoke.sh
+```
+
+## Translations
+
+`po/lume.pot` lists every string. To add a language, for example French:
+
+```sh
+make pot                                  # refresh the template (gettext 0.25+)
+msginit -i po/lume.pot -l fr -o po/fr.po
+```
+
+Translate `po/fr.po`; `make pack` compiles every `po/*.po` into the zip.
+
 ## Writing a provider
 
 Every feature is a provider. The window doesn't know about features; it asks
@@ -588,6 +609,7 @@ src/
 tests/                gjs self-checks (`make test`), headless smoke test
                       (`make smoke`)
 tools/emoji.py        rebuilds src/data/emoji.json from Unicode data
+po/lume.pot           translation template (`make pot`)
 ```
 
 ## Version notes (GNOME 45–51)

@@ -7,12 +7,13 @@
 # It does not open the search window: test that in `make nested`.
 #
 # Run with: make smoke
+# LUME_SRC=<dir> tests it on another copy, such as the unpacked release zip.
 
 set -u
 UUID=lume@cjts15.github.io
 
 if [ -z "${LUME_SMOKE_DIR:-}" ]; then
-    src=$(realpath "$(dirname "$0")/../src")
+    src=$(realpath "${LUME_SRC:-$(dirname "$0")/../src}")
     tmp=$(mktemp -d)
     # Removes only the temp dir; the src symlink inside it is not followed.
     trap 'rm -rf -- "$tmp"' EXIT
