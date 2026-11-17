@@ -2,7 +2,7 @@
 //
 // Reading /proc/PID/stat (proc(5)). No gi:// imports, so tests run under
 // plain gjs.
-// ponytail: assumes 100 clock ticks per second and 4 KiB pages, true on
+// Limitation: assumes 100 clock ticks per second and 4 KiB pages, true on
 // every Linux desktop Lume runs on; GJS has no sysconf().
 
 export const CLOCK_TICKS = 100;

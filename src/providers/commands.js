@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Example provider: Lume's own commands. It exists to prove the provider
-// interface end to end; real providers (apps, calculator, ...) follow the
-// same shape.
+// Lume's own commands: "Lume Preferences" opens the preferences window.
 
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 

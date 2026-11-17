@@ -4,7 +4,7 @@
 // "in 3 hours", "next monday", "days until dec 25", "unix 2026-12-25".
 // Parsing only; places are resolved by the provider. Only GLib, so tests
 // run under plain gjs.
-// ponytail: English words only (month and day names, "until", "ago").
+// Limitation: English words only (month and day names, "until", "ago").
 
 import GLib from 'gi://GLib';
 

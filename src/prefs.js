@@ -499,14 +499,6 @@ export default class LumePreferences extends ExtensionPreferences {
         return group;
     }
 
-    /**
-     * An Adw.ComboRow for a string key with <choices>.
-     *
-     * @param {Gio.Settings} settings
-     * @param {string} key
-     * @param {string} title
-     * @param {Array<[string, string]>} options - [value, label] pairs
-     */
     _buildPrefixGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Prefixes'),
@@ -574,6 +566,14 @@ export default class LumePreferences extends ExtensionPreferences {
         return group;
     }
 
+    /**
+     * An Adw.ComboRow for a string key with <choices>.
+     *
+     * @param {Gio.Settings} settings
+     * @param {string} key
+     * @param {string} title
+     * @param {Array<[string, string]>} options - [value, label] pairs
+     */
     _comboRow(settings, key, title, options) {
         const row = new Adw.ComboRow({
             title,

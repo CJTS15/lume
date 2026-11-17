@@ -619,7 +619,7 @@ export class FilesProvider extends Provider {
             'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
         const folderPath = folder ? path : GLib.path_get_dirname(path);
         const preview = () => this._preview(uri, path, folder);
-        // ponytail: looked up once; installing Yazi later needs a re-enable.
+        // Limitation: looked up once; installing Yazi later needs a re-enable.
         this._yazi ??= GLib.find_program_in_path('yazi') ?? '';
 
         return {

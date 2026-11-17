@@ -115,7 +115,7 @@ export class ScriptsProvider extends Provider {
      * @returns {Promise<boolean>}
      */
     async _unsafe(path) {
-        // ponytail: a symlinked folder's own parents are not walked; the
+        // Limitation: a symlinked folder's own parents are not walked; the
         // usual layout has none. Resolve symlinks first if that changes.
         for (let file = Gio.File.new_for_path(path); file; file = file.get_parent()) {
             const info = await file.query_info_async('unix::uid,unix::mode',
