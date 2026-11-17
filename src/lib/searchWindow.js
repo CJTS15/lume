@@ -335,6 +335,8 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _onDestroy() {
+        // A preview still loading must not fill the destroyed pane.
+        this._previewToken++;
         this._settings.disconnect(this._previewChangedId);
         this._settings.disconnect(this._previewPositionId);
         this._cancelRender();

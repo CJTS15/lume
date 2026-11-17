@@ -64,9 +64,6 @@ const PROFILES = {
 };
 const PROFILE_KEYWORDS = ['power', 'mode', 'profile', 'battery', 'energy'];
 
-// Loaded on enable: the Shell can be built without NetworkManager.
-let NM = null;
-
 const profilesInterface = name => `<node><interface name="${name}">
 <property name="ActiveProfile" type="s" access="readwrite"/>
 <property name="Profiles" type="aa{sv}" access="read"/>
@@ -116,13 +113,13 @@ export class TogglesProvider extends Provider {
     }
 
     _addWifi() {
+        // Imported here, not at the top: the Shell can be built without
+        // NetworkManager. _promisify is a no-op the second time.
         import('gi://NM')
-            .then(({default: module}) => {
-                if (!NM) {
-                    NM = module;
-                    Gio._promisify(NM.Client, 'new_async');
-                    Gio._promisify(NM.Client.prototype, 'dbus_set_property');
-                }
+            .then(({default: NM}) => {
+                Gio._promisify(NM.Client, 'new_async');
+                Gio._promisify(NM.Client.prototype, 'dbus_set_property');
+                this._NM = NM;
                 return NM.Client.new_async(null);
             })
             .then(client => {
@@ -137,10 +134,10 @@ export class TogglesProvider extends Provider {
             icon: 'network-wireless-symbolic',
             // A hardware switch can't be turned back on from software.
             available: () => Boolean(this._network?.wireless_hardware_enabled) &&
-                this._network.get_devices().some(device => device.get_device_type() === NM.DeviceType.WIFI),
+                this._network.get_devices().some(device => device.get_device_type() === this._NM.DeviceType.WIFI),
             isOn: () => this._network.wireless_enabled,
             // As the Shell's Wi-Fi toggle does.
-            set: on => this._network.dbus_set_property(NM.DBUS_PATH, NM.DBUS_INTERFACE,
+            set: on => this._network.dbus_set_property(this._NM.DBUS_PATH, this._NM.DBUS_INTERFACE,
                 'WirelessEnabled', new GLib.Variant('b', on), 2000, null)
                 .catch(e => console.error(`lume: could not switch Wi-Fi: ${e.message}`)),
         });
@@ -245,6 +242,7 @@ export class TogglesProvider extends Provider {
         this._destroyed = true;
         this._profiles = null;
         this._network = null;
+        this._NM = null;
         this._bluetooth = null;
         this._rfkill = null;
     }

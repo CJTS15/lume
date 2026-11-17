@@ -9,6 +9,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Paste from './lib/paste.js';
 import {ProviderRegistry} from './lib/provider.js';
 import {SearchWindow} from './lib/searchWindow.js';
+import * as Terminal from './lib/terminal.js';
 import {AgentsProvider} from './providers/agents.js';
 import {AppsProvider} from './providers/apps.js';
 import {BookmarksProvider} from './providers/bookmarks.js';
@@ -97,6 +98,7 @@ export default class LumeExtension extends Extension {
         this._registry?.destroy();
         this._registry = null;
         Paste.destroy();
+        Terminal.destroy();
 
         this._settings = null;
     }
