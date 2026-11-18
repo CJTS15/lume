@@ -18,15 +18,22 @@
   padding: 2px 6px 2px 0;
 }
 
-/* Flat, like the panel around it; the text cursor shows focus. */
+/* Flat, like the panel around it. */
 .lume-entry,
 .lume-entry:focus,
 .lume-entry:hover {
   font-size: 1.25em;
   min-height: 2.2em;
   background-color: transparent;
-  border-width: 0;
+  border: 2px solid transparent;
   box-shadow: none;
+  border-radius: 12px;
+}
+
+/* A ring in the theme's accent colour shows that typing goes here (GNOME
+ * 47+; older Shells have no accent colour and show only the cursor). */
+.lume-entry:focus {
+  border-color: -st-accent-color;
 }
 
 .lume-entry-icon {
