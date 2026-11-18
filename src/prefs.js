@@ -510,6 +510,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-wikipedia', _('Wikipedia')],
             ['prefix-bookmarks', _('Bookmarks')],
             ['prefix-youtube', _('YouTube')],
+            ['prefix-weather', _('Weather')],
             ['prefix-calculator', _('Calculator')],
             ['prefix-files', _('Files')],
             ['prefix-projects', _('Projects')],
