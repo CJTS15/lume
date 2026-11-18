@@ -26,8 +26,8 @@ let waits = null;
 
 const PATH_CACHE_US = 10 * 1e6;
 const PATH_CACHE_SIZE = 200;
-/** program -> {path, time}; cleared on disable. */
-const paths = new Map();
+/** program -> {path, time}; made on first use, dropped on disable. */
+let paths = null;
 
 /**
  * GLib.find_program_in_path, remembered for 10 s: it stats every $PATH
@@ -38,6 +38,7 @@ const paths = new Map();
  * @returns {string|null}
  */
 export function findProgram(program) {
+    paths ??= new Map();
     const now = GLib.get_monotonic_time();
     const hit = paths.get(program);
     if (hit && now - hit.time < PATH_CACHE_US)
@@ -92,7 +93,7 @@ export async function runInBackground(line) {
 export function destroy() {
     waits?.cancel();
     waits = null;
-    paths.clear();
+    paths = null;
 }
 
 /**
