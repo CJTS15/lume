@@ -4,9 +4,9 @@
 // the clipboard, wait until that window has focus again, then press
 // Ctrl+V (Ctrl+Shift+V in a terminal) with a virtual keyboard inside the
 // compositor, as the Shell's on-screen keyboard does. No portal needed.
-// ponytail: the key is sent as the "v" keyval, which a layout without a
+// Limitation: the key is sent as the "v" keyval, which a layout without a
 // Latin "v" (Russian, Greek) cannot type; the text is then only copied.
-// ponytail: the user's clipboard is replaced (and the text added to the
+// Limitation: the user's clipboard is replaced (and the text added to the
 // clipboard history); restoring the old contents after the paste would race
 // with the app reading it.
 

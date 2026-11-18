@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lume\n"
 "Report-Msgid-Bugs-To: https://github.com/CJTS15/lume/issues\n"
-"POT-Creation-Date: 2026-11-16 15:51+0800\n"
+"POT-Creation-Date: 2026-11-18 09:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,105 +24,105 @@ msgstr ""
 msgid "%s answered with HTTP %d"
 msgstr ""
 
-#: src/lib/searchWindow.js:103 src/prefs.js:356 src/providers/remote.js:36
+#: src/lib/searchWindow.js:104 src/prefs.js:368 src/providers/remote.js:36
 msgid "Search"
 msgstr ""
 
-#: src/lib/searchWindow.js:111
+#: src/lib/searchWindow.js:112
 msgid "Lume search"
 msgstr ""
 
-#: src/lib/searchWindow.js:125 src/lib/searchWindow.js:383
-#: src/lib/searchWindow.js:748
+#: src/lib/searchWindow.js:126 src/lib/searchWindow.js:389
+#: src/lib/searchWindow.js:755
 msgid "All results"
 msgstr ""
 
-#: src/lib/searchWindow.js:145
+#: src/lib/searchWindow.js:146
 msgid "Results"
 msgstr ""
 
-#: src/lib/searchWindow.js:175 src/lib/searchWindow.js:260
+#: src/lib/searchWindow.js:176 src/lib/searchWindow.js:264
 msgid "Preview"
 msgstr ""
 
-#: src/lib/searchWindow.js:201 src/lib/searchWindow.js:413
+#: src/lib/searchWindow.js:202 src/lib/searchWindow.js:419
 msgid "No results"
 msgstr ""
 
 #. TRANSLATORS: key names in the footer hints
-#: src/lib/searchWindow.js:259
+#: src/lib/searchWindow.js:263
 msgid "Ctrl K"
 msgstr ""
 
-#: src/lib/searchWindow.js:259 src/lib/searchWindow.js:747
+#: src/lib/searchWindow.js:263 src/lib/searchWindow.js:754
 msgid "Actions"
 msgstr ""
 
-#: src/lib/searchWindow.js:260
+#: src/lib/searchWindow.js:264
 msgid "Ctrl P"
 msgstr ""
 
-#: src/lib/searchWindow.js:264 src/lib/searchWindow.js:571
+#: src/lib/searchWindow.js:268 src/lib/searchWindow.js:577
 #: src/providers/apps.js:30 src/providers/files.js:643
 msgid "Open"
 msgstr ""
 
-#: src/lib/searchWindow.js:265
+#: src/lib/searchWindow.js:269
 msgid "Esc"
 msgstr ""
 
-#: src/lib/searchWindow.js:265
+#: src/lib/searchWindow.js:269
 msgid "Close"
 msgstr ""
 
-#: src/lib/searchWindow.js:274
+#: src/lib/searchWindow.js:278
 msgid "Preferences"
 msgstr ""
 
-#: src/lib/searchWindow.js:414
+#: src/lib/searchWindow.js:420
 #, javascript-format
 msgid "%d result"
 msgid_plural "%d results"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/lib/searchWindow.js:541
+#: src/lib/searchWindow.js:547
 msgid "Top Hit"
 msgstr ""
 
-#: src/lib/searchWindow.js:562
+#: src/lib/searchWindow.js:568
 msgid "Press Enter to confirm, Esc to go back"
 msgstr ""
 
-#: src/lib/searchWindow.js:572 src/providers/snippets.js:108
+#: src/lib/searchWindow.js:578 src/providers/snippets.js:108
 msgid "Copy"
 msgstr ""
 
 #. TRANSLATORS: %s is an app, e.g. "Firefox"
-#: src/lib/searchWindow.js:575 src/providers/snippets.js:91
+#: src/lib/searchWindow.js:581 src/providers/snippets.js:91
 #, javascript-format
 msgid "Paste into %s"
 msgstr ""
 
-#: src/lib/terminal.js:45
+#: src/lib/terminal.js:75
 msgid "Command not found"
 msgstr ""
 
-#: src/lib/terminal.js:46
+#: src/lib/terminal.js:76
 #, javascript-format
 msgid "Exited with status %d"
 msgstr ""
 
-#: src/lib/terminal.js:50
+#: src/lib/terminal.js:84
 #, javascript-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/lib/terminal.js:65
+#: src/lib/terminal.js:110
 msgid "No terminal found"
 msgstr ""
 
-#: src/lib/terminal.js:66
+#: src/lib/terminal.js:111
 msgid "Set a terminal command in Lume Preferences."
 msgstr ""
 
@@ -130,456 +130,464 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: src/prefs.js:58 src/prefs.js:512
+#: src/prefs.js:52
+msgid "Privacy"
+msgstr ""
+
+#: src/prefs.js:60
+msgid "Integrations"
+msgstr ""
+
+#: src/prefs.js:70 src/prefs.js:516
 msgid "Prefixes"
 msgstr ""
 
-#: src/prefs.js:69 src/prefs.js:523 src/providers/projects.js:53
-#: src/providers/projects.js:75
+#: src/prefs.js:81 src/prefs.js:528 src/providers/projects.js:54
+#: src/providers/projects.js:76
 msgid "Projects"
 msgstr ""
 
-#: src/prefs.js:70
+#: src/prefs.js:82
 msgid ""
 "Git repositories up to 3 levels inside these folders. Type a project’s name, "
 "or “proj” to list them; Enter opens it in the editor, Ctrl+Enter in a "
 "terminal. Leave Editor Command empty to use an installed editor."
 msgstr ""
 
-#: src/prefs.js:74 src/prefs.js:78 src/prefs.js:110
+#: src/prefs.js:86 src/prefs.js:90 src/prefs.js:122
 msgid "Add Project Folder"
 msgstr ""
 
-#: src/prefs.js:91
+#: src/prefs.js:103
 msgid "Remove Folder"
 msgstr ""
 
 #. TRANSLATORS: %s is a folder path
-#: src/prefs.js:96
+#: src/prefs.js:108
 #, javascript-format
 msgid "Remove %s"
 msgstr ""
 
-#: src/prefs.js:124
+#: src/prefs.js:136
 msgid "Editor Command"
 msgstr ""
 
-#: src/prefs.js:142 src/prefs.js:146 src/prefs.js:532
+#: src/prefs.js:154 src/prefs.js:158 src/prefs.js:537
 #: src/providers/snippets.js:36 src/providers/snippets.js:63
 msgid "Snippets"
 msgstr ""
 
-#: src/prefs.js:147
+#: src/prefs.js:159
 msgid ""
 "Type a snippet’s name, or “snip” to list them all. Enter pastes it into the "
 "window you were using; Ctrl+C copies it. {date}, {time} and {clipboard} are "
 "filled in when it is used."
 msgstr ""
 
-#: src/prefs.js:153 src/prefs.js:157
+#: src/prefs.js:165 src/prefs.js:169
 msgid "Add Snippet"
 msgstr ""
 
 #. TRANSLATORS: %s is a file path
-#: src/prefs.js:175
+#: src/prefs.js:187
 #, javascript-format
 msgid ""
 "%s is not a valid snippets file. Fix or remove it, then open Preferences "
 "again."
 msgstr ""
 
-#: src/prefs.js:189 src/prefs.js:224
+#: src/prefs.js:201 src/prefs.js:236
 msgid "Untitled Snippet"
 msgstr ""
 
-#: src/prefs.js:196
+#: src/prefs.js:208
 #, javascript-format
 msgid "Could not save snippets: %s"
 msgstr ""
 
-#: src/prefs.js:218
+#: src/prefs.js:230
 msgid "Remove Snippet"
 msgstr ""
 
 #. TRANSLATORS: %s is a snippet's name
-#: src/prefs.js:227
+#: src/prefs.js:239
 #, javascript-format
 msgid "Remove snippet %s"
 msgstr ""
 
-#: src/prefs.js:231
+#: src/prefs.js:243
 msgid "Name"
 msgstr ""
 
-#: src/prefs.js:248
+#: src/prefs.js:260
 msgid "Text"
 msgstr ""
 
 #. TRANSLATORS: %s is a snippet's name
-#: src/prefs.js:265
+#: src/prefs.js:277
 #, javascript-format
 msgid "“%s” removed"
 msgstr ""
 
-#: src/prefs.js:266
+#: src/prefs.js:278
 msgid "Undo"
 msgstr ""
 
-#: src/prefs.js:283
+#: src/prefs.js:295
 msgid "New Snippet"
 msgstr ""
 
-#: src/prefs.js:292
+#: src/prefs.js:304
 msgid "Keyboard"
 msgstr ""
 
-#: src/prefs.js:295
+#: src/prefs.js:307
 msgid "Open Lume"
 msgstr ""
 
-#: src/prefs.js:296
+#: src/prefs.js:308
 msgid "Shows or hides the search window"
 msgstr ""
 
-#: src/prefs.js:301
+#: src/prefs.js:313
 msgid "Disabled"
 msgstr ""
 
-#: src/prefs.js:313 src/prefs.js:559
+#: src/prefs.js:325 src/prefs.js:564
 msgid "Reset to Default"
 msgstr ""
 
-#: src/prefs.js:317
+#: src/prefs.js:329
 msgid "Reset shortcut to default"
 msgstr ""
 
-#: src/prefs.js:327
+#: src/prefs.js:339
 msgid "Search Window"
 msgstr ""
 
-#: src/prefs.js:339
+#: src/prefs.js:351
 msgid "Width"
 msgstr ""
 
-#: src/prefs.js:339
+#: src/prefs.js:351
 msgid "In pixels, limited to the monitor width"
 msgstr ""
 
-#: src/prefs.js:340
+#: src/prefs.js:352
 msgid "Distance From Top"
 msgstr ""
 
-#: src/prefs.js:340
+#: src/prefs.js:352
 msgid "Percentage of the monitor height"
 msgstr ""
 
-#: src/prefs.js:341
+#: src/prefs.js:353
 msgid "Maximum Results"
 msgstr ""
 
-#: src/prefs.js:341
+#: src/prefs.js:353
 msgid "How many results to show at most"
 msgstr ""
 
-#: src/prefs.js:345
+#: src/prefs.js:357
 msgid "Preview Position"
 msgstr ""
 
-#: src/prefs.js:346 src/prefs.js:347
+#: src/prefs.js:358 src/prefs.js:359
 msgid "Left"
 msgstr ""
 
-#: src/prefs.js:346 src/prefs.js:347
+#: src/prefs.js:358 src/prefs.js:359
 msgid "Right"
 msgstr ""
 
-#: src/prefs.js:349
+#: src/prefs.js:361
 msgid "Side of the results where Ctrl+P shows the preview"
 msgstr ""
 
-#: src/prefs.js:358
+#: src/prefs.js:370
 msgid "Fuzzy Matching"
 msgstr ""
 
-#: src/prefs.js:359
+#: src/prefs.js:371
 msgid "Strict"
 msgstr ""
 
-#: src/prefs.js:360
+#: src/prefs.js:372
 msgid "Normal"
 msgstr ""
 
-#: src/prefs.js:361
+#: src/prefs.js:373
 msgid "Loose"
 msgstr ""
 
-#: src/prefs.js:363
+#: src/prefs.js:375
 msgid ""
 "For app and file names. Loose also skips letters, so “vsc” finds Visual "
 "Studio Code."
 msgstr ""
 
-#: src/prefs.js:366
+#: src/prefs.js:378
 msgid "Home Currency"
 msgstr ""
 
 #. TRANSLATORS: %s is a currency code, e.g. "USD"
-#: src/prefs.js:368
+#: src/prefs.js:380
 #, javascript-format
 msgid "Automatic (%s)"
 msgstr ""
 
-#: src/prefs.js:371
+#: src/prefs.js:383
 msgid "“100 eur” and “€50” convert to it; “$” means it when it is a dollar"
 msgstr ""
 
-#: src/prefs.js:376
+#: src/prefs.js:388
 msgid "Search File Contents"
 msgstr ""
 
-#: src/prefs.js:377
+#: src/prefs.js:389
 msgid "Also match text inside indexed files. Slower."
 msgstr ""
 
-#: src/prefs.js:383
+#: src/prefs.js:395
 msgid "Run Commands"
 msgstr ""
 
-#: src/prefs.js:384
+#: src/prefs.js:396
 msgid "When the first word is a program, offer to run the line"
 msgstr ""
 
-#: src/prefs.js:389
+#: src/prefs.js:401
 msgid "Enter Runs Commands In"
 msgstr ""
 
-#: src/prefs.js:390 src/providers/cli.js:53
+#: src/prefs.js:402 src/providers/cli.js:52
 msgid "Terminal"
 msgstr ""
 
-#: src/prefs.js:391
+#: src/prefs.js:403
 msgid "Background"
 msgstr ""
 
-#: src/prefs.js:393
+#: src/prefs.js:405
 msgid ""
 "A terminal shows the output and lets you stop the command. Ctrl+Enter does "
 "the other."
 msgstr ""
 
-#: src/prefs.js:401
-msgid "Privacy"
+#: src/prefs.js:413
+msgid "Network"
 msgstr ""
 
-#: src/prefs.js:403
+#: src/prefs.js:415
 msgid "Offline Mode"
 msgstr ""
 
-#: src/prefs.js:404
+#: src/prefs.js:416
 msgid ""
 "Nothing leaves this computer: no weather, exchange-rate or time-zone "
 "requests, no results from apps’ search providers, no web search. Saved "
 "exchange rates are still used."
 msgstr ""
 
-#: src/prefs.js:413 src/prefs.js:527
+#: src/prefs.js:425 src/prefs.js:532
 msgid "Clipboard History"
 msgstr ""
 
-#: src/prefs.js:414
+#: src/prefs.js:426
 msgid ""
 "Search “clip” to see copied text. Copies that password managers mark as "
 "secret, and ones that look like tokens, keys or card numbers, are skipped."
 msgstr ""
 
-#: src/prefs.js:417
+#: src/prefs.js:429
 msgid "Remember Copied Text"
 msgstr ""
 
-#: src/prefs.js:422
+#: src/prefs.js:434
 msgid "Keep After Locking or Logging Out"
 msgstr ""
 
-#: src/prefs.js:423
+#: src/prefs.js:435
 msgid "Saves the history to disk, readable only by you"
 msgstr ""
 
-#: src/prefs.js:431
+#: src/prefs.js:443
 msgid "Items to Remember"
 msgstr ""
 
-#: src/prefs.js:441 src/prefs.js:517 src/providers/web.js:21
+#: src/prefs.js:453 src/prefs.js:521 src/providers/web.js:21
 msgid "Web Search"
 msgstr ""
 
-#: src/prefs.js:442
+#: src/prefs.js:454
 msgid ""
 "The last result opens your query in the browser. Nothing is sent until you "
 "choose it."
 msgstr ""
 
-#: src/prefs.js:445
+#: src/prefs.js:457
 msgid "Search Engine"
 msgstr ""
 
-#: src/prefs.js:447
+#: src/prefs.js:459
 msgid "Custom"
 msgstr ""
 
-#: src/prefs.js:450
+#: src/prefs.js:462
 #, javascript-format
 msgid "Custom URL, with %s for the query"
 msgstr ""
 
-#: src/prefs.js:469 src/providers/weather.js:65 src/providers/weather.js:80
-#: src/providers/weather.js:95
+#: src/prefs.js:481 src/prefs.js:525 src/providers/weather.js:65
+#: src/providers/weather.js:88 src/providers/weather.js:103
 msgid "Weather"
 msgstr ""
 
-#: src/prefs.js:471
+#: src/prefs.js:483
 msgid ""
 "Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com "
-"only when you search for weather."
+"only when you search for weather, as you type."
 msgstr ""
 
-#: src/prefs.js:474
+#: src/prefs.js:486
 msgid "Default City"
 msgstr ""
 
-#: src/prefs.js:478
+#: src/prefs.js:490
 msgid "Units"
 msgstr ""
 
-#: src/prefs.js:479
+#: src/prefs.js:491
 msgid "Metric (°C)"
 msgstr ""
 
-#: src/prefs.js:480
+#: src/prefs.js:492
 msgid "Imperial (°F)"
 msgstr ""
 
-#: src/prefs.js:488 src/prefs.js:528 src/providers/agents.js:43
+#: src/prefs.js:500 src/prefs.js:533 src/providers/agents.js:41
 msgid "AI Agent"
 msgstr ""
 
-#: src/prefs.js:489
+#: src/prefs.js:501
 msgid ""
 "Search “ask <prompt>” to open the agent in a terminal, or start with an "
 "agent’s name, e.g. “codex <prompt>”. Leave Terminal empty to use the system "
 "default."
 msgstr ""
 
-#: src/prefs.js:492
+#: src/prefs.js:504
 msgid "Default Agent"
 msgstr ""
 
-#: src/prefs.js:495
+#: src/prefs.js:507
 msgid "Terminal Command"
 msgstr ""
 
-#: src/prefs.js:513
+#: src/prefs.js:517
 msgid ""
 "Start a search with one of these to see only that kind of result. Separate "
 "several with spaces; leave empty to turn a prefix off. Letters need a space "
 "after them (“f readme”), symbols do not (“?lume”)."
 msgstr ""
 
-#: src/prefs.js:518
+#: src/prefs.js:522
 msgid "Wikipedia"
 msgstr ""
 
-#: src/prefs.js:519 src/providers/bookmarks.js:59 src/providers/bookmarks.js:77
+#: src/prefs.js:523 src/providers/bookmarks.js:60 src/providers/bookmarks.js:78
 msgid "Bookmarks"
 msgstr ""
 
-#: src/prefs.js:520
+#: src/prefs.js:524
 msgid "YouTube"
 msgstr ""
 
-#: src/prefs.js:521 src/providers/calculator.js:18
+#: src/prefs.js:526 src/providers/calculator.js:18
 #: src/providers/calculator.js:27
 msgid "Calculator"
 msgstr ""
 
-#: src/prefs.js:522 src/providers/files.js:171 src/providers/files.js:207
+#: src/prefs.js:527 src/providers/files.js:171 src/providers/files.js:207
 msgid "Files"
 msgstr ""
 
-#: src/prefs.js:524 src/providers/files.js:205
+#: src/prefs.js:529 src/providers/files.js:205
 msgid "Recent Files"
 msgstr ""
 
-#: src/prefs.js:525
+#: src/prefs.js:530
 msgid "Open Windows"
 msgstr ""
 
-#: src/prefs.js:526 src/providers/workspaces.js:24
+#: src/prefs.js:531 src/providers/workspaces.js:24
 #: src/providers/workspaces.js:35
 msgid "Workspaces"
 msgstr ""
 
-#: src/prefs.js:529 src/providers/cli.js:89
+#: src/prefs.js:534 src/providers/cli.js:88
 msgid "Run in Terminal"
 msgstr ""
 
-#: src/prefs.js:530 src/providers/processes.js:55 src/providers/processes.js:77
+#: src/prefs.js:535 src/providers/processes.js:56 src/providers/processes.js:78
 msgid "Processes"
 msgstr ""
 
-#: src/prefs.js:531 src/providers/emoji.js:26 src/providers/emoji.js:36
+#: src/prefs.js:536 src/providers/emoji.js:26 src/providers/emoji.js:36
 msgid "Emoji"
 msgstr ""
 
 #. TRANSLATORS: %s is a prefix scope, e.g. "Files"
-#: src/prefs.js:564
+#: src/prefs.js:569
 #, javascript-format
 msgid "Reset %s prefix"
 msgstr ""
 
-#: src/prefs.js:598
+#: src/prefs.js:611
 msgid "Press a Key Combination"
 msgstr ""
 
-#: src/prefs.js:599
+#: src/prefs.js:612
 msgid "Press Esc to cancel or Backspace to disable the shortcut."
 msgstr ""
 
-#: src/prefs.js:606
+#: src/prefs.js:619
 msgid "Set Shortcut"
 msgstr ""
 
-#: src/prefs.js:632
+#: src/prefs.js:645
 msgid "Use at least one of Super, Ctrl or Alt with another key."
 msgstr ""
 
-#: src/providers/agents.js:24
+#: src/providers/agents.js:22
 msgid "AI Agents"
 msgstr ""
 
-#: src/providers/agents.js:24
+#: src/providers/agents.js:22
 msgid "Agent"
 msgstr ""
 
-#: src/providers/agents.js:65
+#: src/providers/agents.js:63
 #, javascript-format
 msgid "%s is not installed"
 msgstr ""
 
-#: src/providers/agents.js:66
+#: src/providers/agents.js:64
 msgid "Install it, or choose another agent in Preferences"
 msgstr ""
 
-#: src/providers/agents.js:77
+#: src/providers/agents.js:75
 #, javascript-format
 msgid "Ask %s: %s"
 msgstr ""
 
-#: src/providers/agents.js:79 src/providers/url.js:26
+#: src/providers/agents.js:77 src/providers/url.js:26
 #, javascript-format
 msgid "Open %s"
 msgstr ""
 
-#: src/providers/agents.js:80
+#: src/providers/agents.js:78
 msgid "Opens in a terminal"
 msgstr ""
 
@@ -607,7 +615,7 @@ msgstr ""
 msgid "App"
 msgstr ""
 
-#: src/providers/bookmarks.js:59
+#: src/providers/bookmarks.js:60
 msgid "Bookmark"
 msgstr ""
 
@@ -616,27 +624,27 @@ msgstr ""
 msgid "Copy to clipboard"
 msgstr ""
 
-#: src/providers/cli.js:34
+#: src/providers/cli.js:33
 msgid "Commands"
 msgstr ""
 
-#: src/providers/cli.js:34
+#: src/providers/cli.js:33
 msgid "Command"
 msgstr ""
 
-#: src/providers/cli.js:78
+#: src/providers/cli.js:77
 msgid "Run in a terminal · Ctrl+Enter to run in background"
 msgstr ""
 
-#: src/providers/cli.js:79
+#: src/providers/cli.js:78
 msgid "Run in background · Ctrl+Enter to run in a terminal"
 msgstr ""
 
-#: src/providers/cli.js:90
+#: src/providers/cli.js:89
 msgid "Run in Background"
 msgstr ""
 
-#: src/providers/cli.js:101
+#: src/providers/cli.js:100
 msgid "Run in a terminal"
 msgstr ""
 
@@ -657,15 +665,15 @@ msgstr ""
 msgid "Clear Clipboard History"
 msgstr ""
 
-#: src/providers/commands.js:16
+#: src/providers/commands.js:14
 msgid "Lume"
 msgstr ""
 
-#: src/providers/commands.js:20
+#: src/providers/commands.js:18
 msgid "Lume Preferences"
 msgstr ""
 
-#: src/providers/commands.js:21
+#: src/providers/commands.js:19
 msgid "Change the shortcut, size and position"
 msgstr ""
 
@@ -765,7 +773,7 @@ msgstr ""
 msgid "Copy File"
 msgstr ""
 
-#: src/providers/files.js:648 src/providers/projects.js:128
+#: src/providers/files.js:648 src/providers/projects.js:129
 msgid "Copy Path"
 msgstr ""
 
@@ -789,20 +797,24 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: src/providers/files.js:682 src/providers/projects.js:132
+#: src/providers/files.js:682 src/providers/projects.js:133
 msgid "Location"
 msgstr ""
 
-#: src/providers/files.js:707
+#: src/providers/files.js:703
+msgid "Not shown: it may hold passwords or keys"
+msgstr ""
+
+#: src/providers/files.js:714
 msgid "Empty folder"
 msgstr ""
 
-#: src/providers/files.js:710
+#: src/providers/files.js:717
 #, javascript-format
 msgid "… and %d more"
 msgstr ""
 
-#: src/providers/files.js:729
+#: src/providers/files.js:736
 msgid "Not shown: it looks like it holds a key or token"
 msgstr ""
 
@@ -840,86 +852,86 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: src/providers/processes.js:55
+#: src/providers/processes.js:56
 msgid "Process"
 msgstr ""
 
 #. TRANSLATORS: CPU use, e.g. "12.5%"
-#: src/providers/processes.js:126
+#: src/providers/processes.js:127
 #, javascript-format
 msgid "%s%%"
 msgstr ""
 
 #. TRANSLATORS: "PID 1234 · CPU 12.5% · 120 MB"
-#: src/providers/processes.js:133
+#: src/providers/processes.js:134
 #, javascript-format
 msgid "PID %d · CPU %s · %s"
 msgstr ""
 
-#: src/providers/processes.js:139
+#: src/providers/processes.js:140
 msgid "End Process"
 msgstr ""
 
-#: src/providers/processes.js:141
+#: src/providers/processes.js:142
 msgid "Force Kill…"
 msgstr ""
 
 #. TRANSLATORS: %s is a process name
-#: src/providers/processes.js:145
+#: src/providers/processes.js:146
 #, javascript-format
 msgid "Force kill %s? Unsaved work in it is lost."
 msgstr ""
 
-#: src/providers/processes.js:148
+#: src/providers/processes.js:149
 msgid "Copy PID"
 msgstr ""
 
-#: src/providers/processes.js:156
+#: src/providers/processes.js:157
 msgid "PID"
 msgstr ""
 
-#: src/providers/processes.js:156
+#: src/providers/processes.js:157
 msgid "CPU"
 msgstr ""
 
-#: src/providers/processes.js:156
+#: src/providers/processes.js:157
 msgid "Memory"
 msgstr ""
 
-#: src/providers/processes.js:249
+#: src/providers/processes.js:254
 #, javascript-format
 msgid "%s has already ended"
 msgstr ""
 
 #. TRANSLATORS: %s is a process name
-#: src/providers/processes.js:259
+#: src/providers/processes.js:264
 #, javascript-format
 msgid "Could not end %s"
 msgstr ""
 
-#: src/providers/projects.js:53
+#: src/providers/projects.js:54
 msgid "Project"
 msgstr ""
 
 #. TRANSLATORS: %s is an editor, e.g. "Visual Studio Code"
-#: src/providers/projects.js:125
+#: src/providers/projects.js:126
 #, javascript-format
 msgid "Open in %s"
 msgstr ""
 
-#: src/providers/projects.js:126
+#: src/providers/projects.js:127
 msgid "Open in Terminal"
 msgstr ""
 
-#: src/providers/projects.js:127
+#: src/providers/projects.js:128
 msgid "Open in Files"
 msgstr ""
 
-#: src/providers/projects.js:132
+#: src/providers/projects.js:133
 msgid "Branch"
 msgstr ""
 
-#: src/providers/projects.js:132 src/providers/weather.js:54
+#: src/providers/projects.js:133 src/providers/weather.js:54
 msgid "Unknown"
 msgstr ""
 
@@ -927,20 +939,20 @@ msgstr ""
 msgid "Search Providers"
 msgstr ""
 
-#: src/providers/scripts.js:38
+#: src/providers/scripts.js:39
 msgid "User Scripts"
 msgstr ""
 
-#: src/providers/scripts.js:38
+#: src/providers/scripts.js:39
 msgid "Script"
 msgstr ""
 
-#: src/providers/scripts.js:146
+#: src/providers/scripts.js:151
 #, javascript-format
 msgid "Script “%s” not run"
 msgstr ""
 
-#: src/providers/scripts.js:147
+#: src/providers/scripts.js:152
 msgid "Other users can change it or a folder above it. Fix with: chmod go-w"
 msgstr ""
 
@@ -1075,79 +1087,79 @@ msgstr ""
 msgid "Power Saver"
 msgstr ""
 
-#: src/providers/toggles.js:77
+#: src/providers/toggles.js:74
 msgid "Quick Toggles"
 msgstr ""
 
-#: src/providers/toggles.js:77
+#: src/providers/toggles.js:74
 msgid "Toggle"
 msgstr ""
 
-#: src/providers/toggles.js:101
+#: src/providers/toggles.js:98
 msgid "Sound"
 msgstr ""
 
-#: src/providers/toggles.js:103
+#: src/providers/toggles.js:100
 msgid "Microphone"
 msgstr ""
 
 #. TRANSLATORS: %s is "Sound" or "Microphone"
-#: src/providers/toggles.js:112
+#: src/providers/toggles.js:109
 #, javascript-format
 msgid "Unmute %s"
 msgstr ""
 
-#: src/providers/toggles.js:112
+#: src/providers/toggles.js:109
 #, javascript-format
 msgid "Mute %s"
 msgstr ""
 
-#: src/providers/toggles.js:113
+#: src/providers/toggles.js:110
 msgid "Currently muted"
 msgstr ""
 
-#: src/providers/toggles.js:113
+#: src/providers/toggles.js:110
 msgid "Currently not muted"
 msgstr ""
 
-#: src/providers/toggles.js:135
+#: src/providers/toggles.js:132
 msgid "Wi-Fi"
 msgstr ""
 
-#: src/providers/toggles.js:163
+#: src/providers/toggles.js:160
 msgid "Bluetooth"
 msgstr ""
 
 #. TRANSLATORS: %s is a setting, e.g. "Night Light"
-#: src/providers/toggles.js:212
+#: src/providers/toggles.js:209
 #, javascript-format
 msgid "Turn Off %s"
 msgstr ""
 
-#: src/providers/toggles.js:212
+#: src/providers/toggles.js:209
 #, javascript-format
 msgid "Turn On %s"
 msgstr ""
 
-#: src/providers/toggles.js:213
+#: src/providers/toggles.js:210
 msgid "Currently on"
 msgstr ""
 
-#: src/providers/toggles.js:213
+#: src/providers/toggles.js:210
 msgid "Currently off"
 msgstr ""
 
 #. TRANSLATORS: %s is a power mode, e.g. "Power Saver"
-#: src/providers/toggles.js:234
+#: src/providers/toggles.js:231
 #, javascript-format
 msgid "Power Mode: %s"
 msgstr ""
 
-#: src/providers/toggles.js:235
+#: src/providers/toggles.js:232
 msgid "Current power mode"
 msgstr ""
 
-#: src/providers/toggles.js:235
+#: src/providers/toggles.js:232
 msgid "Enter to switch"
 msgstr ""
 
@@ -1223,41 +1235,41 @@ msgstr ""
 msgid "Thunderstorm"
 msgstr ""
 
-#: src/providers/weather.js:96
+#: src/providers/weather.js:104
 msgid "Type “weather <city>”, or set a default city in Preferences"
 msgstr ""
 
-#: src/providers/weather.js:111
+#: src/providers/weather.js:119
 #, javascript-format
 msgid "Fetching weather for “%s”…"
 msgstr ""
 
-#: src/providers/weather.js:112 src/providers/weather.js:145
+#: src/providers/weather.js:120 src/providers/weather.js:153
 msgid "Weather data by Open-Meteo.com"
 msgstr ""
 
-#: src/providers/weather.js:133
+#: src/providers/weather.js:141
 msgid "Weather unavailable"
 msgstr ""
 
-#: src/providers/weather.js:144
+#: src/providers/weather.js:152
 #, javascript-format
 msgid "No place called “%s”"
 msgstr ""
 
-#: src/providers/weather.js:157
+#: src/providers/weather.js:165
 msgid "Weather is off in offline mode"
 msgstr ""
 
-#: src/providers/weather.js:158
+#: src/providers/weather.js:166
 msgid "Enter to open Lume Preferences"
 msgstr ""
 
-#: src/providers/weather.js:215
+#: src/providers/weather.js:223
 msgid "Unexpected answer from Open-Meteo"
 msgstr ""
 
-#: src/providers/weather.js:247
+#: src/providers/weather.js:255
 #, javascript-format
 msgid "High %s · Low %s · Feels like %s · Open-Meteo.com"
 msgstr ""
@@ -1426,194 +1438,198 @@ msgid "Prefixes for a YouTube search"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:108
-msgid "Prefixes for the calculator only"
+msgid "Prefixes for the weather"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:112
-msgid "Prefixes for files only"
+msgid "Prefixes for the calculator only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:116
-msgid "Prefixes for open windows only"
+msgid "Prefixes for files only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:120
-msgid "Prefixes for workspaces only"
+msgid "Prefixes for open windows only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:124
-msgid "Prefixes for clipboard history only"
+msgid "Prefixes for workspaces only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:128
-msgid "Prefixes for the AI agent only"
+msgid "Prefixes for clipboard history only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:132
-msgid "Prefixes for running a command in the terminal"
+msgid "Prefixes for the AI agent only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:136
-msgid "Prefixes for emoji only"
+msgid "Prefixes for running a command in the terminal"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:140
-msgid "Prefixes for snippets only"
+msgid "Prefixes for emoji only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:144
-msgid "Prefixes for recently used files only"
+msgid "Prefixes for snippets only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:148
-msgid "Prefixes for browser bookmarks only"
+msgid "Prefixes for recently used files only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:152
-msgid "Prefixes for Git projects only"
+msgid "Prefixes for browser bookmarks only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:156
-msgid "Prefixes for running processes only"
+msgid "Prefixes for Git projects only"
 msgstr ""
 
 #: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:160
+msgid "Prefixes for running processes only"
+msgstr ""
+
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:164
 msgid "Folders searched for Git projects"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:161
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:165
 msgid ""
 "Git repositories up to 3 levels inside these folders are offered as "
 "projects. \"~\" is the home folder; folders that don't exist are skipped."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:165
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:169
 msgid "Command that opens a project"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:166
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:170
 msgid ""
 "The project's folder is added as the last argument. Empty: the first "
 "installed of Visual Studio Code, VSCodium, Zed and GNOME Builder."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:170
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:174
 msgid "Offline mode"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:171
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:175
 msgid ""
 "Nothing leaves the computer: no weather, exchange-rate or time-zone "
 "requests, no results from apps' search providers, no web search rows. Saved "
 "exchange rates are still used."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:175
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:179
 msgid "Log search timings"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:176
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:180
 msgid ""
 "For profiling: log when each provider answers, how many renders a search "
 "took and their time. Never logs the query. Not shown in Preferences."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:180
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:184
 msgid "Show the preview pane"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:181
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:185
 msgid "Toggled with Ctrl+P in the search window."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:189
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:193
 msgid "Side of the preview pane"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:190
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:194
 msgid ""
 "“end” puts the preview after the results (right in left-to-right languages), "
 "“start” before them."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:194
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:198
 msgid "Remember clipboard history"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:195
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:199
 msgid ""
 "Keep a list of copied text, shown by searching “clip”. Copies that password "
 "managers mark as secret, and ones that look like tokens, keys or card "
 "numbers, are skipped."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:199
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:203
 msgid "Keep clipboard history on disk"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:200
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:204
 msgid ""
 "Save the clipboard history so it survives screen locks and logging out. When "
 "off, the history lives only in memory."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:205
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:209
 msgid "Clipboard history size"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:206
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:210
 msgid "How many copied items to remember."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:217
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:221
 msgid "Web search engine"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:218
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:222
 msgid "Search engine used by the web search row. “custom” uses web-search-url."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:222
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:226
 msgid "Custom web search URL"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:223
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:227
 msgid ""
 "An http or https URL where %s is replaced by the query, used when web-search-"
 "engine is “custom”."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:227
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:231
 msgid "Default weather city"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:228
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:232
 msgid ""
 "City used when searching “weather” without a city. It is sent to Open-Meteo "
 "only when you search for weather."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:236
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:240
 msgid "Weather units"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:237
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:241
 msgid "“metric” for °C, “imperial” for °F."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:246
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:250
 msgid "Default AI agent"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:247
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:251
 msgid "Agent CLI opened by “ask <prompt>”."
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:251
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:255
 msgid "Terminal command"
 msgstr ""
 
-#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:252
+#: src/schemas/org.gnome.shell.extensions.lume.gschema.xml:256
 msgid ""
 "Command that runs the arguments after it in a terminal, e.g. “kitty” or "
 "“ptyxis --new-window --”. Empty uses the system default."

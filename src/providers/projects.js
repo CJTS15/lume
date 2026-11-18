@@ -34,6 +34,7 @@ const EDITORS = [
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
+Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 
 function openUri(uri) {
     Gio.AppInfo.launch_default_for_uri_async(uri, global.create_app_launch_context(0, -1), null, (_o, res) => {
@@ -233,17 +234,21 @@ export class ProjectsProvider extends Provider {
             return;
         }
         const children = [];
-        let infos;
-        while ((infos = await enumerator.next_files_async(200, GLib.PRIORITY_LOW, this._cancellable)).length > 0) {
-            for (const info of infos) {
-                const name = info.get_name();
-                if (name === '.git') {
-                    projects.push(dir);
-                    return; // Nested repositories (submodules) belong to this one.
+        try {
+            let infos;
+            while ((infos = await enumerator.next_files_async(200, GLib.PRIORITY_LOW, this._cancellable)).length > 0) {
+                for (const info of infos) {
+                    const name = info.get_name();
+                    if (name === '.git') {
+                        projects.push(dir);
+                        return; // Nested repositories (submodules) belong to this one.
+                    }
+                    if (info.get_file_type() === Gio.FileType.DIRECTORY && !name.startsWith('.') && !SKIPPED.has(name))
+                        children.push(GLib.build_filenamev([dir, name]));
                 }
-                if (info.get_file_type() === Gio.FileType.DIRECTORY && !name.startsWith('.') && !SKIPPED.has(name))
-                    children.push(GLib.build_filenamev([dir, name]));
             }
+        } finally {
+            enumerator.close_async(GLib.PRIORITY_LOW, null).catch(() => {});
         }
         if (depth < MAX_DEPTH) {
             for (const child of children)

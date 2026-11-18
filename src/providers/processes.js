@@ -30,6 +30,7 @@ const ICON = 'utilities-system-monitor-symbolic';
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
+Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 Gio._promisify(Gio.Subprocess.prototype, 'wait_check_async');
 
 const decoder = new TextDecoder();
@@ -175,12 +176,16 @@ export class ProcessesProvider extends Provider {
         const enumerator = await Gio.File.new_for_path('/proc').enumerate_children_async(
             'standard::name,unix::uid', Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, GLib.PRIORITY_DEFAULT, null);
         const pids = [];
-        let infos;
-        while ((infos = await enumerator.next_files_async(500, GLib.PRIORITY_DEFAULT, null)).length > 0) {
-            for (const info of infos) {
-                if (/^\d+$/.test(info.get_name()) && info.get_attribute_uint32('unix::uid') === this._uid)
-                    pids.push(info.get_name());
+        try {
+            let infos;
+            while ((infos = await enumerator.next_files_async(500, GLib.PRIORITY_DEFAULT, null)).length > 0) {
+                for (const info of infos) {
+                    if (/^\d+$/.test(info.get_name()) && info.get_attribute_uint32('unix::uid') === this._uid)
+                        pids.push(info.get_name());
+                }
             }
+        } finally {
+            enumerator.close_async(GLib.PRIORITY_LOW, null).catch(() => {});
         }
         const time = GLib.get_monotonic_time() / 1e6;
         const read_ = await Promise.all(pids.map(async pid => {

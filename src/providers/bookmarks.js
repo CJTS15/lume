@@ -39,6 +39,7 @@ Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
+Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 
 function open(url) {
     Gio.AppInfo.launch_default_for_uri_async(url, global.create_app_launch_context(0, -1), null, (_o, res) => {
@@ -186,13 +187,17 @@ export class BookmarksProvider extends Provider {
             return []; // Not installed.
         }
         const profiles = [];
-        let infos;
-        while ((infos = await enumerator.next_files_async(100, GLib.PRIORITY_LOW, null)).length > 0) {
-            for (const info of infos) {
-                const name = info.get_name();
-                if (name === 'Default' || name.startsWith('Profile '))
-                    profiles.push({path: GLib.build_filenamev([base, name, 'Bookmarks']), browser});
+        try {
+            let infos;
+            while ((infos = await enumerator.next_files_async(100, GLib.PRIORITY_LOW, null)).length > 0) {
+                for (const info of infos) {
+                    const name = info.get_name();
+                    if (name === 'Default' || name.startsWith('Profile '))
+                        profiles.push({path: GLib.build_filenamev([base, name, 'Bookmarks']), browser});
+                }
             }
+        } finally {
+            enumerator.close_async(GLib.PRIORITY_LOW, null).catch(() => {});
         }
         return profiles;
     }

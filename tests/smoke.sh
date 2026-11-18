@@ -85,6 +85,8 @@ step() {
     echo "smoke-window:$1:$out"
     [[ $out == "(true,"* ]] || exit 1
 }
+# Called on every key press on a row; not reached by the steps below.
+step api "if (typeof global.stage.get_event_actor !== 'function') throw new Error('no get_event_actor'); 'ok'"
 step search "w.open(); w._entry.text = 'set'; 'ok'"
 sleep 2
 step folder "w._entry.text = '~/'; 'ok'"

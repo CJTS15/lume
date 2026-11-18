@@ -25,7 +25,7 @@ import {fuzzyScore, matchScore} from '../lib/match.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {convert} from '../lib/units.js';
 import {noAction, Provider} from '../lib/provider.js';
-import {looksSecret} from '../lib/secrets.js';
+import {looksPrivate, looksSecret} from '../lib/secrets.js';
 import {runInTerminal} from '../lib/terminal.js';
 
 const MIN_QUERY_LENGTH = 3;
@@ -619,7 +619,7 @@ export class FilesProvider extends Provider {
             'x-special/gnome-copied-files', new GLib.Bytes(new TextEncoder().encode(`copy\n${uri}`)));
         const folderPath = folder ? path : GLib.path_get_dirname(path);
         const preview = () => this._preview(uri, path, folder);
-        // ponytail: looked up once; installing Yazi later needs a re-enable.
+        // Limitation: looked up once; installing Yazi later needs a re-enable.
         this._yazi ??= GLib.find_program_in_path('yazi') ?? '';
 
         return {
@@ -670,7 +670,7 @@ export class FilesProvider extends Provider {
     async _preview(uri, path, folder) {
         const file = Gio.File.new_for_uri(uri);
         const info = await file.query_info_async(
-            'standard::type,standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon',
+            'standard::type,standard::content-type,standard::size,time::modified,thumbnail::path,standard::icon,unix::mode',
             Gio.FileQueryInfoFlags.NONE, GLib.PRIORITY_DEFAULT, null);
         const type = info.get_content_type();
         const rows = [[_('Type'), Gio.content_type_get_description(type)]];
@@ -694,8 +694,15 @@ export class FilesProvider extends Provider {
         if (folder)
             text = await this._folderText(file);
         // Regular files only: reading a FIFO or a device would never end.
-        else if (info.get_file_type() === Gio.FileType.REGULAR && Gio.content_type_is_a(type, 'text/plain'))
-            text = await this._fileText(file);
+        else if (info.get_file_type() === Gio.FileType.REGULAR && Gio.content_type_is_a(type, 'text/plain')) {
+            // Not read at all: a .env or a file only its owner may read can
+            // hold a password no token pattern catches. No mode (some
+            // network folders): judged by name and text only.
+            const mode = info.has_attribute('unix::mode') ? info.get_attribute_uint32('unix::mode') : 0o644;
+            text = looksPrivate(GLib.path_get_basename(path), mode)
+                ? _('Not shown: it may hold passwords or keys')
+                : await this._fileText(file);
+        }
         return {gicon, rows, text};
     }
 

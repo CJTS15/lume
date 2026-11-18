@@ -21,6 +21,35 @@ const NOT_FOUND = 127;
 
 Gio._promisify(Gio.Subprocess.prototype, 'wait_async');
 
+/** Cancels waits on background commands at disable; made on first use. */
+let waits = null;
+
+const PATH_CACHE_US = 10 * 1e6;
+const PATH_CACHE_SIZE = 200;
+/** program -> {path, time}; made on first use, dropped on disable. */
+let paths = null;
+
+/**
+ * GLib.find_program_in_path, remembered for 10 s: it stats every $PATH
+ * folder on the Shell's main thread, and a slow or stale network folder in
+ * $PATH would stall every keystroke.
+ *
+ * @param {string} program
+ * @returns {string|null}
+ */
+export function findProgram(program) {
+    paths ??= new Map();
+    const now = GLib.get_monotonic_time();
+    const hit = paths.get(program);
+    if (hit && now - hit.time < PATH_CACHE_US)
+        return hit.path;
+    if (paths.size >= PATH_CACHE_SIZE)
+        paths.clear();
+    const path = GLib.find_program_in_path(program);
+    paths.set(program, {path, time: now});
+    return path;
+}
+
 /**
  * Run a shell command line in the home folder, in the background; notify
  * if it fails.
@@ -28,6 +57,8 @@ Gio._promisify(Gio.Subprocess.prototype, 'wait_async');
  * @param {string} line
  */
 export async function runInBackground(line) {
+    waits ??= new Gio.Cancellable();
+    const cancellable = waits;
     let detail;
     try {
         // Output is discarded, not piped: a long-running command
@@ -37,7 +68,7 @@ export async function runInBackground(line) {
         });
         launcher.set_cwd(GLib.get_home_dir());
         const process = launcher.spawnv(['/bin/sh', '-c', line]);
-        await process.wait_async(null);
+        await process.wait_async(cancellable);
         if (process.get_successful())
             return;
         const status = process.get_if_exited() ? process.get_exit_status() : -1;
@@ -45,9 +76,24 @@ export async function runInBackground(line) {
             ? _('Command not found')
             : _('Exited with status %d').format(status);
     } catch (e) {
+        // Lume was disabled while it ran: no notification from a disabled
+        // extension.
+        if (cancellable.is_cancelled())
+            return;
         detail = e.message;
     }
     Main.notifyError(_('Command failed: %s').format(line.slice(0, TITLE_LENGTH)), detail);
+}
+
+/**
+ * Call on disable. Background commands keep running: the user started
+ * them, and ending an rsync because the screen locked would lose work.
+ * Only Lume stops waiting for them.
+ */
+export function destroy() {
+    waits?.cancel();
+    waits = null;
+    paths = null;
 }
 
 /**

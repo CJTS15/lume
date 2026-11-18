@@ -47,12 +47,24 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildShortcutGroup(window, settings));
         page.add(this._buildAppearanceGroup(settings));
         page.add(this._buildSearchGroup(settings));
-        page.add(this._buildClipboardGroup(settings));
-        page.add(this._buildPrivacyGroup(settings));
-        page.add(this._buildWebSearchGroup(settings));
-        page.add(this._buildWeatherGroup(settings));
-        page.add(this._buildAgentGroup(settings));
-        page.add(this._buildProjectsGroup(window, settings));
+
+        const privacyPage = new Adw.PreferencesPage({
+            title: _('Privacy'),
+            icon_name: 'preferences-system-privacy-symbolic',
+        });
+        privacyPage.add(this._buildClipboardGroup(settings));
+        privacyPage.add(this._buildPrivacyGroup(settings));
+        window.add(privacyPage);
+
+        const integrationsPage = new Adw.PreferencesPage({
+            title: _('Integrations'),
+            icon_name: 'application-x-addon-symbolic',
+        });
+        integrationsPage.add(this._buildWebSearchGroup(settings));
+        integrationsPage.add(this._buildWeatherGroup(settings));
+        integrationsPage.add(this._buildAgentGroup(settings));
+        integrationsPage.add(this._buildProjectsGroup(window, settings));
+        window.add(integrationsPage);
 
         const prefixPage = new Adw.PreferencesPage({
             title: _('Prefixes'),
@@ -398,7 +410,7 @@ export default class LumePreferences extends ExtensionPreferences {
     }
 
     _buildPrivacyGroup(settings) {
-        const group = new Adw.PreferencesGroup({title: _('Privacy')});
+        const group = new Adw.PreferencesGroup({title: _('Network')});
         const offline = new Adw.SwitchRow({
             title: _('Offline Mode'),
             subtitle: _('Nothing leaves this computer: no weather, exchange-rate or time-zone requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
@@ -468,7 +480,7 @@ export default class LumePreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({
             title: _('Weather'),
             // Group descriptions are Pango markup; escape the <placeholders>.
-            description: GLib.markup_escape_text(_('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather.'), -1),
+            description: GLib.markup_escape_text(_('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather, as you type.'), -1),
         });
 
         const city = new Adw.EntryRow({title: _('Default City')});
@@ -499,14 +511,6 @@ export default class LumePreferences extends ExtensionPreferences {
         return group;
     }
 
-    /**
-     * An Adw.ComboRow for a string key with <choices>.
-     *
-     * @param {Gio.Settings} settings
-     * @param {string} key
-     * @param {string} title
-     * @param {Array<[string, string]>} options - [value, label] pairs
-     */
     _buildPrefixGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: _('Prefixes'),
@@ -518,6 +522,7 @@ export default class LumePreferences extends ExtensionPreferences {
             ['prefix-wikipedia', _('Wikipedia')],
             ['prefix-bookmarks', _('Bookmarks')],
             ['prefix-youtube', _('YouTube')],
+            ['prefix-weather', _('Weather')],
             ['prefix-calculator', _('Calculator')],
             ['prefix-files', _('Files')],
             ['prefix-projects', _('Projects')],
@@ -574,6 +579,14 @@ export default class LumePreferences extends ExtensionPreferences {
         return group;
     }
 
+    /**
+     * An Adw.ComboRow for a string key with <choices>.
+     *
+     * @param {Gio.Settings} settings
+     * @param {string} key
+     * @param {string} title
+     * @param {Array<[string, string]>} options - [value, label] pairs
+     */
     _comboRow(settings, key, title, options) {
         const row = new Adw.ComboRow({
             title,

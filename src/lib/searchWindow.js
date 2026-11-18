@@ -232,14 +232,17 @@ class LumeSearchWindow extends St.Widget {
                 this.close();
             return Clutter.EVENT_STOP;
         });
-        this.connect('key-press-event', (_a, event) => this._onKeyPress(event));
+        // Keys on rows. A key the entry let through bubbles up here too;
+        // its own handler has already seen it.
+        this.connect('key-press-event', (_a, event) =>
+            global.stage.get_event_actor(event) === this._entry.clutter_text
+                ? Clutter.EVENT_PROPAGATE : this._onKeyPress(event));
         // ClutterText's own bindings take Left and Right before its
         // key-press-event on GNOME 51, so folder keys are caught on the way down.
         this.connect('captured-event', (_a, event) =>
             event.type() === Clutter.EventType.KEY_PRESS && this._onFolderKey(event.get_key_symbol(), event.get_state())
                 ? Clutter.EVENT_STOP : Clutter.EVENT_PROPAGATE);
         this.connect('destroy', () => this._onDestroy());
-
     }
 
     _createFooter() {
@@ -335,6 +338,8 @@ class LumeSearchWindow extends St.Widget {
     }
 
     _onDestroy() {
+        // A preview still loading must not fill the destroyed pane.
+        this._previewToken++;
         this._settings.disconnect(this._previewChangedId);
         this._settings.disconnect(this._previewPositionId);
         this._cancelRender();
@@ -417,7 +422,7 @@ class LumeSearchWindow extends St.Widget {
                 console.log(`lume: timing settled +${elapsed()} ms, ${timing.renders} renders, ` +
                     `${(timing.renderUs / 1000).toFixed(1)} ms rendering`);
             }
-        });
+        }).catch(e => console.error(`lume: search failed: ${e}`));
     }
 
     /** Have a screen reader speak `text` without moving focus (ATK 2.46+). */

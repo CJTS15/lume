@@ -116,7 +116,7 @@ export class ClipboardProvider extends Provider {
                 activate: copy,
                 copy,
                 paste: entry,
-                    preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
+                preview: () => ({text: entry, rows: [[_('Length'), _('%d characters').format(entry.length)]]}),
             };
         });
 

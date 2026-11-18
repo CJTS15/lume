@@ -13,9 +13,9 @@ import St from 'gi://St';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {geocode, getJson} from '../lib/openMeteo.js';
+import {matchPrefix} from '../lib/prefix.js';
 import {noAction, Provider} from '../lib/provider.js';
 
-const KEYWORD = 'weather';
 const MIN_CITY_LENGTH = 2;
 // Wait for typing to pause before hitting the network.
 const DEBOUNCE_MS = 400;
@@ -75,20 +75,28 @@ export class WeatherProvider extends Provider {
         this._destroyed = false;
     }
 
+    /** The city typed after the prefix (maybe empty), or null. */
+    _filter(text) {
+        return matchPrefix(text, this._settings.get_strv('prefix-weather'));
+    }
+
+    owns(text) {
+        return this._filter(text) !== null;
+    }
+
     scope(text) {
-        const lower = text.toLowerCase();
-        return lower === KEYWORD || lower.startsWith(`${KEYWORD} `) ? _('Weather') : null;
+        return this.owns(text) ? _('Weather') : null;
     }
 
     async query(text, cancellable, update) {
-        const lower = text.toLowerCase();
-        if (lower !== KEYWORD && !lower.startsWith(`${KEYWORD} `))
+        const typed = this._filter(text);
+        if (typed === null)
             return [];
 
         if (this._settings.get_boolean('offline-mode'))
             return [this._offlineRow()];
 
-        const city = text.slice(KEYWORD.length).trim() || this._settings.get_string('weather-city').trim();
+        const city = typed || this._settings.get_string('weather-city').trim();
         if (city.length < MIN_CITY_LENGTH) {
             return [{
                 id: 'hint',

@@ -243,8 +243,10 @@ starts with `.`).
 Browse folders from the keyboard: <kbd>→</kbd> on a folder lists it, and
 <kbd>←</kbd> goes back up. With the preview pane on (<kbd>Ctrl</kbd>+<kbd>P</kbd>),
 a folder shows what it holds and a text file its first lines (files that
-aren't UTF-8 text show no lines, and a file that looks like it holds a key
-or token, such as `~/.ssh/id_ed25519`, is not shown). If [Yazi](https://yazi-rs.github.io) is
+aren't UTF-8 text show no lines). Not shown: a file that looks like it
+holds a key or token, such as `~/.ssh/id_ed25519`; a `.env`, `.netrc`,
+`.pgpass` or `*credentials*` file; and any file only you may read (mode
+`600`). If [Yazi](https://yazi-rs.github.io) is
 installed, <kbd>Ctrl</kbd>+<kbd>K</kbd> offers *Open in Yazi*, in your
 terminal. Lume itself never renames, moves or deletes files; use Files or
 Yazi for that.
@@ -301,7 +303,8 @@ when fewer than three other results match.
 
 `weather` uses the default city from preferences; `weather <city>` looks up
 any city with Open-Meteo's geocoding. The city goes to Open-Meteo.com only
-when you search for weather, and results are cached for 10 minutes. Weather
+when you search for weather, as you type (once you pause for 0.4 s, so a
+half-typed name can be sent too), and results are cached for 10 minutes. Weather
 data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 `ask <prompt>` opens the default agent (Claude Code, Codex or agy, set in
@@ -403,9 +406,10 @@ matches, below apps that match as well.
 
 Lume sends nothing unless one of these happens:
 
-- `weather …`: the city to Open-Meteo.com (geocoding and forecast).
+- `weather …`: the city to Open-Meteo.com (geocoding and forecast), as you
+  type, once you pause.
 - `time in …` for a city GNOME's list lacks or several cities share: the
-  name to Open-Meteo.com (geocoding).
+  name to Open-Meteo.com (geocoding), as you type, once you pause.
 - A currency conversion: one fixed request for the day's ECB rates to
   frankfurter.dev, at most every 12 hours. Your query is never sent.
 - Results from apps' GNOME search providers: Lume asks the apps, as the
@@ -434,13 +438,16 @@ it in Lume's preferences.
 - **Width**, **Distance From Top**, **Maximum Results**.
 - **Search**: fuzzy matching (strict, normal, loose), search file contents,
   run commands.
-- **Prefixes** (own page): the prefixes for each scope.
-- **Snippets** (own page): add, edit and remove snippets.
-- **Projects**: the folders searched for Git projects, and the editor command.
-- **Clipboard History**: on/off, keep on disk, number of items (5–200).
-- **Web Search**: search engine, custom URL.
-- **Weather**: default city, units (°C or °F).
-- **AI Agent**: default agent, terminal command (empty for automatic).
+- **Privacy** page:
+  - **Clipboard History**: on/off, keep on disk, number of items (5–200).
+  - **Offline Mode**.
+- **Integrations** page:
+  - **Web Search**: search engine, custom URL.
+  - **Weather**: default city, units (°C or °F).
+  - **AI Agent**: default agent, terminal command (empty for automatic).
+  - **Projects**: the folders searched for Git projects, and the editor command.
+- **Prefixes** page: the prefixes for each scope.
+- **Snippets** page: add, edit and remove snippets.
 
 ## Testing in a nested session
 
@@ -490,6 +497,7 @@ a separate process; watch `journalctl -f -o cat` while opening them.
 ```sh
 make test             # gjs self-checks for the pure modules in src/lib/
 make smoke            # headless gnome-shell: enable/disable cycles, window, prefs
+npm ci && npm run lint  # ESLint (needs Node; nothing from npm ships in the zip)
 ```
 
 `make test` covers the pure modules in `src/lib/`. `make smoke` starts a
@@ -510,6 +518,16 @@ make pack
 mkdir /tmp/lume-zip && unzip -q lume@cjts15.github.io.shell-extension.zip -d /tmp/lume-zip
 glib-compile-schemas /tmp/lume-zip/schemas
 LUME_SRC=/tmp/lume-zip tests/smoke.sh
+```
+
+To see how long each provider takes, turn on the hidden `debug-timing`
+setting. It logs provider names, row counts and times, never the query.
+The schema is the extension's own, so point `gsettings` at it:
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/lume@cjts15.github.io/schemas \
+    set org.gnome.shell.extensions.lume debug-timing true
+journalctl -f -o cat /usr/bin/gnome-shell | grep 'lume: timing'
 ```
 
 ## Translations
