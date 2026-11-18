@@ -243,8 +243,10 @@ starts with `.`).
 Browse folders from the keyboard: <kbd>→</kbd> on a folder lists it, and
 <kbd>←</kbd> goes back up. With the preview pane on (<kbd>Ctrl</kbd>+<kbd>P</kbd>),
 a folder shows what it holds and a text file its first lines (files that
-aren't UTF-8 text show no lines, and a file that looks like it holds a key
-or token, such as `~/.ssh/id_ed25519`, is not shown). If [Yazi](https://yazi-rs.github.io) is
+aren't UTF-8 text show no lines). Not shown: a file that looks like it
+holds a key or token, such as `~/.ssh/id_ed25519`; a `.env`, `.netrc`,
+`.pgpass` or `*credentials*` file; and any file only you may read (mode
+`600`). If [Yazi](https://yazi-rs.github.io) is
 installed, <kbd>Ctrl</kbd>+<kbd>K</kbd> offers *Open in Yazi*, in your
 terminal. Lume itself never renames, moves or deletes files; use Files or
 Yazi for that.

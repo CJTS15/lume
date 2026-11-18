@@ -4,7 +4,7 @@
 
 import System from 'system';
 
-import {looksSecret} from '../src/lib/secrets.js';
+import {looksPrivate, looksSecret} from '../src/lib/secrets.js';
 
 let failures = 0;
 
@@ -44,6 +44,19 @@ check('card number inside text', looksSecret('order 4111111111111111 shipped'), 
 check('millisecond timestamp', looksSecret('1794560000009'), false);
 check('JWT-like words', looksSecret('eyJ.eyJ.x'), false);
 check('empty', looksSecret(''), false);
+
+check('.env', looksPrivate('.env', 0o644), true);
+check('.env.local', looksPrivate('.env.local', 0o644), true);
+check('.netrc', looksPrivate('.netrc', 0o644), true);
+check('.pgpass', looksPrivate('.pgpass', 0o644), true);
+check('aws credentials', looksPrivate('credentials', 0o644), true);
+check('gcloud credentials file', looksPrivate('application_default_credentials.json', 0o644), true);
+check('owner-only file', looksPrivate('notes.txt', 0o600), true);
+check('owner-only, group can write', looksPrivate('notes.txt', 0o620), true);
+check('readable file', looksPrivate('notes.txt', 0o644), false);
+check('group-readable file', looksPrivate('notes.txt', 0o640), false);
+check('environment.md', looksPrivate('environment.md', 0o644), false);
+check('.envrc', looksPrivate('.envrc', 0o644), false);
 
 if (failures > 0) {
     print(`${failures} secrets test(s) failed`);

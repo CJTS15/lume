@@ -44,3 +44,18 @@ export function looksSecret(text) {
         return true;
     return PATTERNS.some(pattern => pattern.test(trimmed));
 }
+
+// Files that hold credentials whatever their text looks like.
+const PRIVATE_NAMES = /^(?:\.env(?:\..+)?|\.netrc|\.pgpass|\.git-credentials|.*credentials.*)$/i;
+
+/**
+ * Whether a file's text should stay out of the preview: a credentials file
+ * by name, or one that only its owner may read (mode 0600 and the like).
+ *
+ * @param {string} name - the file's base name
+ * @param {number} mode - its unix mode
+ * @returns {boolean}
+ */
+export function looksPrivate(name, mode) {
+    return PRIVATE_NAMES.test(name) || (mode & 0o044) === 0;
+}
