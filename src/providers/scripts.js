@@ -29,6 +29,7 @@ const SIGTERM = 15;
 Gio._promisify(Gio.File.prototype, 'enumerate_children_async');
 Gio._promisify(Gio.File.prototype, 'query_info_async');
 Gio._promisify(Gio.FileEnumerator.prototype, 'next_files_async');
+Gio._promisify(Gio.FileEnumerator.prototype, 'close_async');
 // The Shell may already have wrapped read_line_async (with bytes as the
 // result), and a second wrap is ignored, so lines are decoded below.
 Gio._promisify(Gio.DataInputStream.prototype, 'read_line_async', 'read_line_finish_utf8');
@@ -92,15 +93,19 @@ export class ScriptsProvider extends Provider {
                 return scripts;
             throw e;
         }
-        let infos;
-        while ((infos = await enumerator.next_files_async(50, GLib.PRIORITY_LOW, null)).length > 0) {
-            for (const info of infos) {
-                const name = info.get_name();
-                // A name with spaces could never be typed as a prefix.
-                if (info.get_file_type() === Gio.FileType.REGULAR &&
-                    info.get_attribute_boolean('access::can-execute') && !/\s/.test(name) && !name.startsWith('.'))
-                    scripts.set(name, GLib.build_filenamev([SCRIPTS_DIR, name]));
+        try {
+            let infos;
+            while ((infos = await enumerator.next_files_async(50, GLib.PRIORITY_LOW, null)).length > 0) {
+                for (const info of infos) {
+                    const name = info.get_name();
+                    // A name with spaces could never be typed as a prefix.
+                    if (info.get_file_type() === Gio.FileType.REGULAR &&
+                        info.get_attribute_boolean('access::can-execute') && !/\s/.test(name) && !name.startsWith('.'))
+                        scripts.set(name, GLib.build_filenamev([SCRIPTS_DIR, name]));
+                }
             }
+        } finally {
+            enumerator.close_async(GLib.PRIORITY_LOW, null).catch(() => {});
         }
         return scripts;
     }
