@@ -1,0 +1,14 @@
+{
+  "name": "lume-dev",
+  "private": true,
+  "description": "Development tools only (ESLint); nothing here ships in the extension.",
+  "scripts": {
+    "lint": "eslint src tests"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "eslint": "10.14.0",
+    "globals": "17.14.0"
+  }
+}

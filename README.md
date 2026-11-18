@@ -497,6 +497,7 @@ a separate process; watch `journalctl -f -o cat` while opening them.
 ```sh
 make test             # gjs self-checks for the pure modules in src/lib/
 make smoke            # headless gnome-shell: enable/disable cycles, window, prefs
+npm ci && npm run lint  # ESLint (needs Node; nothing from npm ships in the zip)
 ```
 
 `make test` covers the pure modules in `src/lib/`. `make smoke` starts a

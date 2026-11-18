@@ -4,3 +4,4 @@ src/schemas/gschemas.compiled
 /.github/*
 !/.github/workflows/
 .claude/
+node_modules/
