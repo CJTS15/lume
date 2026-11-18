@@ -4,14 +4,12 @@
 // the prompt; "<agent> <prompt>" (claude, codex, agy) picks one agent.
 // The prompt is passed as a single argv element, never through a shell.
 
-import GLib from 'gi://GLib';
-
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import {AGENTS, agentArgv} from '../lib/agents.js';
 import {Provider} from '../lib/provider.js';
 import {matchPrefix} from '../lib/prefix.js';
-import {runInTerminal} from '../lib/terminal.js';
+import {findProgram, runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
 
@@ -54,7 +52,7 @@ export class AgentsProvider extends Provider {
 
         const agent = AGENTS[id];
         const prompt = explicit ? rest.trim() : scoped;
-        const path = GLib.find_program_in_path(agent.command);
+        const path = findProgram(agent.command);
 
         if (!path) {
             // Typing an agent's name is likely an app search; stay quiet.

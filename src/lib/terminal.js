@@ -24,6 +24,31 @@ Gio._promisify(Gio.Subprocess.prototype, 'wait_async');
 /** Cancels waits on background commands at disable; made on first use. */
 let waits = null;
 
+const PATH_CACHE_US = 10 * 1e6;
+const PATH_CACHE_SIZE = 200;
+/** program -> {path, time}; cleared on disable. */
+const paths = new Map();
+
+/**
+ * GLib.find_program_in_path, remembered for 10 s: it stats every $PATH
+ * folder on the Shell's main thread, and a slow or stale network folder in
+ * $PATH would stall every keystroke.
+ *
+ * @param {string} program
+ * @returns {string|null}
+ */
+export function findProgram(program) {
+    const now = GLib.get_monotonic_time();
+    const hit = paths.get(program);
+    if (hit && now - hit.time < PATH_CACHE_US)
+        return hit.path;
+    if (paths.size >= PATH_CACHE_SIZE)
+        paths.clear();
+    const path = GLib.find_program_in_path(program);
+    paths.set(program, {path, time: now});
+    return path;
+}
+
 /**
  * Run a shell command line in the home folder, in the background; notify
  * if it fails.
@@ -67,6 +92,7 @@ export async function runInBackground(line) {
 export function destroy() {
     waits?.cancel();
     waits = null;
+    paths.clear();
 }
 
 /**

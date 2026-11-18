@@ -12,7 +12,7 @@ import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js'
 import {Provider} from '../lib/provider.js';
 import {matchPrefix} from '../lib/prefix.js';
 import {shellLineArgv} from '../lib/agents.js';
-import {runInBackground, runInTerminal} from '../lib/terminal.js';
+import {findProgram, runInBackground, runInTerminal} from '../lib/terminal.js';
 
 const TITLE_LENGTH = 80;
 // Power commands act without GNOME's confirmation (polkit lets the active
@@ -61,7 +61,7 @@ export class CliProvider extends Provider {
         if (POWER_PROGRAMS.has(program) || POWER_VERBS.test(text))
             return [];
         // A path to a folder ("/etc/") is a file browse, not a command.
-        if (!GLib.find_program_in_path(program))
+        if (!findProgram(program))
             return [];
 
         const args = text.slice(program.length);
