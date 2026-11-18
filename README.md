@@ -438,13 +438,16 @@ it in Lume's preferences.
 - **Width**, **Distance From Top**, **Maximum Results**.
 - **Search**: fuzzy matching (strict, normal, loose), search file contents,
   run commands.
-- **Prefixes** (own page): the prefixes for each scope.
-- **Snippets** (own page): add, edit and remove snippets.
-- **Projects**: the folders searched for Git projects, and the editor command.
-- **Clipboard History**: on/off, keep on disk, number of items (5–200).
-- **Web Search**: search engine, custom URL.
-- **Weather**: default city, units (°C or °F).
-- **AI Agent**: default agent, terminal command (empty for automatic).
+- **Privacy** page:
+  - **Clipboard History**: on/off, keep on disk, number of items (5–200).
+  - **Offline Mode**.
+- **Integrations** page:
+  - **Web Search**: search engine, custom URL.
+  - **Weather**: default city, units (°C or °F).
+  - **AI Agent**: default agent, terminal command (empty for automatic).
+  - **Projects**: the folders searched for Git projects, and the editor command.
+- **Prefixes** page: the prefixes for each scope.
+- **Snippets** page: add, edit and remove snippets.
 
 ## Testing in a nested session
 

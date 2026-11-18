@@ -47,12 +47,24 @@ export default class LumePreferences extends ExtensionPreferences {
         page.add(this._buildShortcutGroup(window, settings));
         page.add(this._buildAppearanceGroup(settings));
         page.add(this._buildSearchGroup(settings));
-        page.add(this._buildClipboardGroup(settings));
-        page.add(this._buildPrivacyGroup(settings));
-        page.add(this._buildWebSearchGroup(settings));
-        page.add(this._buildWeatherGroup(settings));
-        page.add(this._buildAgentGroup(settings));
-        page.add(this._buildProjectsGroup(window, settings));
+
+        const privacyPage = new Adw.PreferencesPage({
+            title: _('Privacy'),
+            icon_name: 'preferences-system-privacy-symbolic',
+        });
+        privacyPage.add(this._buildClipboardGroup(settings));
+        privacyPage.add(this._buildPrivacyGroup(settings));
+        window.add(privacyPage);
+
+        const integrationsPage = new Adw.PreferencesPage({
+            title: _('Integrations'),
+            icon_name: 'application-x-addon-symbolic',
+        });
+        integrationsPage.add(this._buildWebSearchGroup(settings));
+        integrationsPage.add(this._buildWeatherGroup(settings));
+        integrationsPage.add(this._buildAgentGroup(settings));
+        integrationsPage.add(this._buildProjectsGroup(window, settings));
+        window.add(integrationsPage);
 
         const prefixPage = new Adw.PreferencesPage({
             title: _('Prefixes'),
@@ -398,7 +410,7 @@ export default class LumePreferences extends ExtensionPreferences {
     }
 
     _buildPrivacyGroup(settings) {
-        const group = new Adw.PreferencesGroup({title: _('Privacy')});
+        const group = new Adw.PreferencesGroup({title: _('Network')});
         const offline = new Adw.SwitchRow({
             title: _('Offline Mode'),
             subtitle: _('Nothing leaves this computer: no weather, exchange-rate or time-zone requests, no results from apps’ search providers, no web search. Saved exchange rates are still used.'),
