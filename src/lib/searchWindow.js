@@ -243,7 +243,6 @@ class LumeSearchWindow extends St.Widget {
             event.type() === Clutter.EventType.KEY_PRESS && this._onFolderKey(event.get_key_symbol(), event.get_state())
                 ? Clutter.EVENT_STOP : Clutter.EVENT_PROPAGATE);
         this.connect('destroy', () => this._onDestroy());
-
     }
 
     _createFooter() {

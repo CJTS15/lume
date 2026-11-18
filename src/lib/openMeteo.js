@@ -28,7 +28,7 @@ export async function getJson(session, url, cancellable) {
     } catch (e) {
         if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED))
             throw e;
-        throw new Error(`${host}: ${e.message}`);
+        throw new Error(`${host}: ${e.message}`, {cause: e});
     }
     if (message.get_status() !== Soup.Status.OK)
         // TRANSLATORS: %s is a server name, %d an HTTP status code
@@ -36,7 +36,7 @@ export async function getJson(session, url, cancellable) {
     try {
         return JSON.parse(new TextDecoder().decode(bytes.get_data()));
     } catch (e) {
-        throw new Error(`${host}: ${e.message}`);
+        throw new Error(`${host}: ${e.message}`, {cause: e});
     }
 }
 

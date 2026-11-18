@@ -54,7 +54,9 @@ try {
     parseBookmarks('{oops');
     failures++;
     print('FAIL not JSON: expected an error');
-} catch {}
+} catch {
+    // Expected.
+}
 
 check('short url', shortUrl('https://www.gnome.org/'), 'gnome.org');
 check('short url path', shortUrl('http://example.com/a/b'), 'example.com/a/b');
