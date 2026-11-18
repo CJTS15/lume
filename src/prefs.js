@@ -468,7 +468,7 @@ export default class LumePreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({
             title: _('Weather'),
             // Group descriptions are Pango markup; escape the <placeholders>.
-            description: GLib.markup_escape_text(_('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather.'), -1),
+            description: GLib.markup_escape_text(_('Search “weather” or “weather <city>”. The city is sent to Open-Meteo.com only when you search for weather, as you type.'), -1),
         });
 
         const city = new Adw.EntryRow({title: _('Default City')});

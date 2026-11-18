@@ -303,7 +303,8 @@ when fewer than three other results match.
 
 `weather` uses the default city from preferences; `weather <city>` looks up
 any city with Open-Meteo's geocoding. The city goes to Open-Meteo.com only
-when you search for weather, and results are cached for 10 minutes. Weather
+when you search for weather, as you type (once you pause for 0.4 s, so a
+half-typed name can be sent too), and results are cached for 10 minutes. Weather
 data by [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 
 `ask <prompt>` opens the default agent (Claude Code, Codex or agy, set in
@@ -405,9 +406,10 @@ matches, below apps that match as well.
 
 Lume sends nothing unless one of these happens:
 
-- `weather …`: the city to Open-Meteo.com (geocoding and forecast).
+- `weather …`: the city to Open-Meteo.com (geocoding and forecast), as you
+  type, once you pause.
 - `time in …` for a city GNOME's list lacks or several cities share: the
-  name to Open-Meteo.com (geocoding).
+  name to Open-Meteo.com (geocoding), as you type, once you pause.
 - A currency conversion: one fixed request for the day's ECB rates to
   frankfurter.dev, at most every 12 hours. Your query is never sent.
 - Results from apps' GNOME search providers: Lume asks the apps, as the
@@ -512,6 +514,16 @@ make pack
 mkdir /tmp/lume-zip && unzip -q lume@cjts15.github.io.shell-extension.zip -d /tmp/lume-zip
 glib-compile-schemas /tmp/lume-zip/schemas
 LUME_SRC=/tmp/lume-zip tests/smoke.sh
+```
+
+To see how long each provider takes, turn on the hidden `debug-timing`
+setting. It logs provider names, row counts and times, never the query.
+The schema is the extension's own, so point `gsettings` at it:
+
+```sh
+gsettings --schemadir ~/.local/share/gnome-shell/extensions/lume@cjts15.github.io/schemas \
+    set org.gnome.shell.extensions.lume debug-timing true
+journalctl -f -o cat /usr/bin/gnome-shell | grep 'lume: timing'
 ```
 
 ## Translations
