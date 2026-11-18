@@ -12,7 +12,7 @@ schemas:
 pack:
 	gnome-extensions pack $(SRC) --force --out-dir=. \
 		--extra-source=lib --extra-source=providers --extra-source=data \
-		--podir=../po
+		--podir=../po --extra-source=../LICENSE
 
 # Translation template. --no-git (gettext 0.24.1+) skips xgettext's git
 # date lookup, which fails with gettext 1.0 ("vc-mtime: ... unexpected
